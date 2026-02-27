@@ -10,10 +10,9 @@ const links = [
 
 <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
   <div class="max-w-6xl mx-auto px-4 md:px-8 flex items-center justify-between h-20">
-    <!-- Logo: two-weight wordmark -->
-    <a href="/" class="flex items-baseline gap-1 group">
-      <span class="font-serif text-2xl nav-logo-text transition-colors duration-300 tracking-tight">SUITE MANAGER</span>
-      <span class="nav-logo-llc text-[0.65rem] font-sans font-light tracking-widest uppercase transition-colors duration-300">LLC</span>
+    <!-- Logo -->
+    <a href="/" class="flex items-center group">
+      <img src="/logo.png" alt="Suite Manager LLC" class="nav-logo-img h-10 w-auto transition-opacity duration-300" />
     </a>
 
     <!-- Desktop Links -->
@@ -66,15 +65,13 @@ const links = [
 </nav>
 
 <style>
-  /* Default: transparent nav for hero pages */
+  /* Default: transparent nav for dark hero pages */
   #main-nav {
     background: transparent;
   }
-  #main-nav .nav-logo-text {
-    color: white;
-  }
-  #main-nav .nav-logo-llc {
-    color: rgba(255, 255, 255, 0.5);
+  /* Logo: invert to white on dark hero */
+  #main-nav .nav-logo-img {
+    filter: brightness(0) invert(1);
   }
   #main-nav .nav-link {
     color: rgba(255, 255, 255, 0.8);
@@ -87,17 +84,15 @@ const links = [
     color: white;
   }
 
-  /* Scrolled state: solid background */
+  /* Scrolled state: solid white background */
   #main-nav.scrolled {
     background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(8px);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
-  #main-nav.scrolled .nav-logo-text {
-    color: #1A1A2E;
-  }
-  #main-nav.scrolled .nav-logo-llc {
-    color: #6B6B7B;
+  /* Logo: show natural color on white nav */
+  #main-nav.scrolled .nav-logo-img {
+    filter: none;
   }
   #main-nav.scrolled .nav-link {
     color: #6B6B7B;
@@ -110,15 +105,9 @@ const links = [
     color: #1A1A2E;
   }
 
-  /* Light nav variant (for pages with cream hero) */
-  :global(.nav-light) #main-nav {
-    background: transparent;
-  }
-  :global(.nav-light) #main-nav .nav-logo-text {
-    color: #1A1A2E;
-  }
-  :global(.nav-light) #main-nav .nav-logo-llc {
-    color: #6B6B7B;
+  /* Light nav variant (for pages with cream/light hero) */
+  :global(.nav-light) #main-nav .nav-logo-img {
+    filter: none;
   }
   :global(.nav-light) #main-nav .nav-link {
     color: #6B6B7B;
