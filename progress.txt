@@ -1,47 +1,53 @@
-## Session - Feb 26, 2026 (Project Kickoff)
+## Session - 2026-02-26
 
 **Completed:**
-- Created site-suitemanagerllc/ folder
-- Wrote PRD.md with full site architecture, wireframes, page list
-- Launched research agent to analyze competitor hotel management sites
+- Built full 4-page Astro + Tailwind site for Suite Manager LLC
+- Competitor research: 7 hotel management company sites analyzed
+- Design direction: DM Serif Display + Inter, navy (#1A1A2E) + gold (#B8955A) + cream (#F8F6F1)
+- Pages: Home, Services, About, Contact
+- Components: Nav (transparent→solid scroll), Footer, HeroCTA
+- Hero: video background (hero.mp4, extended stay property, daytime), centered layout
+- Logo.png placed above hero headline (h-40 mobile / h-56 desktop, inverted white)
+- Trust bar: 4 icon cards (building, shield, home, chart icons)
+- Copy: benefits-focused, no litotes, company voice (not personal)
+- Created GitHub repo: github.com/realjbmangum/site-suitemanagerllc
+- Deployed to Cloudflare Pages, connected suitemanagerllc.com
 
-**Project Overview:**
-- Client: Chris (friend)
-- Domain: suitemanagerllc.com (owned by Brian on Cloudflare)
-- Stack: Astro + Tailwind + Cloudflare Pages
-- Vibe: Modern & approachable, warm neutrals, boutique feel
+**Key Fix:**
+- global.css was never imported in BaseLayout.astro — nothing was styled until this was caught
+- btn-primary/btn-ghost rewritten as vanilla CSS (no @apply) to guarantee rendering
+
+**Files:**
+- src/layouts/BaseLayout.astro — imports global.css (critical fix)
+- src/styles/global.css — all button styles, animations, utilities
+- src/pages/index.astro — hero with logo + video bg, trust bar, services, how-we-work, CTA
+- src/pages/services.astro — 6 service sections alternating layout
+- src/pages/about.astro — principles, story, values
+- src/pages/contact.astro — 3 contact options + Web3Forms form
+- src/components/Nav.astro — text wordmark, transparent→solid, gold progress bar
+- src/components/Footer.astro — logo image (inverted white), nav links, contact
+- src/components/HeroCTA.astro — reusable dark CTA section
+- public/logo.png — logo image
+- public/hero.mp4 — hero background video
+
+**Placeholders Chris Still Needs to Fill:**
+- [ ] Real phone number (currently (555) 000-0000)
+- [ ] Real email (currently hello@suitemanagerllc.com)
+- [ ] Web3Forms access key (contact form won't submit without it)
+- [ ] Calendly link for "Schedule a Call" button on contact page
+- [ ] Real bio/background for About page Our Story section
+- [ ] City, State for footer location blurb
+- [ ] Headshot photo (placeholder shows "CM" initials)
 
 **Decisions:**
-- Full operations management positioning (not consulting, not short-term rentals)
-- Target: hotel owners/investors who want to step back from day-to-day
-- Start from scratch — no existing branding
-- MVP: 4 pages (Home, Services, About, Contact)
-
-**Open Questions (need Chris):**
-- [ ] His background / years of experience
-- [ ] How many properties managed
-- [ ] Phone number and email
-- [ ] Any certifications
-- [ ] Any photos
-
-**Build Complete (Feb 26, 2026):**
-- Research: 7 competitors analyzed (Pyramid, Remington, CoralTree, SPIRE, Concord, Prospera, Aimbridge)
-- Built: 4 pages (Home, Services, About, Contact) + 3 components (Nav, Footer, HeroCTA)
-- Design: DM Serif Display + Inter, cream/navy/gold palette, boutique luxury aesthetic
-- npm run build passes cleanly, 0 errors
-
-**Placeholder Content Chris Needs:**
-- [ ] Phone number (currently 555-000-0000)
-- [ ] Email confirmation (hello@suitemanagerllc.com)
-- [ ] His bio / background for About page
-- [ ] Headshot photo
-- [ ] Web3Forms access key (free at web3forms.com)
-- [ ] Calendly link for "Book a Call"
-- [ ] City/State for Contact page
-- [ ] Years of experience / property count for trust bar stats
+- Nav uses CSS filter (brightness invert) to flip logo white on dark hero — no separate white logo needed
+- btn-primary = gold bg (#B8955A) + white text — rendered as vanilla CSS not @apply
+- Hero content padding zeroed out — section min-h-[90vh] handles vertical centering
+- No body padding-top — hero sections use internal padding to clear fixed nav
 
 **Next Steps:**
-- [ ] Preview site locally (npm run dev in site-suitemanagerllc/)
-- [ ] Deploy to Cloudflare Pages
-- [ ] Connect suitemanagerllc.com custom domain
-- [ ] Chris fills in placeholder content
+- [ ] Chris to fill in all placeholder content above
+- [ ] Set up Web3Forms account and add access key
+- [ ] Add Calendly link
+- [ ] Consider adding a testimonials section once Chris has client quotes
+- [ ] Google Analytics / Cloudflare Analytics setup
