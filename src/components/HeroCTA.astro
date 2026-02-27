@@ -1,0 +1,33 @@
+---
+interface Props {
+  headline: string;
+  subheadline?: string;
+  buttonText?: string;
+  buttonHref?: string;
+}
+
+const {
+  headline,
+  subheadline,
+  buttonText = 'Schedule a Discovery Call',
+  buttonHref = '/contact',
+} = Astro.props;
+---
+
+<section class="relative section-dark grain-overlay overflow-hidden">
+  <!-- Subtle gradient background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-navy via-[#1a1a35] to-navy"></div>
+
+  <div class="relative z-10 max-w-4xl mx-auto px-4 md:px-8 py-20 md:py-28 text-center">
+    <h2 class="font-serif text-3xl md:text-5xl text-white reveal">{headline}</h2>
+    {subheadline && (
+      <p class="mt-6 text-lg text-white/70 max-w-2xl mx-auto reveal reveal-delay-1">{subheadline}</p>
+    )}
+    <div class="mt-10 reveal reveal-delay-2">
+      <a href={buttonHref} class="btn-primary text-lg !px-10 !py-4">
+        {buttonText}
+        <span class="btn-arrow-icon ml-2">&rarr;</span>
+      </a>
+    </div>
+  </div>
+</section>

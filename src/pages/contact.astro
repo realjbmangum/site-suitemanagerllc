@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Contact — Suite Manager LLC" description="Get in touch with Suite Manager LLC. Book a discovery call, send a message, or call us directly.">
+  <Nav />
+
+  <!-- HERO -->
+  <section class="relative section-dark grain-overlay overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-navy via-[#1a1a35] to-navy"></div>
+    <div class="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-32 pb-20 md:pt-40 md:pb-28 text-center">
+      <p class="text-gold text-xs md:text-sm font-sans font-semibold uppercase tracking-[0.25em] mb-5">Get in Touch</p>
+      <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[0.95] tracking-tight">A Straightforward Conversation<br /><span class="text-gold">About Your Property.</span></h1>
+      <p class="mt-8 text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+        Tell us about your property and what you're dealing with. We'll listen, ask good questions, and tell you honestly if we can help.
+      </p>
+    </div>
+  </section>
+
+  <!-- CONTACT OPTIONS -->
+  <section class="bg-cream">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-16 md:py-20">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 reveal">
+        <!-- Book a Call -->
+        <div class="p-8 bg-white rounded-xl border border-border text-center hover:-translate-y-1 hover:shadow-xl hover:border-gold/30 hover:shadow-gold/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center mx-auto mb-5">
+            <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </div>
+          <h3 class="font-serif text-xl text-navy mb-2">Pick a Time That Works</h3>
+          <p class="text-muted text-sm mb-5">A genuine 30-minute conversation. We'll ask about your property, listen to what's working and what's not, and tell you honestly whether Suite Manager is the right fit.</p>
+          <!-- PLACEHOLDER: Replace with actual Calendly link -->
+          <a href="#" class="btn-primary text-sm !px-6 !py-2.5">Schedule a Call</a>
+        </div>
+
+        <!-- Send a Message -->
+        <div class="p-8 bg-white rounded-xl border border-border text-center hover:-translate-y-1 hover:shadow-xl hover:border-gold/30 hover:shadow-gold/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center mx-auto mb-5">
+            <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </div>
+          <h3 class="font-serif text-xl text-navy mb-2">Drop Us a Line</h3>
+          <p class="text-muted text-sm mb-5">Prefer email? Tell us a little about your property and what's on your mind. We'll get back to you within one business day.</p>
+          <a href="#contact-form" class="btn-secondary text-sm !px-6 !py-2.5">Jump to Form</a>
+        </div>
+
+        <!-- Call Direct -->
+        <div class="p-8 bg-white rounded-xl border border-border text-center hover:-translate-y-1 hover:shadow-xl hover:border-gold/30 hover:shadow-gold/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center mx-auto mb-5">
+            <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+          </div>
+          <h3 class="font-serif text-xl text-navy mb-2">Speak With Our Team</h3>
+          <p class="text-muted text-sm mb-5">Prefer talking to texting? Our team is available during business hours.</p>
+          <!-- PLACEHOLDER: Replace with real phone number -->
+          <a href="tel:+15550000000" class="btn-primary text-sm !px-6 !py-2.5">(555) 000-0000</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT FORM -->
+  <section id="contact-form" class="bg-white">
+    <div class="max-w-2xl mx-auto px-4 md:px-8 py-16 md:py-24">
+      <div class="text-center mb-12 reveal">
+        <h2 class="font-serif text-3xl md:text-4xl text-navy">Tell Us About Your Property</h2>
+        <p class="mt-4 text-muted">The more you share, the better our first conversation will be. But even a few sentences is plenty.</p>
+      </div>
+
+      <form
+        action="https://api.web3forms.com/submit"
+        method="POST"
+        class="space-y-6 reveal reveal-delay-1"
+      >
+        <!-- PLACEHOLDER: Replace with your Web3Forms access key -->
+        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE" />
+        <input type="hidden" name="subject" value="New inquiry from suitemanagerllc.com" />
+        <input type="hidden" name="from_name" value="Suite Manager Website" />
+
+        <!-- Honeypot spam prevention -->
+        <input type="checkbox" name="botcheck" class="hidden" style="display:none" />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="name" class="block text-sm font-medium text-navy mb-2">Your Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors"
+              placeholder="First and last name"
+            />
+          </div>
+          <div>
+            <label for="email" class="block text-sm font-medium text-navy mb-2">Best Email *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors"
+              placeholder="Where should we reply?"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="phone" class="block text-sm font-medium text-navy mb-2">Phone (optional)</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors"
+              placeholder="In case you'd rather talk"
+            />
+          </div>
+          <div>
+            <label for="property" class="block text-sm font-medium text-navy mb-2">Your Property</label>
+            <input
+              type="text"
+              id="property"
+              name="property_name"
+              class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors"
+              placeholder="Hotel name or location"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="rooms" class="block text-sm font-medium text-navy mb-2">How Many Rooms?</label>
+          <input
+            type="text"
+            id="rooms"
+            name="number_of_rooms"
+            class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors"
+            placeholder="Approximate is fine"
+          />
+        </div>
+
+        <div>
+          <label for="message" class="block text-sm font-medium text-navy mb-2">What's Going On? *</label>
+          <textarea
+            id="message"
+            name="message"
+            required
+            rows="5"
+            class="w-full px-4 py-3 bg-cream border border-border rounded-lg text-navy placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-colors resize-vertical"
+            placeholder="What's working, what's not, what you need help with..."
+          ></textarea>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="btn-primary w-full text-lg !py-4">
+            Send It Over
+            <span class="btn-arrow-icon ml-2">&rarr;</span>
+          </button>
+        </div>
+
+        <p class="text-center text-muted text-sm">
+          Your information stays between us. We'll respond within one business day.
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <!-- LOCATION BLURB -->
+  <section class="bg-cream border-t border-border">
+    <div class="max-w-3xl mx-auto px-4 md:px-8 py-14 md:py-20 text-center">
+      <div class="w-8 h-px bg-gold mx-auto mb-8"></div>
+      <p class="text-muted text-lg leading-relaxed">
+        <!-- PLACEHOLDER: Replace with actual city/state -->
+        Serving hotel owners nationwide from <span class="text-navy font-medium">[City, State]</span>. We travel to your property — wherever it is.
+      </p>
+      <p class="mt-4 text-muted/70 text-sm">Response time: within one business day.</p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>

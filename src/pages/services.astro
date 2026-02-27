@@ -1,0 +1,175 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import HeroCTA from '../components/HeroCTA.astro';
+
+const services = [
+  {
+    id: 'operations',
+    name: 'Operations Management',
+    headline: 'Your hotel runs like clockwork — even when you\'re not watching.',
+    description: 'We handle the daily rhythm of your hotel so nothing falls through the cracks.',
+    bullets: [
+      'We oversee daily operations top to bottom — housekeeping, front desk, maintenance, and everything in between',
+      'Vendor relationships managed and renegotiated to protect your margins',
+      'Preventive maintenance programs that catch problems before they become emergencies (and invoices)',
+      'SOPs tailored to your property, your brand, and your standards — built specifically for how you operate',
+    ],
+    icon: 'building',
+  },
+  {
+    id: 'revenue',
+    name: 'Revenue & Pricing Strategy',
+    headline: 'Every empty room is money you don\'t get back.',
+    description: 'Data-driven pricing strategies that optimize occupancy and revenue.',
+    bullets: [
+      'Dynamic pricing adjusted daily based on local demand, seasonality, and competitor rates',
+      'OTA channel management with rate parity so you\'re never undercutting yourself',
+      'RevPAR tracking and revenue forecasting you can actually understand and act on',
+      'Market positioning analysis that tells you where you stand — and how to move up',
+    ],
+    icon: 'chart',
+  },
+  {
+    id: 'guest-experience',
+    name: 'Guest Experience',
+    headline: 'Five-star reviews don\'t happen by accident.',
+    description: 'Creating memorable stays that drive reviews, repeat bookings, and referrals.',
+    bullets: [
+      'Every online review gets a thoughtful, timely response — good or bad',
+      'Service standards defined, trained, and reinforced with your team',
+      'Guest feedback loops that turn complaints into improvements before they become patterns',
+      'Loyalty and repeat-guest programs that keep your best customers coming back',
+    ],
+    icon: 'star',
+  },
+  {
+    id: 'staff',
+    name: 'Staffing & Team Building',
+    headline: 'Great hotels are built by great teams. We build them.',
+    description: 'Recruiting, developing, and retaining hospitality talent that delivers.',
+    bullets: [
+      'We recruit, screen, and hire people who are genuinely invested in hospitality — people who care about the guest experience',
+      'Training programs designed around your property\'s standards and brand identity',
+      'Scheduling optimization that controls labor costs without burning out your staff',
+      'Retention programs that reduce turnover and save you the hidden cost of constantly re-hiring',
+    ],
+    icon: 'people',
+  },
+  {
+    id: 'distribution',
+    name: 'Channel & Distribution',
+    headline: 'Show up where travelers are looking — at the right price.',
+    description: 'Strategic channel management across every major booking platform.',
+    bullets: [
+      'Listing optimization across Expedia, Booking.com, and 20+ booking platforms',
+      'Direct booking strategy that reduces your dependency on commissions',
+      'Rate parity monitoring so your channels aren\'t competing against each other',
+      'Compelling property descriptions and photography management that convert lookers into bookers',
+    ],
+    icon: 'globe',
+  },
+  {
+    id: 'reporting',
+    name: 'Owner Reporting & Transparency',
+    headline: 'You\'ll always know exactly how your hotel is doing.',
+    description: 'Clear, consistent reporting so you always know how your property is performing.',
+    bullets: [
+      'Monthly P&L statements delivered on time, with full context in plain language',
+      'KPI dashboards tracking occupancy, ADR, RevPAR, and guest satisfaction',
+      'Regular ownership calls where we walk through performance and discuss what\'s next',
+      'Full financial transparency — you see what we see, complete clarity',
+    ],
+    icon: 'report',
+  },
+];
+---
+
+<BaseLayout title="Services — Suite Manager LLC" description="Full-service hotel management: operations, revenue, guest experience, staffing, OTA distribution, and owner reporting.">
+  <Nav />
+
+  <!-- HERO -->
+  <section class="relative section-dark grain-overlay overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-navy via-[#1a1a35] to-navy"></div>
+    <div class="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-32 pb-20 md:pt-40 md:pb-28 text-center">
+      <p class="text-gold text-xs md:text-sm font-sans font-semibold uppercase tracking-[0.25em] mb-5">Full-Service Management</p>
+      <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[0.95] tracking-tight">Full-Service<br />Hotel Management</h1>
+      <p class="mt-8 text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+        From the front desk to the P&L — we handle every moving piece so your hotel runs profitably and your guests keep coming back.
+      </p>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="bg-cream dot-grid">
+    <div class="max-w-3xl mx-auto px-4 md:px-8 py-20 md:py-28 text-center">
+      <p class="text-muted text-lg leading-relaxed reveal">
+        Most hotel management companies give you a playbook and a quarterly report. We give you a partner.
+      </p>
+      <p class="text-muted text-lg leading-relaxed mt-5 reveal reveal-delay-1">
+        Suite Manager LLC manages independent and boutique hotels with the depth and infrastructure of a large
+        company — with direct accountability, fast decisions, and the personal attention your property deserves.
+        We're hands-on, accessible, and accountable to you.
+      </p>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  {services.map((service, i) => (
+    <section id={service.id} class:list={[i % 2 === 0 ? 'bg-white' : 'bg-cream']}>
+      <div class="max-w-5xl mx-auto px-4 md:px-8 py-16 md:py-24">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-10 md:gap-16 items-start">
+          <!-- Icon + Title: on odd rows, push to col 4-5 via ordering -->
+          <div class:list={['md:col-span-2 reveal', i % 2 === 1 ? 'md:order-last' : '']}>
+            <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center mb-5 group-hover:bg-gold transition-colors duration-300">
+              {service.icon === 'building' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+              )}
+              {service.icon === 'chart' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              )}
+              {service.icon === 'star' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+              )}
+              {service.icon === 'people' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              )}
+              {service.icon === 'globe' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+              )}
+              {service.icon === 'report' && (
+                <svg class="w-7 h-7 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              )}
+            </div>
+            <h2 class="font-serif text-2xl md:text-3xl lg:text-4xl text-navy">{service.name}</h2>
+            <p class="mt-3 text-muted leading-relaxed">{service.description}</p>
+          </div>
+
+          <!-- Details -->
+          <div class:list={['md:col-span-3 reveal reveal-delay-1', i % 2 === 1 ? 'md:order-first' : '']}>
+            <h3 class="font-serif text-xl md:text-2xl text-navy mb-6">{service.headline}</h3>
+            <ul class="space-y-4">
+              {service.bullets.map(bullet => (
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-gold mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                  <span class="text-muted leading-relaxed">{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <!-- CTA -->
+  <HeroCTA
+    headline="Every hotel is different. Tell us about yours."
+    subheadline="We'll listen to what's working, what's not, and where the opportunity is. Straightforward and pressure-free."
+    buttonText="Schedule a Discovery Call"
+    buttonHref="/contact"
+  />
+
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,179 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import HeroCTA from '../components/HeroCTA.astro';
+
+const principles = [
+  {
+    name: 'Open Books',
+    description: 'You see everything we see. Every dollar, every report, every decision. We communicate in plain language and surface issues proactively. If something needs attention, you\'ll hear it from us first.',
+  },
+  {
+    name: 'Skin in the Game',
+    description: 'We set clear performance benchmarks and hold ourselves to them. If occupancy drops, if reviews slip, if revenue misses the target — that\'s on us to fix, and we fix it fast.',
+  },
+  {
+    name: 'Long-Haul Partnership',
+    description: 'We\'re here to build a relationship. Your goals become our goals, and we\'re here for as long as it takes to reach them.',
+  },
+];
+
+const values = [
+  {
+    name: 'Owner-First',
+    description: 'Every decision we make starts with one question: is this good for the owner? Not the management fee. Not the convenience. The owner.',
+    icon: 'shield',
+  },
+  {
+    name: 'Hands-On',
+    description: 'We\'re on the ground, walking your property, talking to your staff, checking your rooms. Present, involved, and accountable.',
+    icon: 'hand',
+  },
+  {
+    name: 'Results Over Reports',
+    description: 'We measure success in occupancy, revenue, and guest satisfaction — the metrics that actually grow your business.',
+    icon: 'target',
+  },
+  {
+    name: 'Lean by Design',
+    description: 'Streamlined operations, efficient structure. Lower costs for us means better returns for you.',
+    icon: 'bolt',
+  },
+];
+---
+
+<BaseLayout title="About — Suite Manager LLC" description="Meet the team behind Suite Manager LLC. Built on hospitality, driven by results.">
+  <Nav />
+  <script>document.body.classList.add('nav-light');</script>
+
+  <!-- HERO (warm cream bg — approachable) -->
+  <section class="bg-cream dot-grid">
+    <div class="max-w-4xl mx-auto px-4 md:px-8 pt-36 pb-20 md:pt-48 md:pb-28 text-center">
+      <p class="text-gold text-xs md:text-sm font-sans font-semibold uppercase tracking-[0.25em] mb-6">About Suite Manager LLC</p>
+      <h1 class="font-serif text-5xl md:text-7xl text-navy leading-[0.95] tracking-tight">
+        This Is Personal.
+      </h1>
+      <p class="mt-8 text-lg md:text-xl text-muted max-w-2xl mx-auto leading-relaxed">
+        Suite Manager LLC exists because hotel owners deserve a management partner who picks up the phone,
+        knows their property by name, and cares about the outcome as much as they do.
+      </p>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section class="bg-white">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div class="text-center mb-14 reveal">
+        <h2 class="font-serif text-3xl md:text-5xl text-navy">
+          <span class="heading-accent heading-accent-center">We run your hotel like it's ours.</span>
+        </h2>
+        <p class="mt-8 text-muted text-lg">Three commitments that guide everything we do.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {principles.map((p, i) => (
+          <div class:list={[
+            'p-8 bg-cream rounded-xl border-l-4 border-gold reveal',
+            'hover:-translate-y-1 transition-transform duration-300',
+            `reveal-delay-${i + 1}`
+          ]}>
+            <h3 class="font-serif text-2xl text-navy mb-3">{p.name}</h3>
+            <p class="text-muted leading-relaxed">{p.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- OUR STORY -->
+  <section class="bg-cream">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-12 md:gap-16 items-center">
+        <!-- Photo placeholder -->
+        <div class="md:col-span-2 reveal">
+          <div class="aspect-[3/4] bg-gradient-to-br from-navy to-[#2a2a45] rounded-2xl flex items-center justify-center">
+            <div class="text-center">
+              <span class="font-serif text-7xl text-gold">SM</span>
+              <p class="mt-4 text-white/40 text-sm">Photo coming soon</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="md:col-span-3 reveal reveal-delay-1">
+          <p class="text-gold font-semibold text-sm uppercase tracking-wider mb-3">How We Got Here</p>
+          <h2 class="font-serif text-3xl md:text-4xl text-navy mb-6">Our Story</h2>
+          <div class="space-y-5 text-muted text-lg leading-relaxed">
+            <p>
+              Suite Manager LLC was born from years spent inside hotel operations — dealing with the same
+              problems hotel owners deal with every day. Our founding team saw the gap firsthand and knew
+              there was a better way.
+            </p>
+            <p>
+              We'd seen how the big management companies worked from the inside: the slow decision-making,
+              the layers of people between the owner and the person actually running their hotel, the quarterly
+              reports full of jargon and light on answers.
+            </p>
+            <p>
+              We'd also seen what happens when a hotel gets the right attention from the right operator.
+              Occupancy climbs. Reviews improve. Staff turnover drops. The owner actually gets to enjoy
+              what they built.
+            </p>
+            <p>
+              Suite Manager is the company we wished existed when we were on the other side of the table.
+              When you work with us, you work with our leadership team directly.
+            </p>
+            <p class="text-xs text-muted/50 italic">* Please replace with your specific background, properties, and turning points.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section class="bg-white">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div class="text-center mb-14 reveal">
+        <h2 class="font-serif text-3xl md:text-5xl text-navy">
+          <span class="heading-accent heading-accent-center">What We Believe</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        {values.map((v, i) => (
+          <div class:list={['flex items-start gap-5 reveal', `reveal-delay-${i + 1}`]}>
+            <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center flex-shrink-0">
+              {v.icon === 'shield' && (
+                <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              )}
+              {v.icon === 'hand' && (
+                <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" /></svg>
+              )}
+              {v.icon === 'target' && (
+                <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              )}
+              {v.icon === 'bolt' && (
+                <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              )}
+            </div>
+            <div>
+              <h3 class="font-serif text-xl text-navy mb-1">{v.name}</h3>
+              <p class="text-muted leading-relaxed">{v.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <HeroCTA
+    headline="Ready to work with someone who actually answers the phone?"
+    subheadline="Let's talk about your property. Direct access to our leadership. A real conversation."
+    buttonText="Get in Touch"
+    buttonHref="/contact"
+  />
+
+  <Footer />
+</BaseLayout>

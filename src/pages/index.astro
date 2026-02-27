@@ -1,0 +1,293 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import HeroCTA from '../components/HeroCTA.astro';
+
+const services = [
+  {
+    name: 'Daily Operations',
+    description: 'Your property runs smoothly whether you\'re on-site or on a beach.',
+    icon: 'building',
+  },
+  {
+    name: 'Revenue & Pricing Strategy',
+    description: 'More heads in beds at better rates — backed by data, adjusted daily.',
+    icon: 'chart',
+  },
+  {
+    name: 'Guest Experience',
+    description: 'Happy guests leave five-star reviews. Five-star reviews fill rooms.',
+    icon: 'star',
+  },
+  {
+    name: 'Staffing & Team Building',
+    description: 'A team your guests remember for the right reasons — recruited, trained, and retained by us.',
+    icon: 'people',
+  },
+  {
+    name: 'Channel & Distribution',
+    description: 'Your hotel shows up where travelers are looking, at the right price, every time.',
+    icon: 'globe',
+  },
+  {
+    name: 'Owner Reporting & Transparency',
+    description: 'Monthly P&Ls, KPI dashboards, and a standing call so you always know where you stand.',
+    icon: 'report',
+  },
+];
+
+const steps = [
+  { number: '01', title: 'A Real Conversation', description: 'A 30-minute call where we learn about your property, your goals, and your frustrations. We\'ll tell you honestly if we\'re a fit.' },
+  { number: '02', title: 'We Walk Your Property', description: 'We come to you. We meet your staff, review your numbers, and identify exactly where the gaps are — and where the upside is.' },
+  { number: '03', title: 'A Smooth Handoff', description: 'We take over operations with a detailed transition plan. Your guests won\'t notice the change. Your staff will welcome it.' },
+  { number: '04', title: 'Results You Can See', description: 'Monthly reporting, regular check-ins, and continuous improvement. You\'ll know exactly how your property is performing — and why.' },
+];
+---
+
+<BaseLayout title="Suite Manager LLC — Stop Running Your Hotel. Start Owning It.">
+  <Nav />
+
+  <!-- HERO -->
+  <section class="relative min-h-[90vh] flex items-center overflow-hidden">
+    <!-- Background video -->
+    <div class="absolute inset-0">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        class="w-full h-full object-cover"
+      >
+        <source src="/hero.mp4" type="video/mp4" />
+      </video>
+      <div class="absolute inset-0 bg-navy/70"></div>
+    </div>
+    <!-- Grain -->
+    <div class="absolute inset-0 grain-overlay"></div>
+
+    <div class="relative z-10 max-w-5xl mx-auto px-4 md:px-8 py-32">
+      <!-- Overline label -->
+      <p class="hero-stagger hero-stagger-1 text-gold text-xs md:text-sm font-sans font-semibold uppercase tracking-[0.25em] mb-6">
+        Hotel Operations Management
+      </p>
+
+      <h1 class="hero-stagger hero-stagger-2 font-serif text-5xl md:text-7xl lg:text-[7rem] text-white leading-[0.95] tracking-tight">
+        Stop Running<br />Your Hotel.<br /><span class="text-gold">Start Owning It.</span>
+      </h1>
+
+      <p class="hero-stagger hero-stagger-3 mt-8 text-lg md:text-xl text-white/75 max-w-xl leading-relaxed">
+        Suite Manager LLC takes over day-to-day operations so you get your time, your weekends, and your revenue back.
+      </p>
+
+      <div class="hero-stagger hero-stagger-4 mt-10 flex flex-col sm:flex-row items-start gap-4">
+        <a href="/contact" class="btn-primary text-lg !px-10 !py-4">
+          Let's Talk
+          <span class="btn-arrow-icon ml-2">&rarr;</span>
+        </a>
+        <a href="#how-we-work" class="btn-ghost">
+          See how it works
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <section class="bg-white border-b border-border">
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-12">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <!-- Card 1 -->
+        <div class="flex flex-col items-center text-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+          </div>
+          <p class="font-serif text-sm text-navy leading-snug">Every Department,<br/>One Team</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="flex flex-col items-center text-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+          </div>
+          <p class="font-serif text-sm text-navy leading-snug">Owner-First<br/>Approach</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="flex flex-col items-center text-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+          </div>
+          <p class="font-serif text-sm text-navy leading-snug">Built for<br/>Independent Hotels</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="flex flex-col items-center text-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
+          <p class="font-serif text-sm text-navy leading-snug">Full Financial<br/>Transparency</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM SECTION -->
+  <section class="bg-cream dot-grid">
+    <div class="max-w-3xl mx-auto px-4 md:px-8 py-20 md:py-28 problem-glow">
+      <h2 class="font-serif text-3xl md:text-5xl text-navy text-center reveal">
+        <span class="heading-accent heading-accent-center">You didn't buy a hotel to answer the front desk phone at midnight.</span>
+      </h2>
+      <div class="relative z-10 mt-10 space-y-5 text-muted text-lg leading-relaxed reveal reveal-delay-1">
+        <p>
+          You bought a property to build wealth, create something lasting, maybe even pass it down.
+          But somewhere along the way, "hotel owner" turned into "hotel operator" — and now you're deep in it.
+        </p>
+        <ul class="space-y-3 mt-2">
+          <li class="flex items-start gap-3"><span class="text-gold mt-1 flex-shrink-0">—</span><span><strong class="text-navy">The phone never stops.</strong> Staff problems, guest complaints, maintenance emergencies — all funneled to you, all the time.</span></li>
+          <li class="flex items-start gap-3"><span class="text-gold mt-1 flex-shrink-0">—</span><span><strong class="text-navy">Your OTA channels are a mess.</strong> Pricing is reactive, listings are stale, and you're leaving revenue on the table every night rooms sit empty.</span></li>
+          <li class="flex items-start gap-3"><span class="text-gold mt-1 flex-shrink-0">—</span><span><strong class="text-navy">You can't take a vacation.</strong> Because the last time you did, you spent half of it checking your phone.</span></li>
+          <li class="flex items-start gap-3"><span class="text-gold mt-1 flex-shrink-0">—</span><span><strong class="text-navy">The reviews are slipping.</strong> And every bad one feels personal — because you're doing everything yourself.</span></li>
+        </ul>
+        <p class="text-navy font-medium text-xl pt-4">
+          You didn't sign up for this. That's where Suite Manager comes in.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES OVERVIEW — Asymmetric layout -->
+  <section class="bg-white dot-grid">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div class="text-center mb-14 reveal">
+        <h2 class="font-serif text-3xl md:text-5xl text-navy">
+          <span class="heading-accent heading-accent-center">What We Manage</span>
+        </h2>
+        <p class="mt-6 text-muted text-lg max-w-2xl mx-auto">
+          Everything between check-in and checkout — and everything behind the scenes that makes it work.
+        </p>
+      </div>
+
+      <!-- Clean 3-col grid: 6 cards, left-to-right, no reordering -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {services.map((service, i) => (
+          <div
+            class:list={[
+              'service-card group p-8 rounded-xl border border-border bg-cream/50 hover:bg-white hover:shadow-lg hover:border-gold/30 transition-all duration-300 reveal',
+              `reveal-delay-${Math.min(i + 1, 5)}`,
+              i % 2 !== 0 ? 'service-card-accent' : '',
+            ]}
+          >
+            <div class="w-12 h-12 rounded-lg bg-navy flex items-center justify-center mb-5 group-hover:bg-gold transition-colors duration-300">
+              {service.icon === 'building' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+              )}
+              {service.icon === 'chart' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              )}
+              {service.icon === 'star' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+              )}
+              {service.icon === 'people' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              )}
+              {service.icon === 'globe' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+              )}
+              {service.icon === 'report' && (
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              )}
+            </div>
+            <h3 class="font-serif text-xl text-navy mb-2">{service.name}</h3>
+            <p class="text-muted text-sm leading-relaxed">{service.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="text-center mt-12 reveal">
+        <a href="/services" class="btn-secondary">
+          View All Services
+          <span class="btn-arrow-icon ml-2">&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW WE WORK — with diagonal dividers -->
+  <section id="how-we-work" class="relative overflow-hidden">
+    <!-- Diagonal top divider -->
+    <div class="absolute top-0 left-0 right-0 h-20 bg-white clip-diagonal-bottom z-10"></div>
+
+    <div class="relative section-dark grain-overlay">
+      <div class="absolute inset-0 bg-gradient-to-br from-navy via-[#1a1a35] to-[#16162a]"></div>
+      <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 py-28 md:py-36">
+        <div class="text-center mb-16 reveal">
+          <h2 class="font-serif text-3xl md:text-5xl text-white">
+            <span class="heading-accent heading-accent-center" style="--accent-color: #B8955A;">How We Work</span>
+          </h2>
+          <p class="mt-6 text-white/60 text-lg">From first conversation to first results — here's what to expect.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
+          {steps.map((step, i) => (
+            <div class:list={['text-center reveal', `reveal-delay-${i + 1}`]}>
+              <div class="font-serif text-5xl text-gold mb-4">{step.number}</div>
+              <h3 class="font-semibold text-lg text-white mb-2">{step.title}</h3>
+              <p class="text-white/60 text-sm leading-relaxed">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagonal bottom divider -->
+    <div class="absolute bottom-0 left-0 right-0 h-20 bg-cream clip-diagonal-top z-10"></div>
+  </section>
+
+  <!-- ABOUT TEASER — 40/60 split with overlapping headshot -->
+  <section class="bg-cream dot-grid">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-12 md:gap-16 items-center">
+        <!-- Text (3 cols = ~60%) -->
+        <div class="md:col-span-3 reveal">
+          <h2 class="font-serif text-3xl md:text-5xl text-navy">
+            <span class="heading-accent">We run your hotel<br />like it's ours.</span>
+          </h2>
+          <p class="mt-8 text-muted text-lg leading-relaxed">
+            Suite Manager LLC was built on a belief most management companies have forgotten: your hotel
+            is a real investment, your livelihood, maybe your legacy — and it deserves to be treated that way.
+          </p>
+          <p class="mt-4 text-muted text-lg leading-relaxed">
+            When you call Suite Manager, you reach our leadership team directly.
+            Real people who know your property, your staff, and your numbers.
+          </p>
+          <a href="/about" class="inline-flex items-center mt-8 text-gold font-semibold hover:text-gold-dark transition-colors duration-200">
+            Our Story
+            <span class="btn-arrow-icon ml-2">&rarr;</span>
+          </a>
+        </div>
+
+        <!-- Headshot placeholder (2 cols = ~40%) with overlap effect -->
+        <div class="md:col-span-2 reveal reveal-delay-2">
+          <div class="relative md:-mr-8 lg:-mr-12">
+            <div class="aspect-[3/4] bg-gradient-to-br from-navy to-[#2a2a45] rounded-2xl flex items-center justify-center shadow-2xl">
+              <div class="text-center">
+                <span class="font-serif text-6xl text-gold">CM</span>
+                <p class="mt-3 text-white/40 text-sm">Photo coming soon</p>
+              </div>
+            </div>
+            <!-- Subtle gold frame accent -->
+            <div class="absolute -bottom-3 -right-3 w-full h-full border-2 border-gold/20 rounded-2xl -z-10"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <HeroCTA
+    headline="Your hotel has more potential than you think."
+    subheadline="Let's figure out what's possible — a straightforward, pressure-free conversation about your property."
+    buttonText="Schedule a Discovery Call"
+    buttonHref="/contact"
+  />
+
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream text-navy font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 2rem;
+    background-color: #B8955A;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    background-color: #8B6F3E;
+    color: #ffffff;
+    transform: translateY(-2px);
+  }
+  /* Shine sweep on hover */
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transition: left 0.5s ease;
+    pointer-events: none;
+  }
+  .btn-primary:hover::after {
+    left: 100%;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 2rem;
+    border: 2px solid #1A1A2E;
+    color: #1A1A2E;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none;
+  }
+  .btn-secondary:hover {
+    background-color: #1A1A2E;
+    color: #ffffff;
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 0.375rem;
+    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    text-decoration: none;
+  }
+  .btn-ghost:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.65);
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  .section-dark {
+    @apply bg-navy text-white;
+  }
+  .section-light {
+    @apply bg-cream;
+  }
+}
+
+/* Scroll reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* Hero staggered entrance */
+.hero-stagger {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: heroReveal 0.8s ease forwards;
+}
+.hero-stagger-1 { animation-delay: 0s; }
+.hero-stagger-2 { animation-delay: 0.15s; }
+.hero-stagger-3 { animation-delay: 0.3s; }
+.hero-stagger-4 { animation-delay: 0.45s; }
+
+@keyframes heroReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle grain texture for dark sections */
+.grain-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dot grid pattern for light sections */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(26,26,46,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Diagonal section divider - bottom clip */
+.clip-diagonal-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+/* Diagonal section divider - top clip */
+.clip-diagonal-top {
+  clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Service card gold border glow on hover (odd cards) */
+.service-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(184,149,90,0.2);
+}
+.service-card-accent {
+  border-left: 3px solid transparent;
+}
+.service-card-accent:hover {
+  border-left-color: #B8955A;
+}
+
+/* CTA arrow shift on hover */
+.btn-arrow-icon {
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+.btn-primary:hover .btn-arrow-icon,
+.btn-secondary:hover .btn-arrow-icon,
+a:hover > .btn-arrow-icon {
+  transform: translateX(4px);
+}
+
+/* Gold accent bar for section headings */
+.heading-accent {
+  position: relative;
+  display: inline-block;
+}
+.heading-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 48px;
+  height: 3px;
+  background: #B8955A;
+  border-radius: 2px;
+}
+.heading-accent-center::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Nav scroll progress indicator */
+.nav-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #B8955A;
+  width: 0%;
+  transition: width 0.05s linear;
+}
+
+/* Problem section radial glow */
+.problem-glow {
+  position: relative;
+}
+.problem-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(184,149,90,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Footer gold glow behind logo */
+.footer-logo-glow {
+  position: relative;
+}
+.footer-logo-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(184,149,90,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .hero-stagger {
+    opacity: 1;
+    transform: none;
+  }
+}
