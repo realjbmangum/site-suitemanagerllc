@@ -9,10 +9,11 @@ const links = [
 ---
 
 <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-  <div class="max-w-6xl mx-auto px-4 md:px-8 flex items-center justify-between h-28">
-    <!-- Logo -->
-    <a href="/" class="flex items-center group">
-      <img src="/logo.png" alt="Suite Manager LLC" class="nav-logo-img h-16 w-auto transition-opacity duration-300" />
+  <div class="max-w-6xl mx-auto px-4 md:px-8 flex items-center justify-between h-20">
+    <!-- Logo: text wordmark -->
+    <a href="/" class="flex items-baseline gap-1 group">
+      <span class="font-serif text-2xl nav-logo-text transition-colors duration-300 tracking-tight">SUITE MANAGER</span>
+      <span class="nav-logo-llc text-[0.65rem] font-sans font-light tracking-widest uppercase transition-colors duration-300">LLC</span>
     </a>
 
     <!-- Desktop Links -->
@@ -69,9 +70,11 @@ const links = [
   #main-nav {
     background: transparent;
   }
-  /* Logo: invert to white on dark hero */
-  #main-nav .nav-logo-img {
-    filter: brightness(0) invert(1);
+  #main-nav .nav-logo-text {
+    color: white;
+  }
+  #main-nav .nav-logo-llc {
+    color: rgba(255, 255, 255, 0.5);
   }
   #main-nav .nav-link {
     color: rgba(255, 255, 255, 0.8);
@@ -90,9 +93,11 @@ const links = [
     backdrop-filter: blur(8px);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
-  /* Logo: show natural color on white nav */
-  #main-nav.scrolled .nav-logo-img {
-    filter: none;
+  #main-nav.scrolled .nav-logo-text {
+    color: #1A1A2E;
+  }
+  #main-nav.scrolled .nav-logo-llc {
+    color: #6B6B7B;
   }
   #main-nav.scrolled .nav-link {
     color: #6B6B7B;
@@ -105,9 +110,15 @@ const links = [
     color: #1A1A2E;
   }
 
-  /* Light nav variant (for pages with cream/light hero) */
-  :global(.nav-light) #main-nav .nav-logo-img {
-    filter: none;
+  /* Light nav variant (for pages with cream hero) */
+  :global(.nav-light) #main-nav {
+    background: transparent;
+  }
+  :global(.nav-light) #main-nav .nav-logo-text {
+    color: #1A1A2E;
+  }
+  :global(.nav-light) #main-nav .nav-logo-llc {
+    color: #6B6B7B;
   }
   :global(.nav-light) #main-nav .nav-link {
     color: #6B6B7B;
