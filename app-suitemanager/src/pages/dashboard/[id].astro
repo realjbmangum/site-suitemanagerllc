@@ -1,0 +1,211 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const { id } = Astro.params;
+
+const doc = await env.DB
+  .prepare(
+    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.note,
+            d.size_bytes, d.mime_type, d.status, d.flagged, d.created_at, d.reviewed_at,
+            d.property_id, d.uploaded_by,
+            p.name AS property_name, u.name AS gm_name, u.email AS gm_email
+     FROM documents d
+     LEFT JOIN properties p ON p.id = d.property_id
+     LEFT JOIN users u ON u.id = d.uploaded_by
+     WHERE d.id = ?`
+  )
+  .bind(id)
+  .first<{
+    id: string; filename: string; category: string; vendor: string | null;
+    amount_cents: number | null; note: string | null;
+    size_bytes: number; mime_type: string;
+    status: string; flagged: number;
+    created_at: string; reviewed_at: string | null;
+    property_id: string; uploaded_by: string;
+    property_name: string | null; gm_name: string | null; gm_email: string | null;
+  }>();
+
+if (!doc) {
+  return Astro.redirect("/dashboard?error=Document+not+found");
+}
+
+// Audit timeline for this doc.
+const audit = await env.DB
+  .prepare(
+    `SELECT a.action, a.detail, a.created_at, u.name AS actor_name, u.role AS actor_role
+     FROM audit_events a
+     LEFT JOIN users u ON u.id = a.user_id
+     WHERE a.document_id = ?
+     ORDER BY a.created_at DESC`
+  )
+  .bind(id)
+  .all<{ action: string; detail: string | null; created_at: string; actor_name: string | null; actor_role: string | null }>();
+
+const fmtBytes = (b: number) => {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+const fmtMoney = (cents: number | null) =>
+  cents != null
+    ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "—";
+const fmtTime = (iso: string) => new Date(iso + "Z").toLocaleString();
+const fmtRel = (iso: string) => {
+  const d = new Date(iso + "Z");
+  const diff = (Date.now() - d.getTime()) / 60000;
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${Math.round(diff)} min ago`;
+  if (diff < 1440) return `${Math.round(diff / 60)} hr ago`;
+  return d.toLocaleDateString();
+};
+
+const pillClass =
+  doc.category === "invoice" ? "pill-invoice" :
+  doc.category === "statement" ? "pill-statement" : "pill-other";
+
+const previewable =
+  doc.mime_type === "application/pdf" ||
+  doc.mime_type === "image/png" ||
+  doc.mime_type === "image/jpeg";
+
+const isPdf = doc.mime_type === "application/pdf";
+const isImage = doc.mime_type.startsWith("image/");
+
+const previewUrl = `/api/documents/${doc.id}/download?inline=1`;
+const downloadUrl = `/api/documents/${doc.id}/download`;
+
+const actionLabel: Record<string, string> = {
+  upload: "Uploaded",
+  download: "Downloaded",
+  review: "Marked reviewed",
+  reopen: "Reopened",
+  archive: "Archived",
+  assign: "Assigned",
+};
+---
+
+<PortalLayout title={doc.filename} context="Strand Hospitality">
+  <a href="/dashboard" class="text-sm text-[var(--color-muted)] hover:text-[var(--color-navy)] mb-4 inline-flex items-center gap-1">
+    ← Back to dashboard
+  </a>
+
+  <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class={`pill ${pillClass} capitalize`}>{doc.category}</span>
+        {doc.status === "new" ? (
+          <span class="pill bg-[var(--color-brass-light)]/30 text-[var(--color-brass-dark)] border border-[var(--color-brass)]">New</span>
+        ) : doc.status === "reviewed" ? (
+          <span class="pill bg-green-100 text-green-800 border border-green-200">Reviewed</span>
+        ) : (
+          <span class="pill bg-[var(--color-hairline)] text-[var(--color-muted)]">{doc.status}</span>
+        )}
+        {doc.flagged === 1 && doc.status === "new" && (
+          <span class="pill bg-[var(--color-brass)] text-white">Pending review</span>
+        )}
+      </div>
+      <h1 class="text-2xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        {doc.property_name || "—"}
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Submitted by <strong class="text-[var(--color-navy)]">{doc.gm_name}</strong>
+        {doc.gm_email && <span class="text-[var(--color-muted)]"> · {doc.gm_email}</span>}
+        · {fmtRel(doc.created_at)}
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <a href={downloadUrl} class="btn-ghost text-sm">Download</a>
+      <form method="POST" action={`/api/documents/${doc.id}/review`} class="inline">
+        <input type="hidden" name="status" value={doc.status === "new" ? "reviewed" : "new"} />
+        <button type="submit" class={doc.status === "new" ? "btn-primary text-sm" : "btn-ghost text-sm"}>
+          {doc.status === "new" ? "Mark reviewed" : "Reopen"}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+    <!-- File preview -->
+    <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+        <h2 class="font-semibold text-[var(--color-navy)] truncate">{doc.filename}</h2>
+        <span class="text-xs text-[var(--color-muted)]">{fmtBytes(doc.size_bytes)} · {doc.mime_type}</span>
+      </header>
+      {isPdf && (
+        <iframe
+          src={previewUrl}
+          title={doc.filename}
+          style="width:100%;height:780px;border:0;display:block;background:#f5f4f1;"
+        ></iframe>
+      )}
+      {isImage && (
+        <div class="bg-[var(--color-cream)] p-6 flex items-center justify-center" style="min-height:400px;">
+          <img src={previewUrl} alt={doc.filename} style="max-width:100%;max-height:720px;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.08);" />
+        </div>
+      )}
+      {!previewable && (
+        <div class="px-6 py-16 text-center text-[var(--color-muted)]">
+          <p class="text-sm mb-2">No inline preview available for this file type.</p>
+          <a href={downloadUrl} class="btn-primary text-sm">Download to view</a>
+        </div>
+      )}
+    </section>
+
+    <!-- Metadata + note + audit -->
+    <aside class="space-y-4">
+      {doc.note && (
+        <section class="bg-[var(--color-brass-light)]/15 border border-[var(--color-brass)] rounded-xl p-5">
+          <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-brass-dark)] mb-2">
+            Note from {doc.gm_name?.split(" ")[0] || "GM"}
+          </h2>
+          <p class="text-sm text-[var(--color-navy)] leading-relaxed whitespace-pre-wrap">{doc.note}</p>
+        </section>
+      )}
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3 text-sm">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">Details</h2>
+        <dl class="space-y-2.5">
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Vendor</dt>
+            <dd class="text-[var(--color-navy)] font-medium">{doc.vendor || "—"}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Amount</dt>
+            <dd class="text-[var(--color-navy)] font-medium tabular-nums">{fmtMoney(doc.amount_cents)}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Received</dt>
+            <dd class="text-[var(--color-navy)]">{fmtTime(doc.created_at)}</dd>
+          </div>
+          {doc.reviewed_at && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Reviewed</dt>
+              <dd class="text-green-700 font-medium">{fmtTime(doc.reviewed_at)}</dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Activity</h2>
+        <ol class="space-y-3">
+          {audit.results.map((e) => (
+            <li class="text-sm">
+              <div class="flex items-baseline gap-2">
+                <span class="font-semibold text-[var(--color-navy)]">{actionLabel[e.action] || e.action}</span>
+                <span class="text-xs text-[var(--color-muted)]">· {fmtRel(e.created_at)}</span>
+              </div>
+              <div class="text-xs text-[var(--color-muted)]">
+                {e.actor_name || "—"} <span class="capitalize">({e.actor_role || "—"})</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </aside>
+  </div>
+</PortalLayout>

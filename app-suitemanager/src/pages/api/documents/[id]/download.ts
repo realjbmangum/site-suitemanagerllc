@@ -3,13 +3,18 @@ import { logAudit } from '../../../../lib/audit';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, request }) => {
   const env = locals.runtime.env;
   const user = locals.user;
   if (!user) return new Response('unauthorized', { status: 401 });
 
   const id = params.id;
   if (!id) return new Response('bad request', { status: 400 });
+
+  // `?inline=1` returns the file with inline disposition so browsers preview
+  // PDFs/images directly instead of forcing a download. Used by the detail page.
+  const url = new URL(request.url);
+  const inline = url.searchParams.get('inline') === '1';
 
   // Role scoping: GMs can only download their own property's docs.
   let sql =
@@ -30,15 +35,19 @@ export const GET: APIRoute = async ({ params, locals }) => {
   const obj = await env.FILES.get(row.r2_key);
   if (!obj) return new Response('file missing', { status: 410 });
 
-  await logAudit(env.DB, user.id, 'download', {
-    documentId: row.id,
-    detail: row.filename,
-  });
+  // Skip audit row for inline previews — they fire on every page load and
+  // would spam the log. Real downloads (no inline flag) still get audited.
+  if (!inline) {
+    await logAudit(env.DB, user.id, 'download', {
+      documentId: row.id,
+      detail: row.filename,
+    });
+  }
 
   return new Response(obj.body, {
     headers: {
       'content-type': row.mime_type,
-      'content-disposition': `attachment; filename="${row.filename}"`,
+      'content-disposition': `${inline ? 'inline' : 'attachment'}; filename="${row.filename}"`,
       'cache-control': 'private, no-store',
     },
   });

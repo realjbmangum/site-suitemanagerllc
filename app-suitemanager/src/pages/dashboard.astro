@@ -83,7 +83,8 @@ const orderSql = `ORDER BY ${sortColumn[sort] ?? "d.created_at"} ${dir === "asc"
 
 const rows = await env.DB
   .prepare(
-    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.flagged, d.status, d.created_at, d.reviewed_at,
+    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.note,
+            d.flagged, d.status, d.created_at, d.reviewed_at,
             p.name AS property_name, u.name AS gm_name
      FROM documents d
      LEFT JOIN properties p ON p.id = d.property_id
@@ -95,7 +96,7 @@ const rows = await env.DB
   .bind(...args)
   .all<{
     id: string; filename: string; category: string;
-    vendor: string | null; amount_cents: number | null;
+    vendor: string | null; amount_cents: number | null; note: string | null;
     flagged: number; status: string; created_at: string;
     reviewed_at: string | null;
     property_name: string | null; gm_name: string | null;
@@ -242,6 +243,23 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
     />
   </form>
 
+  <script is:inline>
+    // Row click → navigate to detail. Skip when the click originated on a
+    // button, link, form, or the actions cell.
+    document.querySelectorAll("tr[data-href]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        const t = e.target;
+        if (
+          t.closest("a") ||
+          t.closest("button") ||
+          t.closest("form") ||
+          t.closest("[data-no-row-click]")
+        ) return;
+        window.location.href = row.dataset.href;
+      });
+    });
+  </script>
+
   <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
     <table class="w-full text-sm">
       <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
@@ -281,16 +299,31 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
           </tr>
         )}
         {rows.results.map((r) => (
-          <tr class={`border-t border-[var(--color-hairline)] ${
-            r.flagged && r.status === "new" ? "bg-[var(--color-brass-light)]/10" : ""
-          }`}>
+          <tr
+            data-href={`/dashboard/${r.id}`}
+            class={`border-t border-[var(--color-hairline)] cursor-pointer transition-colors hover:bg-[var(--color-cream)] ${
+              r.flagged && r.status === "new" ? "bg-[var(--color-brass-light)]/10" : ""
+            }`}
+          >
             <td class="px-5 py-3">
               <div class="font-semibold text-[var(--color-navy)]">{r.property_name || "—"}</div>
               <div class="text-xs text-[var(--color-muted)]">{r.gm_name || ""}</div>
             </td>
             <td class="px-5 py-3 text-[var(--color-navy)]">
-              {r.filename}
+              <div class="flex items-center gap-2">
+                <a href={`/dashboard/${r.id}`} class="hover:text-[var(--color-brass-dark)]">{r.filename}</a>
+                {r.note && (
+                  <span title={r.note} class="inline-flex items-center text-[var(--color-brass-dark)] text-sm" aria-label="Has note">
+                    💬
+                  </span>
+                )}
+              </div>
               {r.vendor && <div class="text-xs text-[var(--color-muted)]">{r.vendor}</div>}
+              {r.note && (
+                <div class="text-xs italic text-[var(--color-muted)] mt-0.5 truncate max-w-md">
+                  “{r.note}”
+                </div>
+              )}
             </td>
             <td class="px-5 py-3">
               <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
@@ -304,12 +337,18 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
                 </div>
               )}
             </td>
-            <td class="px-3 py-3">
+            <td class="px-3 py-3" data-no-row-click>
               <div class="flex items-center justify-end gap-2">
+                <a
+                  href={`/dashboard/${r.id}`}
+                  class="text-xs font-semibold px-2.5 py-1.5 rounded-md text-[var(--color-navy)] hover:bg-white border border-[var(--color-hairline)]"
+                >
+                  Open
+                </a>
                 <a
                   href={`/api/documents/${r.id}/download`}
                   title="Download"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-cream)] text-[var(--color-navy)]"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-white text-[var(--color-navy)]"
                 >
                   ↓
                 </a>
@@ -320,7 +359,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
                     class={`text-xs font-semibold px-2.5 py-1.5 rounded-md transition-colors ${
                       r.status === "new"
                         ? "bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy-700)]"
-                        : "text-[var(--color-muted)] hover:bg-[var(--color-cream)]"
+                        : "text-[var(--color-muted)] hover:bg-white"
                     }`}
                   >
                     {r.status === "new" ? "Mark reviewed" : "Reopen"}
