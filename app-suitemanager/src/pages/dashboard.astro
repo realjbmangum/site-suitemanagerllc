@@ -5,17 +5,24 @@ export const prerender = false;
 const env = Astro.locals.runtime.env;
 const url = new URL(Astro.request.url);
 
-// Filters via URL params.
-const category = url.searchParams.get("category") || "all";        // all|invoice|statement|other
-const filter = url.searchParams.get("filter") || "";               // pending|today|week
+// Filters / view state via URL params.
+const status = url.searchParams.get("status") || "new";     // new (default) | reviewed | all
+const category = url.searchParams.get("category") || "all"; // all | invoice | statement | other
+const filter = url.searchParams.get("filter") || "";        // '' | pending | today | week
 const q = (url.searchParams.get("q") || "").trim();
+const sort = url.searchParams.get("sort") || "date";        // date | property | vendor | amount
+const dir = (url.searchParams.get("dir") || "desc") === "asc" ? "asc" : "desc";
 
-// Tile counts (regardless of current filter).
+// Tile aggregates — always over ALL documents, not the filtered view.
 const tiles = await env.DB.batch([
   env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-1 day')"),
   env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-7 day')"),
   env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE status = 'new' AND flagged = 1"),
-  env.DB.prepare("SELECT COALESCE(SUM(size_bytes), 0) AS bytes FROM documents"),
+  env.DB.prepare(
+    `SELECT
+      (SELECT COALESCE(SUM(size_bytes), 0) FROM documents) +
+      (SELECT COALESCE(SUM(size_bytes), 0) FROM resources WHERE archived_at IS NULL) AS bytes`
+  ),
 ]);
 const today = (tiles[0].results[0] as any).n as number;
 const week = (tiles[1].results[0] as any).n as number;
@@ -29,22 +36,31 @@ const fmtBytes = (b: number) => {
   return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
-// Category counts.
-const catCounts = await env.DB
-  .prepare("SELECT category, COUNT(*) AS n FROM documents GROUP BY category")
+// Status-aware category counts.
+const catCountRows = await env.DB
+  .prepare(
+    `SELECT category, COUNT(*) AS n FROM documents
+     ${status === "all" ? "" : "WHERE status = ?"}
+     GROUP BY category`
+  )
+  .bind(...(status === "all" ? [] : [status]))
   .all<{ category: string; n: number }>();
 const countByCat: Record<string, number> = {};
-for (const r of catCounts.results) countByCat[r.category] = r.n;
+for (const r of catCountRows.results) countByCat[r.category] = r.n;
 
-// Document list.
+// Build the doc-list query.
 const where: string[] = [];
 const args: unknown[] = [];
+if (status !== "all") {
+  where.push("d.status = ?");
+  args.push(status);
+}
 if (category !== "all") {
   where.push("d.category = ?");
   args.push(category);
 }
 if (filter === "pending") {
-  where.push("d.status = 'new' AND d.flagged = 1");
+  where.push("d.flagged = 1");
 } else if (filter === "today") {
   where.push("d.created_at >= datetime('now','-1 day')");
 } else if (filter === "week") {
@@ -55,17 +71,25 @@ if (q) {
   const like = `%${q.toLowerCase()}%`;
   args.push(like, like, like);
 }
-const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+const sortColumn: Record<string, string> = {
+  date: "d.created_at",
+  property: "p.name",
+  vendor: "d.vendor",
+  amount: "d.amount_cents",
+};
+const orderSql = `ORDER BY ${sortColumn[sort] ?? "d.created_at"} ${dir === "asc" ? "ASC" : "DESC"}, d.created_at DESC`;
 
 const rows = await env.DB
   .prepare(
-    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.flagged, d.status, d.created_at,
+    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.flagged, d.status, d.created_at, d.reviewed_at,
             p.name AS property_name, u.name AS gm_name
      FROM documents d
      LEFT JOIN properties p ON p.id = d.property_id
      LEFT JOIN users u ON u.id = d.uploaded_by
      ${whereSql}
-     ORDER BY d.created_at DESC
+     ${orderSql}
      LIMIT 100`
   )
   .bind(...args)
@@ -73,6 +97,7 @@ const rows = await env.DB
     id: string; filename: string; category: string;
     vendor: string | null; amount_cents: number | null;
     flagged: number; status: string; created_at: string;
+    reviewed_at: string | null;
     property_name: string | null; gm_name: string | null;
   }>();
 
@@ -92,19 +117,32 @@ const pillClass = (cat: string) =>
   cat === "invoice" ? "pill-invoice" :
   cat === "statement" ? "pill-statement" : "pill-other";
 
-const tileLink = (key: string, active: boolean) => {
+// URL builders.
+const buildHref = (overrides: Record<string, string | null>) => {
   const u = new URL(url);
-  if (active) u.searchParams.delete("filter");
-  else u.searchParams.set("filter", key);
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
   return u.pathname + (u.search || "");
 };
 
-const catLink = (cat: string) => {
-  const u = new URL(url);
-  if (cat === "all") u.searchParams.delete("category");
-  else u.searchParams.set("category", cat);
-  return u.pathname + (u.search || "");
+const tileHref = (key: string, active: boolean) =>
+  buildHref({ filter: active ? null : key });
+
+const catHref = (cat: string) =>
+  buildHref({ category: cat === "all" ? null : cat });
+
+const statusHref = (s: string) =>
+  buildHref({ status: s === "new" ? null : s });
+
+const sortHref = (col: string) => {
+  const sameCol = sort === col;
+  const nextDir = sameCol && dir === "desc" ? "asc" : "desc";
+  return buildHref({ sort: col === "date" ? null : col, dir: nextDir === "desc" ? null : "asc" });
 };
+
+const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : "↓") : "");
 ---
 
 <PortalLayout title="Incoming documents" context="Strand Hospitality">
@@ -113,24 +151,26 @@ const catLink = (cat: string) => {
       <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
         Incoming documents
       </h1>
-      <p class="text-sm text-[var(--color-muted)] mt-1">Strand Hospitality back-office inbox</p>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Strand Hospitality back-office inbox · {rows.results.length} {rows.results.length === 1 ? "match" : "matches"}
+      </p>
     </div>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-    <a href={tileLink("today", filter === "today")} class={`rounded-xl border p-4 transition-colors ${
+    <a href={tileHref("today", filter === "today")} class={`rounded-xl border p-4 transition-colors ${
       filter === "today" ? "border-[var(--color-navy)] bg-white shadow-sm" : "bg-white border-[var(--color-hairline)] hover:border-[var(--color-navy)]"
     }`}>
       <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Today</div>
       <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{today}</div>
     </a>
-    <a href={tileLink("week", filter === "week")} class={`rounded-xl border p-4 transition-colors ${
+    <a href={tileHref("week", filter === "week")} class={`rounded-xl border p-4 transition-colors ${
       filter === "week" ? "border-[var(--color-navy)] bg-white shadow-sm" : "bg-white border-[var(--color-hairline)] hover:border-[var(--color-navy)]"
     }`}>
       <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">This week</div>
       <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{week}</div>
     </a>
-    <a href={tileLink("pending", filter === "pending")} class={`rounded-xl border p-4 transition-colors ${
+    <a href={tileHref("pending", filter === "pending")} class={`rounded-xl border p-4 transition-colors ${
       filter === "pending"
         ? "border-[var(--color-brass)] bg-[var(--color-brass-light)]/30"
         : "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)] hover:bg-[var(--color-brass-light)]/30"
@@ -138,10 +178,33 @@ const catLink = (cat: string) => {
       <div class="text-xs font-semibold text-[var(--color-brass-dark)] uppercase tracking-widest">Pending review</div>
       <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{pending}</div>
     </a>
-    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4" title="Sum of GM uploads + HR templates in R2">
       <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Storage used</div>
       <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtBytes(storageBytes)}</div>
     </div>
+  </div>
+
+  <!-- Status tabs -->
+  <div class="border-b border-[var(--color-hairline)] mb-4">
+    <nav class="flex gap-1">
+      {[
+        { v: "new", label: "Inbox", desc: "New uploads waiting for review" },
+        { v: "reviewed", label: "Reviewed", desc: "Already processed" },
+        { v: "all", label: "All", desc: "Everything" },
+      ].map((s) => (
+        <a
+          href={statusHref(s.v)}
+          title={s.desc}
+          class={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+            status === s.v
+              ? "border-[var(--color-brass)] text-[var(--color-navy)]"
+              : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-navy)]"
+          }`}
+        >
+          {s.label}
+        </a>
+      ))}
+    </nav>
   </div>
 
   <div class="flex items-center gap-2 mb-3 flex-wrap">
@@ -151,7 +214,7 @@ const catLink = (cat: string) => {
       { v: "statement", label: "Statements", count: countByCat.statement ?? 0 },
       { v: "other", label: "Other", count: countByCat.other ?? 0 },
     ].map((f) => (
-      <a href={catLink(f.v)} class={`pill ${
+      <a href={catHref(f.v)} class={`pill ${
         category === f.v
           ? f.v === "invoice" ? "pill-invoice"
           : f.v === "statement" ? "pill-statement"
@@ -165,9 +228,11 @@ const catLink = (cat: string) => {
   </div>
 
   <form method="GET" class="mb-4">
-    {/* preserve current category/filter via hidden fields */}
+    {status !== "new" && <input type="hidden" name="status" value={status} />}
     {category !== "all" && <input type="hidden" name="category" value={category} />}
     {filter && <input type="hidden" name="filter" value={filter} />}
+    {sort !== "date" && <input type="hidden" name="sort" value={sort} />}
+    {dir !== "desc" && <input type="hidden" name="dir" value={dir} />}
     <input
       type="search"
       name="q"
@@ -181,25 +246,43 @@ const catLink = (cat: string) => {
     <table class="w-full text-sm">
       <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
         <tr>
-          <th class="text-left px-5 py-3">Property / GM</th>
-          <th class="text-left px-5 py-3">File</th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("property")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Property / GM <span class="text-[var(--color-brass)]">{sortIndicator("property")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("vendor")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              File / Vendor <span class="text-[var(--color-brass)]">{sortIndicator("vendor")}</span>
+            </a>
+          </th>
           <th class="text-left px-5 py-3">Category</th>
-          <th class="text-right px-5 py-3">Amount</th>
-          <th class="text-left px-5 py-3">Received</th>
-          <th class="w-12"></th>
+          <th class="text-right px-5 py-3">
+            <a href={sortHref("amount")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Amount <span class="text-[var(--color-brass)]">{sortIndicator("amount")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("date")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Received <span class="text-[var(--color-brass)]">{sortIndicator("date")}</span>
+            </a>
+          </th>
+          <th class="text-right px-5 py-3">Actions</th>
         </tr>
       </thead>
       <tbody>
         {rows.results.length === 0 && (
           <tr>
             <td colspan="6" class="px-5 py-10 text-center text-[var(--color-muted)]">
-              No documents match this view. Upload one from the GM screen to see it land here.
+              {status === "new"
+                ? "Inbox is clear — no new documents."
+                : "No documents match this view."}
             </td>
           </tr>
         )}
         {rows.results.map((r) => (
           <tr class={`border-t border-[var(--color-hairline)] ${
-            r.flagged ? "bg-[var(--color-brass-light)]/10" : ""
+            r.flagged && r.status === "new" ? "bg-[var(--color-brass-light)]/10" : ""
           }`}>
             <td class="px-5 py-3">
               <div class="font-semibold text-[var(--color-navy)]">{r.property_name || "—"}</div>
@@ -213,15 +296,37 @@ const catLink = (cat: string) => {
               <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
             </td>
             <td class="px-5 py-3 text-right tabular-nums text-[var(--color-navy)]">{fmtMoney(r.amount_cents)}</td>
-            <td class="px-5 py-3 text-[var(--color-muted)]">{fmtTime(r.created_at)}</td>
-            <td class="px-2 py-3">
-              <a
-                href={`/api/documents/${r.id}/download`}
-                title="Download"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-cream)] text-[var(--color-navy)]"
-              >
-                ↓
-              </a>
+            <td class="px-5 py-3 text-[var(--color-muted)]">
+              {fmtTime(r.created_at)}
+              {r.status === "reviewed" && r.reviewed_at && (
+                <div class="text-[10px] text-green-700 mt-0.5">
+                  Reviewed {fmtTime(r.reviewed_at)}
+                </div>
+              )}
+            </td>
+            <td class="px-3 py-3">
+              <div class="flex items-center justify-end gap-2">
+                <a
+                  href={`/api/documents/${r.id}/download`}
+                  title="Download"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-cream)] text-[var(--color-navy)]"
+                >
+                  ↓
+                </a>
+                <form method="POST" action={`/api/documents/${r.id}/review`} class="inline">
+                  <input type="hidden" name="status" value={r.status === "new" ? "reviewed" : "new"} />
+                  <button
+                    type="submit"
+                    class={`text-xs font-semibold px-2.5 py-1.5 rounded-md transition-colors ${
+                      r.status === "new"
+                        ? "bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy-700)]"
+                        : "text-[var(--color-muted)] hover:bg-[var(--color-cream)]"
+                    }`}
+                  >
+                    {r.status === "new" ? "Mark reviewed" : "Reopen"}
+                  </button>
+                </form>
+              </div>
             </td>
           </tr>
         ))}
