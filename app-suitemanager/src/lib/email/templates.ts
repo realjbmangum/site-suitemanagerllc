@@ -16,7 +16,8 @@ const BRAND = {
   text: '#1D1D33',
   muted: '#6B6B78',
   hairline: '#E5E3DE',
-  logoUrl: 'https://app.suitemanagerllc.com/logo.png',
+  // Logo loads from the marketing site (no Access gate) so inboxes can render it.
+  logoUrl: 'https://suitemanagerllc.com/logo1.png',
 };
 
 const FONT_STACK =
