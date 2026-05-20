@@ -1,0 +1,134 @@
+---
+import PortalLayout from "../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+const activeFolder = url.searchParams.get("folder") || "";
+
+const folders = await env.DB
+  .prepare(
+    `SELECT f.id, f.name,
+      (SELECT COUNT(*) FROM resources r WHERE r.folder_id = f.id AND r.archived_at IS NULL) AS n
+     FROM resource_folders f ORDER BY f.sort_order, f.name`
+  )
+  .all<{ id: string; name: string; n: number }>();
+
+// Unfiled bucket (templates with no folder).
+const unfiled = await env.DB
+  .prepare(
+    "SELECT COUNT(*) AS n FROM resources WHERE folder_id IS NULL AND archived_at IS NULL"
+  )
+  .first<{ n: number }>();
+
+const selectedId = activeFolder || (folders.results[0]?.id ?? "");
+
+let templates: { id: string; title: string; description: string | null; filename: string; mime_type: string; created_at: string }[] = [];
+if (selectedId === "unfiled") {
+  const r = await env.DB
+    .prepare(
+      "SELECT id, title, description, filename, mime_type, created_at FROM resources WHERE folder_id IS NULL AND archived_at IS NULL ORDER BY created_at DESC"
+    )
+    .all<{ id: string; title: string; description: string | null; filename: string; mime_type: string; created_at: string }>();
+  templates = r.results;
+} else if (selectedId) {
+  const r = await env.DB
+    .prepare(
+      "SELECT id, title, description, filename, mime_type, created_at FROM resources WHERE folder_id = ? AND archived_at IS NULL ORDER BY created_at DESC"
+    )
+    .bind(selectedId)
+    .all<{ id: string; title: string; description: string | null; filename: string; mime_type: string; created_at: string }>();
+  templates = r.results;
+}
+
+const fmtDate = (iso: string) =>
+  new Date(iso + "Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+const fileTypeLabel = (mime: string) => {
+  if (mime.includes("pdf")) return "PDF";
+  if (mime.includes("sheet") || mime.includes("excel")) return "XLSX";
+  if (mime.includes("png")) return "PNG";
+  if (mime.includes("jpeg")) return "JPG";
+  return "FILE";
+};
+---
+
+<PortalLayout title="HR Resources">
+  <section>
+    <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+      HR Resources
+    </h1>
+    <p class="text-[var(--color-muted)] mt-1 mb-8 max-w-2xl">
+      Templates and forms from Strand HR. View or print — uploads of completed forms go through your HR system.
+    </p>
+
+    {folders.results.length === 0 && (unfiled?.n ?? 0) === 0 ? (
+      <div class="bg-white border border-[var(--color-hairline)] rounded-xl p-10 text-center">
+        <p class="text-[var(--color-muted)]">
+          No templates have been published yet.
+        </p>
+      </div>
+    ) : (
+      <div class="grid md:grid-cols-[220px_1fr] gap-8">
+        <aside>
+          <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Folders</div>
+          <ul class="space-y-1">
+            {folders.results.map((f) => (
+              <li>
+                <a
+                  href={`/resources?folder=${f.id}`}
+                  class={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                    f.id === selectedId
+                      ? "bg-[var(--color-navy)] text-white"
+                      : "text-[var(--color-navy)] hover:bg-white"
+                  }`}
+                >
+                  <span>{f.name}</span>
+                  <span class={f.id === selectedId ? "text-[var(--color-brass-light)]" : "text-[var(--color-muted)]"}>{f.n}</span>
+                </a>
+              </li>
+            ))}
+            {(unfiled?.n ?? 0) > 0 && (
+              <li>
+                <a
+                  href={`/resources?folder=unfiled`}
+                  class={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                    selectedId === "unfiled"
+                      ? "bg-[var(--color-navy)] text-white"
+                      : "text-[var(--color-navy)] hover:bg-white"
+                  }`}
+                >
+                  <span>Unfiled</span>
+                  <span class={selectedId === "unfiled" ? "text-[var(--color-brass-light)]" : "text-[var(--color-muted)]"}>{unfiled?.n}</span>
+                </a>
+              </li>
+            )}
+          </ul>
+        </aside>
+
+        <div class="space-y-3">
+          {templates.length === 0 ? (
+            <div class="bg-white border border-[var(--color-hairline)] rounded-xl p-8 text-center text-[var(--color-muted)]">
+              This folder is empty.
+            </div>
+          ) : templates.map((t) => (
+            <article class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 flex flex-wrap items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="pill pill-resource">{fileTypeLabel(t.mime_type)}</span>
+                  <span class="text-xs text-[var(--color-muted)]">Updated {fmtDate(t.created_at)}</span>
+                </div>
+                <h2 class="font-semibold text-[var(--color-navy)]">{t.title}</h2>
+                {t.description && <p class="text-sm text-[var(--color-muted)] mt-1">{t.description}</p>}
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <a class="btn-ghost text-sm" href={`/api/resources/${t.id}/download`} target="_blank" rel="noopener">View</a>
+                <a class="btn-primary text-sm" href={`/api/resources/${t.id}/download`} download={t.filename}>Download</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )}
+  </section>
+</PortalLayout>

@@ -1,0 +1,102 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const { token } = Astro.params;
+const env = Astro.locals.runtime.env;
+
+const url = new URL(Astro.request.url);
+const error = url.searchParams.get("error");
+
+let user: { name: string; email: string; role: string; expires: string | null } | null = null;
+let expired = false;
+
+if (token) {
+  const row = await env.DB
+    .prepare(
+      `SELECT name, email, role, invite_expires_at FROM users
+       WHERE invite_token = ? AND active = 1`
+    )
+    .bind(token)
+    .first<{ name: string; email: string; role: string; invite_expires_at: string | null }>();
+  if (row) {
+    user = {
+      name: row.name,
+      email: row.email,
+      role: row.role,
+      expires: row.invite_expires_at,
+    };
+    if (row.invite_expires_at && new Date(row.invite_expires_at) < new Date()) {
+      expired = true;
+    }
+  }
+}
+---
+
+<PortalLayout title={user ? "Set your password" : "Invite not found"} bare>
+  <div class="w-full max-w-sm">
+    <div class="bg-white border border-[var(--color-hairline)] rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-[var(--color-navy)] text-white px-8 py-6 border-b-2 border-[var(--color-brass)]">
+        <img src="/logo.png" alt="Suite Manager" class="h-10 brightness-0 invert" />
+      </div>
+
+      {!user ? (
+        <div class="px-8 py-7 text-center">
+          <h1 class="text-xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+            Invite link not found
+          </h1>
+          <p class="text-sm text-[var(--color-muted)] mt-2">
+            This invite link is invalid or has already been used. Ask your admin for a new one.
+          </p>
+          <a href="/login" class="btn-ghost mt-5 inline-flex">Back to sign in</a>
+        </div>
+      ) : expired ? (
+        <div class="px-8 py-7 text-center">
+          <h1 class="text-xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+            Invite link expired
+          </h1>
+          <p class="text-sm text-[var(--color-muted)] mt-2">
+            Your invite link for <strong>{user.email}</strong> has expired. Ask your admin to send a new one.
+          </p>
+        </div>
+      ) : (
+        <form method="POST" action="/api/auth/activate" class="px-8 py-7 space-y-5">
+          <input type="hidden" name="token" value={token} />
+
+          <div>
+            <h1 class="text-2xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+              Welcome, {user.name.split(" ")[0]}
+            </h1>
+            <p class="text-sm text-[var(--color-muted)] mt-1">
+              Set a password for <strong>{user.email}</strong> to access the Suite Manager portal.
+            </p>
+          </div>
+
+          {error && (
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label for="password" class="block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              New password
+            </label>
+            <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-3 text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]" />
+          </div>
+
+          <div>
+            <label for="confirm" class="block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              Confirm
+            </label>
+            <input id="confirm" name="confirm" type="password" minlength="8" required autocomplete="new-password"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-3 text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]" />
+          </div>
+
+          <button type="submit" class="btn-primary w-full">Set password & sign in</button>
+        </form>
+      )}
+    </div>
+  </div>
+</PortalLayout>

@@ -1,0 +1,124 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  /** Property name shown right side (for GMs) */
+  context?: string;
+  /** Initials for the avatar circle */
+  initials?: string;
+  /** User's name shown next to avatar */
+  userName?: string;
+  /** Hide the chrome (login page uses bare layout) */
+  bare?: boolean;
+}
+
+const {
+  title,
+  context,
+  initials,
+  userName,
+  bare = false,
+} = Astro.props;
+
+const user = Astro.locals.user ?? null;
+const initialsOf = (name: string) =>
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+const displayName = user?.name ?? userName;
+const displayInitials = user ? initialsOf(user.name) : initials;
+
+// Role-aware nav. Admin sees everything.
+const role = user?.role;
+const navItems: { href: string; label: string }[] = [];
+if (role === "gm" || role === "admin") navItems.push({ href: "/upload", label: "Upload" });
+if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", label: "Dashboard" });
+if (user) navItems.push({ href: "/resources", label: "Resources" });
+if (role === "hr" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
+if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
+
+const currentPath = new URL(Astro.request.url).pathname;
+const isActive = (href: string) =>
+  href === currentPath || (href !== "/" && currentPath.startsWith(href));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title} · Suite Manager</title>
+  </head>
+  <body>
+    {!bare && (
+      <header class="bg-[var(--color-navy)] text-white border-b-2 border-[var(--color-brass)]">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+          <a href="/" class="flex items-center gap-3 group">
+            <span class="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--color-brass)] text-[var(--color-navy)] font-bold text-sm">
+              SM
+            </span>
+            <span class="flex flex-col leading-tight">
+              <span class="font-bold tracking-tight">SUITE MANAGER</span>
+              <span class="text-xs text-[var(--color-brass-light)]">Document portal</span>
+            </span>
+          </a>
+
+          {navItems.length > 0 && (
+            <nav class="order-3 sm:order-2 w-full sm:w-auto sm:flex-1 sm:flex sm:justify-center">
+              <ul class="flex items-center gap-1 sm:gap-2 flex-wrap">
+                {navItems.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      class={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                        isActive(item.href)
+                          ? "bg-[var(--color-brass)] text-[var(--color-navy)]"
+                          : "text-[var(--color-brass-light)] hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+          <div class="order-2 sm:order-3 flex items-center gap-4 text-right">
+            {context && (
+              <div class="hidden sm:flex flex-col leading-tight text-right">
+                {displayName && <span class="font-semibold text-sm">{displayName}</span>}
+                <span class="text-xs text-[var(--color-brass-light)]">{context}</span>
+              </div>
+            )}
+            {displayInitials && (
+              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brass)] text-[var(--color-navy)] font-bold text-sm">
+                {displayInitials}
+              </span>
+            )}
+            {user && (
+              <form method="POST" action="/api/auth/logout" class="hidden sm:block">
+                <button
+                  type="submit"
+                  class="text-xs text-[var(--color-brass-light)] hover:text-white transition-colors"
+                  title="Sign out"
+                >
+                  Sign out
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </header>
+    )}
+
+    <main class={bare ? "min-h-screen flex items-center justify-center px-4" : "max-w-6xl mx-auto px-6 py-10"}>
+      <slot />
+    </main>
+  </body>
+</html>

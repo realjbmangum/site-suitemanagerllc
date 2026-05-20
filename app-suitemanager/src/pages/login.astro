@@ -1,0 +1,86 @@
+---
+import PortalLayout from "../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const url = new URL(Astro.request.url);
+const error = url.searchParams.get("error");
+const next = url.searchParams.get("next") || "";
+
+// If already signed in, send them to their home.
+if (Astro.locals.user) {
+  const { roleHome } = await import("../lib/session");
+  return Astro.redirect(roleHome(Astro.locals.user.role));
+}
+---
+
+<PortalLayout title="Sign in" bare>
+  <div class="w-full max-w-sm">
+    <div class="bg-white border border-[var(--color-hairline)] rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-[var(--color-navy)] text-white px-8 py-6 border-b-2 border-[var(--color-brass)]">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--color-brass)] text-[var(--color-navy)] font-bold text-sm">
+            SM
+          </span>
+          <div class="leading-tight">
+            <div class="font-bold tracking-tight">SUITE MANAGER</div>
+            <div class="text-xs text-[var(--color-brass-light)]">Document portal</div>
+          </div>
+        </div>
+      </div>
+
+      <form method="POST" action="/api/auth/login" class="px-8 py-7 space-y-5">
+        <input type="hidden" name="next" value={next} />
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">Sign in</h1>
+          <p class="text-sm text-[var(--color-muted)] mt-1">
+            Use the credentials Suite Manager sent you.
+          </p>
+        </div>
+
+        {error && (
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label for="email" class="block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-3 text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-3 text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
+          />
+        </div>
+
+        <button type="submit" class="btn-primary w-full">Sign in</button>
+
+        <p class="text-xs text-center text-[var(--color-muted)]">
+          Trouble signing in? Contact your Suite Manager admin.
+        </p>
+      </form>
+    </div>
+
+    <p class="text-center text-xs text-[var(--color-muted)] mt-6">
+      &copy; {new Date().getFullYear()} Suite Manager LLC
+    </p>
+  </div>
+</PortalLayout>

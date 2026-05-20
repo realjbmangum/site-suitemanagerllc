@@ -1,0 +1,206 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+const invited = url.searchParams.get("invited");
+const error = url.searchParams.get("error");
+
+const properties = await env.DB
+  .prepare("SELECT id, name FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string }>();
+
+const users = await env.DB
+  .prepare(
+    `SELECT id, email, name, role, property_id, invite_token, invite_expires_at, password_hash IS NOT NULL AS activated, active
+     FROM users ORDER BY created_at DESC`
+  )
+  .all<{
+    id: string; email: string; name: string; role: string;
+    property_id: string | null; invite_token: string | null;
+    invite_expires_at: string | null; activated: number; active: number;
+  }>();
+
+const origin = url.origin;
+const invitedLink = invited ? `${origin}/invite/${invited}` : null;
+---
+
+<PortalLayout title="Users">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Users
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Create accounts for GMs, Strand accounting, HR, and other admins.
+      </p>
+    </div>
+  </div>
+
+  {invitedLink && (
+    <div class="mb-6 rounded-xl border border-[var(--color-brass)] bg-[var(--color-brass-light)]/15 p-5">
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-brass-dark)]">
+        Invite link created
+      </div>
+      <p class="text-sm text-[var(--color-navy)] mt-1 mb-3">
+        Send this link to the new user. It expires in 7 days. They'll use it to set their own password.
+      </p>
+      <div class="flex items-center gap-2 flex-wrap">
+        <input
+          id="invite-link"
+          readonly
+          value={invitedLink}
+          class="flex-1 min-w-[260px] rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-xs font-mono text-[var(--color-navy)]"
+        />
+        <button
+          type="button"
+          class="btn-primary text-sm"
+          data-copy-target="invite-link"
+        >
+          Copy link
+        </button>
+      </div>
+    </div>
+  )}
+
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      {error}
+    </div>
+  )}
+
+  <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+    <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+        <h2 class="font-semibold text-[var(--color-navy)]">All users</h2>
+        <span class="text-xs text-[var(--color-muted)]">{users.results.length} total</span>
+      </header>
+      <table class="w-full text-sm">
+        <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+          <tr>
+            <th class="text-left px-5 py-3">Name</th>
+            <th class="text-left px-5 py-3">Role</th>
+            <th class="text-left px-5 py-3">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.results.length === 0 && (
+            <tr>
+              <td colspan="3" class="px-5 py-6 text-center text-[var(--color-muted)]">
+                No users yet. Use the form to create the first one.
+              </td>
+            </tr>
+          )}
+          {users.results.map((u) => (
+            <tr class="border-t border-[var(--color-hairline)]">
+              <td class="px-5 py-3">
+                <div class="font-semibold text-[var(--color-navy)]">{u.name}</div>
+                <div class="text-xs text-[var(--color-muted)]">{u.email}</div>
+              </td>
+              <td class="px-5 py-3 capitalize">{u.role}</td>
+              <td class="px-5 py-3 text-xs">
+                {u.activated ? (
+                  <span class="text-green-700 font-semibold">Active</span>
+                ) : (
+                  <span class="text-[var(--color-brass-dark)] font-semibold">Invite pending</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <aside class="space-y-5">
+      <form
+        method="POST"
+        action="/api/properties"
+        class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3"
+      >
+        <h2 class="font-semibold text-[var(--color-navy)]">Add a property</h2>
+        <input name="name" required placeholder="Hampton Inn Myrtle Beach"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        <button type="submit" class="btn-ghost w-full text-sm">Add property</button>
+        <p class="text-xs text-[var(--color-muted)]">
+          {properties.results.length} {properties.results.length === 1 ? "property" : "properties"} currently.
+        </p>
+      </form>
+
+      <form
+        method="POST"
+        action="/api/users"
+        class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-4"
+      >
+        <h2 class="font-semibold text-[var(--color-navy)]">Invite a new user</h2>
+
+        <div>
+          <label for="email" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Email
+          </label>
+          <input id="email" name="email" type="email" required
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label for="name" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Full name
+          </label>
+          <input id="name" name="name" type="text" required
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label for="role" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Role
+          </label>
+          <select id="role" name="role" required
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+            <option value="gm">GM (hotel general manager)</option>
+            <option value="strand">Strand accounting</option>
+            <option value="hr">Strand HR</option>
+            <option value="admin">Suite Manager admin</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="property_id" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Property <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(GMs only)</span>
+          </label>
+          <select id="property_id" name="property_id"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+            <option value="">— none —</option>
+            {properties.results.map((p) => (
+              <option value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          {properties.results.length === 0 && (
+            <p class="text-xs text-[var(--color-muted)] mt-1">
+              No properties yet. Add a property before inviting a GM.
+            </p>
+          )}
+        </div>
+
+        <button type="submit" class="btn-primary w-full">Generate invite link</button>
+      </form>
+    </aside>
+  </div>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>("[data-copy-target]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.copyTarget!;
+        const el = document.getElementById(id) as HTMLInputElement | null;
+        if (!el) return;
+        try {
+          await navigator.clipboard.writeText(el.value);
+          const orig = btn.textContent;
+          btn.textContent = "Copied!";
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        } catch {
+          el.select();
+        }
+      });
+    });
+  </script>
+</PortalLayout>

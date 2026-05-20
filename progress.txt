@@ -1,3 +1,57 @@
+## Session - 2026-05-20 — Document Portal scaffold
+
+**Completed:**
+- Wrote PRD / TECHNICAL-SPEC / DESIGN-BRIEF for the Suite Manager Document Portal (`tasks/`)
+- Wrote paste-ready proposal copy (`tasks/PROPOSAL-copy.md`) — $9,500 fixed + $35/property/mo
+- Shipped rich-text rendering + redesigned SOW layout to the Ascend Systems proposal generator (commit `085ac16` in `ascend-systems`): bullets, numbered lists, bold, numbered section markers, Investment card
+- v2 doc updates per Karen (Strand HR) email: dropped GM-uploaded HR docs from v1; added HR Resources library (HR → GM template distribution). Categories now Invoice/Statement/Other.
+- Scaffolded standalone Astro + Cloudflare Pages app at `app-suitemanager/`:
+  - Tailwind v4 with brand tokens (navy #1D1D33, brass #BB945C)
+  - PortalLayout with branded header
+  - Routes: /login, /upload, /resources, /dashboard, /admin/templates (static UI, placeholder data matches mockups)
+  - wrangler.toml with D1 + R2 binding placeholders
+  - worker/db/schema.sql with users/properties/documents/resources/resource_folders/sessions/audit_events
+  - `npm run build` passes clean
+
+**Files (new):**
+- `tasks/PRD-document-portal.md` (v2), `tasks/TECHNICAL-SPEC.md` (v2), `tasks/DESIGN-BRIEF.md` (v2)
+- `tasks/PROPOSAL-copy.md`
+- `app-suitemanager/` — full Astro scaffold
+- `app-suitemanager/mockups/01-gm-upload.png`, `02-strand-dashboard.png`
+
+**Decisions:**
+- Portal lives at `app.suitemanagerllc.com`, standalone — nested inside `site-suitemanagerllc/app-suitemanager/`, deployed to its own Cloudflare Pages project
+- HR scope reversed: templates library (HR → GM read-only) instead of GM HR uploads. Engage handles inbound HR docs.
+- Per-GM logins (not per-property) — needed for HR Resources audit trail and per-GM upload attribution
+- Roles: `gm` | `strand` | `hr` | `admin`. HR has zero visibility into GM document uploads.
+
+**Auth shipped (same session, May 20 PM):**
+- D1 db `suitemanager-portal` (id `a05dcf90-...4737d8`) linked in wrangler.toml
+- R2 bucket `suitemanager-portal-files` created (remote)
+- Schema applied to both remote and local D1
+- Auth: PBKDF2-SHA256 100k iters (`src/lib/crypto.ts`), session tokens in D1 + HttpOnly Lax cookie (`src/lib/session.ts`), `src/middleware.ts` enforces auth + role gating, `/api/auth/login` + `/api/auth/logout` endpoints
+- Login page handles error query param + `next` redirect
+- PortalLayout reads `Astro.locals.user` and shows Sign out
+- Seed script `scripts/create-user.mjs` — PBKDF2 hash + UPSERT-on-email SQL, repeatable
+- Brian seeded as admin (email `bmangum1@gmail.com`, temp password `Suite!Admin#2026` — change immediately)
+- `npm run build` passes; sharp warning fixed via `imageService: 'compile'`
+
+**Pending (next sessions):**
+- [ ] /api/upload + R2 storage routing
+- [ ] Email notification routing (Strand Accounting / SM admin)
+- [ ] /api/documents + dashboard wiring + filters + search
+- [ ] HR Resources API + folder/template CRUD
+- [ ] Audit log writes on every upload/download
+- [ ] Role-based query scoping (especially HR silo from documents)
+- [ ] Custom domain `app.suitemanagerllc.com` + secrets
+- [ ] Reply to Karen with the Resources screenshot once it's wired
+
+**Gotchas:**
+- Astro Cloudflare adapter auto-enables session KV binding — warning is benign for now (we're rolling our own session via D1), but address before first deploy by either adding a KV binding or disabling Astro's sessions feature.
+- Sharp warning at build: set `imageService: 'compile'` in the adapter config to silence.
+
+---
+
 ## Session - 2026-02-26
 
 **Completed:**

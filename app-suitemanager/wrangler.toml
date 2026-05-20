@@ -1,0 +1,37 @@
+name = "suitemanager-portal"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# D1: metadata (users, properties, documents, resources, audit_events)
+# Create with:  wrangler d1 create suitemanager-portal
+# Then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "suitemanager-portal"
+database_id = "a05dcf90-e157-4e4b-bfb1-b34e2e4737d8"
+
+# R2: file blobs (documents/ and resources/ prefixes)
+# Create with:  wrangler r2 bucket create suitemanager-portal-files
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "suitemanager-portal-files"
+
+# Plain vars (non-secret). Override per-environment in the Cloudflare dashboard.
+[vars]
+MAX_UPLOAD_BYTES = "26214400"          # 25 MB
+STRAND_ACCOUNTING_EMAIL = ""           # set in dashboard once Chris confirms
+ADMIN_EMAIL = ""                       # set in dashboard once Chris confirms
+APP_ORIGIN = "https://app.suitemanagerllc.com"
+
+# Email transport: Microsoft Graph (Suite Manager's M365 tenant).
+# Wired in a later session. App registration steps:
+#   1. Azure AD → App registrations → New registration
+#   2. Grant application permission: Mail.Send (admin consent required)
+#   3. Capture tenant id, client id, client secret, and the sender mailbox user id
+#   GRAPH_TENANT_ID, GRAPH_CLIENT_ID, GRAPH_SENDER_USER_ID  → plain vars
+#   GRAPH_CLIENT_SECRET                                     → secret
+
+# Secrets — set with `wrangler pages secret put <NAME>`:
+#   SESSION_SECRET
+#   GRAPH_CLIENT_SECRET  (later, when Graph is wired)

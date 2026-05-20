@@ -1,0 +1,187 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+const error = url.searchParams.get("error");
+const uploaded = url.searchParams.get("uploaded") === "1";
+
+const folders = await env.DB
+  .prepare(
+    `SELECT f.id, f.name,
+      (SELECT COUNT(*) FROM resources r WHERE r.folder_id = f.id AND r.archived_at IS NULL) AS n
+     FROM resource_folders f ORDER BY f.sort_order, f.name`
+  )
+  .all<{ id: string; name: string; n: number }>();
+
+const requested = url.searchParams.get("folder") || "";
+const activeFolderId =
+  requested && folders.results.find((f) => f.id === requested)
+    ? requested
+    : folders.results[0]?.id ?? "";
+
+let templates: { id: string; title: string; description: string | null; filename: string; mime_type: string; created_at: string; version: number }[] = [];
+if (activeFolderId) {
+  const r = await env.DB
+    .prepare(
+      "SELECT id, title, description, filename, mime_type, created_at, version FROM resources WHERE folder_id = ? AND archived_at IS NULL ORDER BY created_at DESC"
+    )
+    .bind(activeFolderId)
+    .all<typeof templates[number]>();
+  templates = r.results;
+}
+
+const fmtDate = (iso: string) =>
+  new Date(iso + "Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+const fileTypeLabel = (mime: string) => {
+  if (mime.includes("pdf")) return "PDF";
+  if (mime.includes("sheet") || mime.includes("excel")) return "XLSX";
+  if (mime.includes("png")) return "PNG";
+  if (mime.includes("jpeg")) return "JPG";
+  return "FILE";
+};
+---
+
+<PortalLayout title="HR Templates" context="Strand HR">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        HR Templates
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Upload forms and templates GMs at every property can view and print.
+      </p>
+    </div>
+  </div>
+
+  {uploaded && (
+    <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800">
+      Uploaded. GMs can see it in the Resources tab.
+    </div>
+  )}
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      {error}
+    </div>
+  )}
+
+  <div class="grid md:grid-cols-[260px_1fr] gap-8">
+    <aside class="space-y-5">
+      <div>
+        <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-2">Folders</div>
+        {folders.results.length === 0 ? (
+          <p class="text-sm text-[var(--color-muted)] mb-3">
+            No folders yet. Add one to start organizing templates.
+          </p>
+        ) : (
+          <ul class="space-y-1 mb-3">
+            {folders.results.map((f) => (
+              <li>
+                <a
+                  href={`/admin/templates?folder=${f.id}`}
+                  class={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                    f.id === activeFolderId
+                      ? "bg-[var(--color-navy)] text-white"
+                      : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)] hover:border-[var(--color-navy)]"
+                  }`}
+                >
+                  <span>{f.name}</span>
+                  <span class={f.id === activeFolderId ? "text-[var(--color-brass-light)]" : "text-[var(--color-muted)]"}>{f.n}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <form method="POST" action="/api/resources/folders" class="bg-white border border-[var(--color-hairline)] rounded-xl p-4 space-y-3">
+        <h3 class="text-sm font-semibold text-[var(--color-navy)]">New folder</h3>
+        <input name="name" required placeholder="e.g. Onboarding"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        <button type="submit" class="btn-ghost w-full text-sm">Add folder</button>
+      </form>
+    </aside>
+
+    <div class="space-y-5">
+      {activeFolderId && (
+        <form
+          method="POST"
+          action="/api/resources"
+          enctype="multipart/form-data"
+          class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-4"
+        >
+          <h3 class="font-semibold text-[var(--color-navy)]">Upload a template</h3>
+          <input type="hidden" name="folder_id" value={activeFolderId} />
+
+          <div>
+            <label for="title" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              Title
+            </label>
+            <input id="title" name="title" type="text" required placeholder="Blank I-9 (2026)"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+          </div>
+
+          <div>
+            <label for="description" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              Description (optional)
+            </label>
+            <textarea id="description" name="description" rows="2"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"></textarea>
+          </div>
+
+          <label class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-4 py-6 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
+            <input type="file" name="file" required class="hidden" id="tpl-file" />
+            <div class="text-sm font-semibold text-[var(--color-brass-dark)]" id="tpl-label">
+              Drag a file here, or click to browse
+            </div>
+            <div class="text-xs text-[var(--color-muted)] mt-1">PDF or image — up to 25 MB</div>
+          </label>
+
+          <button type="submit" class="btn-primary w-full">Upload</button>
+        </form>
+      )}
+
+      {!activeFolderId ? (
+        <div class="bg-white border border-[var(--color-hairline)] rounded-xl p-8 text-center text-[var(--color-muted)]">
+          Create your first folder on the left, then upload templates here.
+        </div>
+      ) : templates.length === 0 ? (
+        <div class="bg-white border border-[var(--color-hairline)] rounded-xl p-8 text-center text-[var(--color-muted)]">
+          This folder is empty. Upload your first template above.
+        </div>
+      ) : (
+        <div class="space-y-3">
+          {templates.map((t) => (
+            <article class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 flex flex-wrap items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="pill pill-resource">{fileTypeLabel(t.mime_type)}</span>
+                  <span class="text-xs text-[var(--color-muted)]">v{t.version} · {fmtDate(t.created_at)}</span>
+                </div>
+                <h2 class="font-semibold text-[var(--color-navy)]">{t.title}</h2>
+                {t.description && <p class="text-sm text-[var(--color-muted)] mt-1">{t.description}</p>}
+                <p class="text-xs text-[var(--color-muted)] mt-1 font-mono">{t.filename}</p>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <a class="btn-ghost text-sm" href={`/api/resources/${t.id}/download`} target="_blank" rel="noopener">View</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script is:inline>
+    const inp = document.getElementById("tpl-file");
+    const lab = document.getElementById("tpl-label");
+    if (inp && lab) {
+      inp.addEventListener("change", () => {
+        const f = inp.files && inp.files[0];
+        lab.textContent = f ? f.name : "Drag a file here, or click to browse";
+      });
+    }
+  </script>
+</PortalLayout>

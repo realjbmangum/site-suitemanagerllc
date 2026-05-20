@@ -1,0 +1,20 @@
+# build output
+dist/
+.astro/
+.wrangler/
+
+# deps
+node_modules/
+
+# env
+.env
+.env.local
+.dev.vars
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# tsc
+*.tsbuildinfo

@@ -1,0 +1,231 @@
+---
+import PortalLayout from "../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+
+// Filters via URL params.
+const category = url.searchParams.get("category") || "all";        // all|invoice|statement|other
+const filter = url.searchParams.get("filter") || "";               // pending|today|week
+const q = (url.searchParams.get("q") || "").trim();
+
+// Tile counts (regardless of current filter).
+const tiles = await env.DB.batch([
+  env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-1 day')"),
+  env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-7 day')"),
+  env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE status = 'new' AND flagged = 1"),
+  env.DB.prepare("SELECT COALESCE(SUM(size_bytes), 0) AS bytes FROM documents"),
+]);
+const today = (tiles[0].results[0] as any).n as number;
+const week = (tiles[1].results[0] as any).n as number;
+const pending = (tiles[2].results[0] as any).n as number;
+const storageBytes = (tiles[3].results[0] as any).bytes as number;
+
+const fmtBytes = (b: number) => {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  if (b < 1024 * 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+
+// Category counts.
+const catCounts = await env.DB
+  .prepare("SELECT category, COUNT(*) AS n FROM documents GROUP BY category")
+  .all<{ category: string; n: number }>();
+const countByCat: Record<string, number> = {};
+for (const r of catCounts.results) countByCat[r.category] = r.n;
+
+// Document list.
+const where: string[] = [];
+const args: unknown[] = [];
+if (category !== "all") {
+  where.push("d.category = ?");
+  args.push(category);
+}
+if (filter === "pending") {
+  where.push("d.status = 'new' AND d.flagged = 1");
+} else if (filter === "today") {
+  where.push("d.created_at >= datetime('now','-1 day')");
+} else if (filter === "week") {
+  where.push("d.created_at >= datetime('now','-7 day')");
+}
+if (q) {
+  where.push("(LOWER(d.filename) LIKE ? OR LOWER(COALESCE(d.vendor,'')) LIKE ? OR LOWER(p.name) LIKE ?)");
+  const like = `%${q.toLowerCase()}%`;
+  args.push(like, like, like);
+}
+const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+
+const rows = await env.DB
+  .prepare(
+    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.flagged, d.status, d.created_at,
+            p.name AS property_name, u.name AS gm_name
+     FROM documents d
+     LEFT JOIN properties p ON p.id = d.property_id
+     LEFT JOIN users u ON u.id = d.uploaded_by
+     ${whereSql}
+     ORDER BY d.created_at DESC
+     LIMIT 100`
+  )
+  .bind(...args)
+  .all<{
+    id: string; filename: string; category: string;
+    vendor: string | null; amount_cents: number | null;
+    flagged: number; status: string; created_at: string;
+    property_name: string | null; gm_name: string | null;
+  }>();
+
+const fmtTime = (iso: string) => {
+  const d = new Date(iso + "Z");
+  const diff = (Date.now() - d.getTime()) / 60000;
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${Math.round(diff)} min ago`;
+  if (diff < 1440) return `${Math.round(diff / 60)} hr ago`;
+  return d.toLocaleDateString();
+};
+
+const fmtMoney = (cents: number | null) =>
+  cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
+
+const pillClass = (cat: string) =>
+  cat === "invoice" ? "pill-invoice" :
+  cat === "statement" ? "pill-statement" : "pill-other";
+
+const tileLink = (key: string, active: boolean) => {
+  const u = new URL(url);
+  if (active) u.searchParams.delete("filter");
+  else u.searchParams.set("filter", key);
+  return u.pathname + (u.search || "");
+};
+
+const catLink = (cat: string) => {
+  const u = new URL(url);
+  if (cat === "all") u.searchParams.delete("category");
+  else u.searchParams.set("category", cat);
+  return u.pathname + (u.search || "");
+};
+---
+
+<PortalLayout title="Incoming documents" context="Strand Hospitality">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Incoming documents
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">Strand Hospitality back-office inbox</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <a href={tileLink("today", filter === "today")} class={`rounded-xl border p-4 transition-colors ${
+      filter === "today" ? "border-[var(--color-navy)] bg-white shadow-sm" : "bg-white border-[var(--color-hairline)] hover:border-[var(--color-navy)]"
+    }`}>
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Today</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{today}</div>
+    </a>
+    <a href={tileLink("week", filter === "week")} class={`rounded-xl border p-4 transition-colors ${
+      filter === "week" ? "border-[var(--color-navy)] bg-white shadow-sm" : "bg-white border-[var(--color-hairline)] hover:border-[var(--color-navy)]"
+    }`}>
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">This week</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{week}</div>
+    </a>
+    <a href={tileLink("pending", filter === "pending")} class={`rounded-xl border p-4 transition-colors ${
+      filter === "pending"
+        ? "border-[var(--color-brass)] bg-[var(--color-brass-light)]/30"
+        : "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)] hover:bg-[var(--color-brass-light)]/30"
+    }`}>
+      <div class="text-xs font-semibold text-[var(--color-brass-dark)] uppercase tracking-widest">Pending review</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{pending}</div>
+    </a>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Storage used</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtBytes(storageBytes)}</div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
+    {[
+      { v: "all", label: "All categories", count: null },
+      { v: "invoice", label: "Invoices", count: countByCat.invoice ?? 0 },
+      { v: "statement", label: "Statements", count: countByCat.statement ?? 0 },
+      { v: "other", label: "Other", count: countByCat.other ?? 0 },
+    ].map((f) => (
+      <a href={catLink(f.v)} class={`pill ${
+        category === f.v
+          ? f.v === "invoice" ? "pill-invoice"
+          : f.v === "statement" ? "pill-statement"
+          : f.v === "other" ? "pill-other"
+          : "pill-statement"
+          : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)] hover:bg-[var(--color-cream)]"
+      }`}>
+        {f.label}{f.count !== null ? ` · ${f.count}` : ""}
+      </a>
+    ))}
+  </div>
+
+  <form method="GET" class="mb-4">
+    {/* preserve current category/filter via hidden fields */}
+    {category !== "all" && <input type="hidden" name="category" value={category} />}
+    {filter && <input type="hidden" name="filter" value={filter} />}
+    <input
+      type="search"
+      name="q"
+      value={q}
+      placeholder="Search property, file, or vendor"
+      class="w-full sm:w-96 rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
+    />
+  </form>
+
+  <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+        <tr>
+          <th class="text-left px-5 py-3">Property / GM</th>
+          <th class="text-left px-5 py-3">File</th>
+          <th class="text-left px-5 py-3">Category</th>
+          <th class="text-right px-5 py-3">Amount</th>
+          <th class="text-left px-5 py-3">Received</th>
+          <th class="w-12"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.results.length === 0 && (
+          <tr>
+            <td colspan="6" class="px-5 py-10 text-center text-[var(--color-muted)]">
+              No documents match this view. Upload one from the GM screen to see it land here.
+            </td>
+          </tr>
+        )}
+        {rows.results.map((r) => (
+          <tr class={`border-t border-[var(--color-hairline)] ${
+            r.flagged ? "bg-[var(--color-brass-light)]/10" : ""
+          }`}>
+            <td class="px-5 py-3">
+              <div class="font-semibold text-[var(--color-navy)]">{r.property_name || "—"}</div>
+              <div class="text-xs text-[var(--color-muted)]">{r.gm_name || ""}</div>
+            </td>
+            <td class="px-5 py-3 text-[var(--color-navy)]">
+              {r.filename}
+              {r.vendor && <div class="text-xs text-[var(--color-muted)]">{r.vendor}</div>}
+            </td>
+            <td class="px-5 py-3">
+              <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
+            </td>
+            <td class="px-5 py-3 text-right tabular-nums text-[var(--color-navy)]">{fmtMoney(r.amount_cents)}</td>
+            <td class="px-5 py-3 text-[var(--color-muted)]">{fmtTime(r.created_at)}</td>
+            <td class="px-2 py-3">
+              <a
+                href={`/api/documents/${r.id}/download`}
+                title="Download"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--color-cream)] text-[var(--color-navy)]"
+              >
+                ↓
+              </a>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</PortalLayout>
