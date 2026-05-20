@@ -1,0 +1,104 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { buildInviteEmail } from "../../lib/email/templates";
+
+export const prerender = false;
+
+const url = new URL(Astro.request.url);
+const role = (url.searchParams.get("role") || "gm") as "gm" | "strand" | "hr" | "admin";
+const includeProperty = url.searchParams.get("property") !== "0";
+
+const sampleInviteUrl = `${url.origin}/invite/EXAMPLE_TOKEN_8a3f9b4c2e1d7f6a0b5c9e8d2f3a1b4c`;
+const expires = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
+
+const sample = buildInviteEmail({
+  recipientName: role === "hr" ? "Karen Lyles" : "Karen Marshall",
+  recipientEmail:
+    role === "gm"
+      ? "karen@hamptonmyrtle.com"
+      : role === "strand"
+      ? "accounting@strandhospitality.com"
+      : role === "hr"
+      ? "hr@strandhospitality.com"
+      : "admin@suitemanagerllc.com",
+  role,
+  inviteUrl: sampleInviteUrl,
+  expiresAt: expires,
+  inviterName: "Brian Mangum",
+  propertyName: role === "gm" && includeProperty ? "Hampton Inn Myrtle Beach" : undefined,
+});
+
+const roleOptions = [
+  { v: "gm", label: "GM (with property)" },
+  { v: "strand", label: "Strand accounting" },
+  { v: "hr", label: "Strand HR" },
+  { v: "admin", label: "Suite Manager admin" },
+];
+---
+
+<PortalLayout title="Email preview">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Email previews
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1 max-w-2xl">
+        How transactional emails will look when Microsoft Graph mail is wired.
+        Not sent yet — change the role to see how each variant reads.
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 mb-4 flex-wrap">
+    <span class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mr-1">
+      Variant
+    </span>
+    {roleOptions.map((opt) => (
+      <a
+        href={`/admin/email-preview?role=${opt.v}`}
+        class={`pill ${
+          role === opt.v
+            ? "pill-statement"
+            : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)] hover:bg-white"
+        }`}
+      >
+        {opt.label}
+      </a>
+    ))}
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_280px] gap-6">
+    <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <div class="px-5 py-3 border-b border-[var(--color-hairline)] text-xs text-[var(--color-muted)] uppercase tracking-widest font-semibold">
+        Subject: <span class="text-[var(--color-navy)] normal-case tracking-normal font-normal">{sample.subject}</span>
+      </div>
+      <iframe
+        title="Email preview"
+        srcdoc={sample.html}
+        style="width:100%;height:880px;border:0;display:block;background:#f5f4f1;"
+      ></iframe>
+    </div>
+
+    <aside class="space-y-4">
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <h2 class="text-sm font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">
+          Plain-text fallback
+        </h2>
+        <pre class="text-xs leading-relaxed whitespace-pre-wrap text-[var(--color-navy)] font-mono">{sample.text}</pre>
+      </section>
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <h2 class="text-sm font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">
+          Notes
+        </h2>
+        <ul class="text-sm text-[var(--color-muted)] space-y-2 list-disc pl-4">
+          <li>Built table + inline-style for Outlook/Gmail compatibility.</li>
+          <li>Logo is loaded from <code class="text-xs">app.suitemanagerllc.com/logo.png</code>; cached on first open.</li>
+          <li>Pre-header text sets the inbox preview line.</li>
+          <li>Single CTA, plain-URL fallback below in case the button breaks.</li>
+          <li>Plain-text version sent alongside (clients fall back to it).</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</PortalLayout>

@@ -35,6 +35,7 @@ if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", l
 if (user) navItems.push({ href: "/resources", label: "Resources" });
 if (role === "hr" || role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
 if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
+if (role === "admin") navItems.push({ href: "/admin/email-preview", label: "Emails" });
 
 const currentPath = new URL(Astro.request.url).pathname;
 const isActive = (href: string) =>

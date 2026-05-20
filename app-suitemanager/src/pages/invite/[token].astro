@@ -36,8 +36,15 @@ if (token) {
 <PortalLayout title={user ? "Set your password" : "Invite not found"} bare>
   <div class="w-full max-w-sm">
     <div class="bg-white border border-[var(--color-hairline)] rounded-2xl shadow-sm overflow-hidden">
-      <div class="bg-[var(--color-navy)] text-white px-8 py-6 border-b-2 border-[var(--color-brass)]">
-        <img src="/logo.png" alt="Suite Manager" class="h-10 brightness-0 invert" />
+      <div class="bg-[var(--color-navy)] text-white px-8 py-7 border-b-2 border-[var(--color-brass)] flex flex-col items-center">
+        <img
+          src="/logo.png"
+          alt="Suite Manager"
+          class="h-12 w-auto brightness-0 invert"
+        />
+        <div class="text-[10px] uppercase tracking-[0.25em] text-[var(--color-brass-light)] mt-3">
+          Document portal
+        </div>
       </div>
 
       {!user ? (
