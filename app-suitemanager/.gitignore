@@ -18,3 +18,8 @@ node_modules/
 
 # tsc
 *.tsbuildinfo
+
+# Source data files (real business info — opt in to track)
+data/*.csv
+data/*.xlsx
+data/*.xls

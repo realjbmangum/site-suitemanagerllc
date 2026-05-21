@@ -3,12 +3,26 @@
 -- Apply with: npm run db:apply:remote
 
 -- Properties (hotels)
+-- v2 (2026-05-20): expanded for CRM-style fields from the ASA property roster.
 CREATE TABLE IF NOT EXISTS properties (
-  id          TEXT PRIMARY KEY,
-  name        TEXT NOT NULL,
-  active      INTEGER NOT NULL DEFAULT 1,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  id              TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  code            TEXT,                            -- CHORUM / internal property code (e.g. AFFMYR)
+  brand           TEXT,                            -- 'asa' (Affordable Suites of America) | 'acs' (Affordable Corporate Suites) | NULL
+  owner_group     TEXT,                            -- "Arthur/Chris", "Richard/Michael" etc.; freeform until owners table exists
+  address_street  TEXT,
+  address_city    TEXT,
+  address_state   TEXT,                            -- 2-letter abbreviation
+  address_zip     TEXT,
+  room_count      INTEGER,
+  phone           TEXT,                            -- front-desk
+  fax             TEXT,
+  emergency_phone TEXT,                            -- 24/7 GM cell
+  property_email  TEXT,                            -- property inbox
+  active          INTEGER NOT NULL DEFAULT 1,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_properties_code ON properties(code);
 
 -- Users (per-GM login + Strand + HR admin + SM admin)
 -- password_hash is NULL while an invite is outstanding (set via /invite/:token).
