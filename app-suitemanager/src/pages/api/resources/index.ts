@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
   const user = locals.user;
   if (!user) return bounce(request, 'unauthorized');
-  if (user.role !== 'hr' && user.role !== 'strand' && user.role !== 'admin') {
+  if (user.role !== 'strand' && user.role !== 'admin') {
     return bounce(request, 'You don’t have permission to upload templates.');
   }
 

@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const active = form.get('active') ? 1 : 0;
 
   if (!name) return bounce(id, 'Full name is required.');
-  if (!['gm', 'strand', 'hr', 'admin'].includes(role)) {
+  if (!['gm', 'strand', 'admin'].includes(role)) {
     return bounce(id, 'Pick a valid role.');
   }
   if (role === 'gm' && !propertyId) {

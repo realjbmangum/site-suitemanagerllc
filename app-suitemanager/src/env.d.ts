@@ -19,7 +19,7 @@ type SessionUser = {
   id: string;
   email: string;
   name: string;
-  role: 'gm' | 'strand' | 'hr' | 'admin';
+  role: 'gm' | 'strand' | 'admin';
   propertyId: string | null;
 };
 

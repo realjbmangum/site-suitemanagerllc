@@ -5,33 +5,30 @@ import { buildInviteEmail } from "../../lib/email/templates";
 export const prerender = false;
 
 const url = new URL(Astro.request.url);
-const role = (url.searchParams.get("role") || "gm") as "gm" | "strand" | "hr" | "admin";
+const role = (url.searchParams.get("role") || "gm") as "gm" | "strand" | "admin";
 const includeProperty = url.searchParams.get("property") !== "0";
 
 const sampleInviteUrl = `${url.origin}/invite/EXAMPLE_TOKEN_8a3f9b4c2e1d7f6a0b5c9e8d2f3a1b4c`;
 const expires = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
 
 const sample = buildInviteEmail({
-  recipientName: role === "hr" ? "Karen Lyles" : "Karen Marshall",
+  recipientName: role === "strand" ? "Karen Lyles" : "Karen Marshall",
   recipientEmail:
     role === "gm"
       ? "karen@hamptonmyrtle.com"
       : role === "strand"
-      ? "accounting@strandhospitality.com"
-      : role === "hr"
-      ? "hr@strandhospitality.com"
+      ? "karen@strandhospitality.com"
       : "admin@suitemanagerllc.com",
   role,
   inviteUrl: sampleInviteUrl,
   expiresAt: expires,
   inviterName: "Brian Mangum",
-  propertyName: role === "gm" && includeProperty ? "Hampton Inn Myrtle Beach" : undefined,
+  propertyName: role === "gm" && includeProperty ? "Myrtle Beach" : undefined,
 });
 
 const roleOptions = [
   { v: "gm", label: "GM (with property)" },
-  { v: "strand", label: "Strand accounting" },
-  { v: "hr", label: "Strand HR" },
+  { v: "strand", label: "Strand" },
   { v: "admin", label: "Suite Manager admin" },
 ];
 ---

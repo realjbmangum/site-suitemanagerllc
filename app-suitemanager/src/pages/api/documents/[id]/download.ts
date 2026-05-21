@@ -24,9 +24,6 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     sql += ' AND property_id = ?';
     args.push(user.propertyId);
   }
-  // strand + admin see everything. hr is blocked entirely.
-  if (user.role === 'hr') return new Response('forbidden', { status: 403 });
-
   const row = await env.DB.prepare(sql).bind(...args).first<{
     id: string; r2_key: string; filename: string; mime_type: string; property_id: string;
   }>();

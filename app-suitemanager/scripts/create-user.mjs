@@ -34,7 +34,7 @@ if (args[2] === 'gm') {
   propertyId = null;
 }
 
-if (!['gm', 'strand', 'hr', 'admin'].includes(role)) {
+if (!['gm', 'strand', 'admin'].includes(role)) {
   console.error(`Bad role: ${role}`);
   usage();
 }

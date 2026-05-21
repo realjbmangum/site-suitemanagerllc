@@ -25,15 +25,14 @@ const FONT_STACK =
 
 const ROLE_LABEL: Record<string, string> = {
   gm: 'general manager',
-  strand: 'Strand accounting team member',
-  hr: 'Strand HR team member',
+  strand: 'Strand team member',
   admin: 'Suite Manager admin',
 };
 
 export interface InviteEmailInput {
   recipientName: string;
   recipientEmail: string;
-  role: 'gm' | 'strand' | 'hr' | 'admin';
+  role: 'gm' | 'strand' | 'admin';
   inviteUrl: string;          // absolute /invite/:token URL
   expiresAt: string;          // ISO date
   inviterName?: string;       // "Brian Mangum" — optional, defaults generic

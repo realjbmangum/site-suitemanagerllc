@@ -33,7 +33,7 @@ const navItems: { href: string; label: string }[] = [];
 if (role === "gm" || role === "admin") navItems.push({ href: "/upload", label: "Upload" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", label: "Dashboard" });
 if (user) navItems.push({ href: "/resources", label: "Resources" });
-if (role === "hr" || role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
+if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
 if (role === "admin") navItems.push({ href: "/admin/properties", label: "Properties" });
 if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
 if (role === "admin") navItems.push({ href: "/admin/email-preview", label: "Emails" });

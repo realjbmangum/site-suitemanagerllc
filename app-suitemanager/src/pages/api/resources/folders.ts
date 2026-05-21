@@ -8,10 +8,7 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
   const user = locals.user;
-  if (
-    !user ||
-    (user.role !== 'hr' && user.role !== 'strand' && user.role !== 'admin')
-  ) {
+  if (!user || (user.role !== 'strand' && user.role !== 'admin')) {
     return bounce(request, 'You don’t have permission to create folders.');
   }
 

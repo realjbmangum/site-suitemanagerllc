@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
   email             TEXT NOT NULL UNIQUE,
   name              TEXT NOT NULL,
   password_hash     TEXT,                                  -- PBKDF2 via Web Crypto; NULL until invite activated
-  role              TEXT NOT NULL CHECK (role IN ('gm','strand','hr','admin')),
+  role              TEXT NOT NULL CHECK (role IN ('gm','strand','admin')),
   property_id       TEXT REFERENCES properties(id),
   active            INTEGER NOT NULL DEFAULT 1,
   invite_token      TEXT,                                  -- 64-char hex; NULL after activation

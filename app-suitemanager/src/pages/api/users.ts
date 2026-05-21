@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const propertyId =
     String(form.get('property_id') || '').trim() || null;
 
-  if (!email || !name || !['gm', 'strand', 'hr', 'admin'].includes(role)) {
+  if (!email || !name || !['gm', 'strand', 'admin'].includes(role)) {
     return bounce(request, 'Email, name, and role are all required.');
   }
   if (role === 'gm' && !propertyId) {

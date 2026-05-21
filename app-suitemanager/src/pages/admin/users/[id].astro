@@ -158,8 +158,7 @@ const inviteUrl =
         <select id="role" name="role" required
           class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
           <option value="gm" selected={user.role === "gm"}>GM (hotel general manager)</option>
-          <option value="strand" selected={user.role === "strand"}>Strand accounting</option>
-          <option value="hr" selected={user.role === "hr"}>Strand HR</option>
+          <option value="strand" selected={user.role === "strand"}>Strand (accounting + HR)</option>
           <option value="admin" selected={user.role === "admin"}>Suite Manager admin</option>
         </select>
         {isSelf && (

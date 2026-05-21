@@ -97,8 +97,6 @@ export function roleHome(role: SessionUser['role']): string {
       return '/upload';
     case 'strand':
       return '/dashboard';
-    case 'hr':
-      return '/admin/templates';
     case 'admin':
       return '/dashboard';
   }
