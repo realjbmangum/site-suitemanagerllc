@@ -94,6 +94,30 @@ CREATE TABLE IF NOT EXISTS resources (
   archived_at TEXT
 );
 
+-- Financial statements — uploaded by Strand/admin (and later owners),
+-- property-scoped, time-series. P&Ls / balance sheets / cash flow /
+-- budgets / other. GMs see only their own property; admin sees all.
+CREATE TABLE IF NOT EXISTS financial_statements (
+  id              TEXT PRIMARY KEY,
+  property_id     TEXT NOT NULL REFERENCES properties(id),
+  uploaded_by     TEXT NOT NULL REFERENCES users(id),
+  statement_type  TEXT NOT NULL CHECK (statement_type IN ('profit_loss','balance_sheet','cash_flow','budget','other')),
+  period_year     INTEGER NOT NULL,
+  period_month    INTEGER,                                  -- NULL for annual statements
+  title           TEXT NOT NULL,
+  description     TEXT,
+  r2_key          TEXT NOT NULL,                            -- properties/{id}/financials/{year}/{mm}/{type}/...
+  filename        TEXT NOT NULL,
+  size_bytes      INTEGER NOT NULL,
+  mime_type       TEXT NOT NULL,
+  archived_at     TEXT,
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_financials_property_period
+  ON financial_statements(property_id, period_year DESC, period_month DESC);
+CREATE INDEX IF NOT EXISTS idx_financials_type ON financial_statements(statement_type);
+CREATE INDEX IF NOT EXISTS idx_financials_active ON financial_statements(archived_at);
+
 -- Audit log
 CREATE TABLE IF NOT EXISTS audit_events (
   id          TEXT PRIMARY KEY,

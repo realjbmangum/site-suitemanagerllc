@@ -1,5 +1,6 @@
 ---
 import PortalLayout from "../layouts/PortalLayout.astro";
+import { typeLabel, periodLabel } from "../lib/financials";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -62,6 +63,18 @@ const stats = await env.DB
   )
   .bind(targetPropertyId, targetPropertyId, targetPropertyId)
   .first<{ total: number; unpaid_count: number; unpaid_total: number }>();
+
+// Financial statements for this property.
+const financials = await env.DB
+  .prepare(
+    `SELECT id, statement_type, period_year, period_month, title, filename, mime_type, created_at
+     FROM financial_statements
+     WHERE property_id = ? AND archived_at IS NULL
+     ORDER BY period_year DESC, period_month DESC, created_at DESC
+     LIMIT 12`
+  )
+  .bind(targetPropertyId)
+  .all<{ id: string; statement_type: string; period_year: number; period_month: number | null; title: string; filename: string; mime_type: string; created_at: string }>();
 
 const fmtMoney = (cents: number | null) =>
   cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
@@ -262,6 +275,47 @@ const pillClass = (cat: string) =>
       </div>
     </section>
   </div>
+
+  <!-- Financials -->
+  <section class="mt-8">
+    <div class="flex items-end justify-between mb-3">
+      <div>
+        <h2 class="text-lg font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+          Financial statements
+        </h2>
+        <p class="text-sm text-[var(--color-muted)] mt-1">
+          P&Ls, balance sheets, and budgets from Strand and Suite Manager.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white border border-[var(--color-hairline)] rounded-2xl overflow-hidden">
+      {financials.results.length === 0 ? (
+        <div class="px-5 py-10 text-center text-[var(--color-muted)] text-sm">
+          No financial statements have been published for this property yet.
+        </div>
+      ) : (
+        <ul class="divide-y divide-[var(--color-hairline)]">
+          {financials.results.map((f) => (
+            <li class="px-5 py-3 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="pill pill-statement">{typeLabel(f.statement_type)}</span>
+                  <span class="text-xs text-[var(--color-muted)]">{periodLabel(f.period_year, f.period_month)}</span>
+                </div>
+                <div class="text-sm font-semibold text-[var(--color-navy)] truncate">{f.title}</div>
+                <div class="text-xs text-[var(--color-muted)] mt-0.5 font-mono truncate">{f.filename}</div>
+              </div>
+              <div class="flex gap-2 shrink-0">
+                <a class="btn-ghost text-xs" href={`/api/financials/${f.id}/download?inline=1`} target="_blank" rel="noopener">View</a>
+                <a class="btn-primary text-xs" href={`/api/financials/${f.id}/download`} download>Download</a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
 
   <script is:inline>
     const inp = document.getElementById("file-input");

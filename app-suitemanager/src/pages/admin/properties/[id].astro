@@ -1,5 +1,6 @@
 ---
 import PortalLayout from "../../../layouts/PortalLayout.astro";
+import { typeLabel, periodLabel } from "../../../lib/financials";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -56,6 +57,17 @@ const stats = await env.DB
   )
   .bind(id, id, id)
   .first<{ total: number; new_count: number; invoice_30d: number }>();
+
+const financials = await env.DB
+  .prepare(
+    `SELECT id, statement_type, period_year, period_month, title, created_at
+     FROM financial_statements
+     WHERE property_id = ? AND archived_at IS NULL
+     ORDER BY period_year DESC, period_month DESC, created_at DESC
+     LIMIT 6`
+  )
+  .bind(id)
+  .all<{ id: string; statement_type: string; period_year: number; period_month: number | null; title: string; created_at: string }>();
 
 const fmtMoney = (cents: number | null) =>
   cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
@@ -155,6 +167,34 @@ const pillClass = (cat: string) =>
                     <div class="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">{d.status}</div>
                   </div>
                 </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+          <h2 class="font-semibold text-[var(--color-navy)]">Financial statements</h2>
+          <a href={`/admin/financials?property=${id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">Upload / see all →</a>
+        </header>
+        {financials.results.length === 0 ? (
+          <div class="px-5 py-8 text-center text-[var(--color-muted)] text-sm">
+            No financial statements yet.
+            <a href={`/admin/financials?property=${id}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline ml-1">Upload one</a>.
+          </div>
+        ) : (
+          <ul class="divide-y divide-[var(--color-hairline)]">
+            {financials.results.map((f) => (
+              <li class="px-5 py-3 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="pill pill-statement">{typeLabel(f.statement_type)}</span>
+                    <span class="text-xs text-[var(--color-muted)]">{periodLabel(f.period_year, f.period_month)}</span>
+                  </div>
+                  <div class="text-sm font-semibold text-[var(--color-navy)] truncate">{f.title}</div>
+                </div>
+                <a class="btn-ghost text-xs shrink-0" href={`/api/financials/${f.id}/download?inline=1`} target="_blank" rel="noopener">View</a>
               </li>
             ))}
           </ul>

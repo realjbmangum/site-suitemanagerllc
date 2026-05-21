@@ -1,0 +1,298 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { STATEMENT_TYPES, typeLabel, periodLabel, MONTH_LABELS } from "../../lib/financials";
+
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+
+const propertyParam = url.searchParams.get("property") || "";
+const typeParam = url.searchParams.get("type") || "all";
+const yearParam = parseInt(url.searchParams.get("year") || "", 10);
+const yearFilter = Number.isFinite(yearParam) ? yearParam : null;
+const uploaded = url.searchParams.get("uploaded") === "1";
+const error = url.searchParams.get("error");
+
+// Property list for selectors.
+const properties = await env.DB
+  .prepare("SELECT id, name, address_state FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string; address_state: string | null }>();
+
+const selectedProperty = propertyParam
+  ? properties.results.find((p) => p.id === propertyParam) || null
+  : null;
+
+// Distinct years for filter.
+const yearsResult = await env.DB
+  .prepare("SELECT DISTINCT period_year FROM financial_statements WHERE archived_at IS NULL ORDER BY period_year DESC")
+  .all<{ period_year: number }>();
+const years = yearsResult.results.map((r) => r.period_year);
+
+// Tile aggregates.
+const aggregates = await env.DB.batch([
+  env.DB.prepare("SELECT COUNT(*) AS n FROM financial_statements WHERE archived_at IS NULL"),
+  env.DB.prepare("SELECT COUNT(DISTINCT property_id) AS n FROM financial_statements WHERE archived_at IS NULL"),
+  env.DB.prepare("SELECT COUNT(*) AS n FROM financial_statements WHERE archived_at IS NULL AND statement_type = 'profit_loss'"),
+  env.DB.prepare("SELECT COUNT(*) AS n FROM financial_statements WHERE archived_at IS NULL AND created_at >= datetime('now','-30 day')"),
+]);
+const totalCount = (aggregates[0].results[0] as any).n as number;
+const propsWithFinancials = (aggregates[1].results[0] as any).n as number;
+const totalPL = (aggregates[2].results[0] as any).n as number;
+const last30 = (aggregates[3].results[0] as any).n as number;
+
+// Filtered list.
+const where: string[] = ["f.archived_at IS NULL"];
+const args: unknown[] = [];
+if (propertyParam) {
+  where.push("f.property_id = ?");
+  args.push(propertyParam);
+}
+if (typeParam !== "all") {
+  where.push("f.statement_type = ?");
+  args.push(typeParam);
+}
+if (yearFilter) {
+  where.push("f.period_year = ?");
+  args.push(yearFilter);
+}
+const whereSql = `WHERE ${where.join(" AND ")}`;
+
+const rows = await env.DB
+  .prepare(
+    `SELECT f.id, f.statement_type, f.period_year, f.period_month,
+            f.title, f.description, f.filename, f.size_bytes, f.mime_type,
+            f.created_at, p.name AS property_name, u.name AS uploader_name
+     FROM financial_statements f
+     LEFT JOIN properties p ON p.id = f.property_id
+     LEFT JOIN users u ON u.id = f.uploaded_by
+     ${whereSql}
+     ORDER BY f.period_year DESC, f.period_month DESC, f.created_at DESC
+     LIMIT 200`
+  )
+  .bind(...args)
+  .all<{
+    id: string; statement_type: string;
+    period_year: number; period_month: number | null;
+    title: string; description: string | null;
+    filename: string; size_bytes: number; mime_type: string;
+    created_at: string;
+    property_name: string | null; uploader_name: string | null;
+  }>();
+
+const fmtBytes = (b: number) => {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+};
+const fmtDate = (iso: string) =>
+  new Date(iso + "Z").toLocaleDateString();
+
+const now = new Date();
+const defaultYear = now.getFullYear();
+const defaultMonth = now.getMonth() + 1;
+
+const buildHref = (overrides: Record<string, string | null>) => {
+  const u = new URL(url);
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + (u.search || "");
+};
+---
+
+<PortalLayout title="Financial Statements">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Financial Statements
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        P&Ls, balance sheets, cash flow, and budgets — uploaded by Strand or Suite Manager admin, visible to the property's GM and owners.
+      </p>
+    </div>
+  </div>
+
+  {uploaded && (
+    <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-800">
+      Uploaded.
+    </div>
+  )}
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+      {error}
+    </div>
+  )}
+
+  <!-- Tiles -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Total</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{totalCount}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Properties covered</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{propsWithFinancials}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">P&Ls</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{totalPL}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Last 30 days</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{last30}</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_360px] gap-6">
+    <!-- List + filters -->
+    <section>
+      <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+        <select name="property" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm min-w-[200px]">
+          <option value="">All properties</option>
+          {properties.results.map((p) => (
+            <option value={p.id} selected={propertyParam === p.id}>
+              {p.name}{p.address_state ? `, ${p.address_state}` : ""}
+            </option>
+          ))}
+        </select>
+        <select name="type" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+          <option value="all">All types</option>
+          {STATEMENT_TYPES.map((t) => (
+            <option value={t.value} selected={typeParam === t.value}>{t.label}</option>
+          ))}
+        </select>
+        <select name="year" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+          <option value="">All years</option>
+          {years.map((y) => (
+            <option value={y} selected={yearFilter === y}>{y}</option>
+          ))}
+        </select>
+        <button type="submit" class="btn-ghost text-sm">Apply</button>
+      </form>
+
+      <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+        {rows.results.length === 0 ? (
+          <div class="px-5 py-12 text-center text-[var(--color-muted)] text-sm">
+            No financial statements yet for this view. Upload one on the right.
+          </div>
+        ) : (
+          <ul class="divide-y divide-[var(--color-hairline)]">
+            {rows.results.map((r) => (
+              <li class="px-5 py-4 hover:bg-[var(--color-cream)] flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="pill pill-statement">{typeLabel(r.statement_type)}</span>
+                    <span class="text-xs text-[var(--color-muted)]">{periodLabel(r.period_year, r.period_month)}</span>
+                  </div>
+                  <div class="font-semibold text-[var(--color-navy)]">{r.title}</div>
+                  <div class="text-xs text-[var(--color-muted)] mt-0.5">
+                    {r.property_name} · uploaded by {r.uploader_name} · {fmtDate(r.created_at)} · {fmtBytes(r.size_bytes)}
+                  </div>
+                  {r.description && (
+                    <p class="text-xs text-[var(--color-muted)] italic mt-1">{r.description}</p>
+                  )}
+                </div>
+                <div class="flex gap-2 shrink-0">
+                  <a class="btn-ghost text-xs" href={`/api/financials/${r.id}/download?inline=1`} target="_blank" rel="noopener">View</a>
+                  <a class="btn-primary text-xs" href={`/api/financials/${r.id}/download`} download>Download</a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+
+    <!-- Upload form -->
+    <aside>
+      <form
+        method="POST"
+        action="/api/financials"
+        enctype="multipart/form-data"
+        class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-4 sticky top-4"
+      >
+        <h2 class="font-semibold text-[var(--color-navy)]">Upload a statement</h2>
+
+        <div>
+          <label for="property_id" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Property</label>
+          <select id="property_id" name="property_id" required
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+            <option value="">— pick one —</option>
+            {properties.results.map((p) => (
+              <option value={p.id} selected={selectedProperty?.id === p.id}>
+                {p.name}{p.address_state ? `, ${p.address_state}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label for="statement_type" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Type</label>
+          <select id="statement_type" name="statement_type" required
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+            {STATEMENT_TYPES.map((t) => (
+              <option value={t.value} selected={t.value === "profit_loss"}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="period_year" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Year</label>
+            <input id="period_year" name="period_year" type="number" required min="2000" max="2100" value={defaultYear}
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label for="period_month" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Period</label>
+            <select id="period_month" name="period_month"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+              {MONTH_LABELS.map((label, i) => (
+                <option value={i === 0 ? "" : i} selected={i === defaultMonth}>{label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="title" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Title <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
+          </label>
+          <input id="title" name="title" type="text" placeholder="Auto-generated if blank"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label for="description" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Notes <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
+          </label>
+          <textarea id="description" name="description" rows="2"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"></textarea>
+        </div>
+
+        <label class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-4 py-6 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
+          <input type="file" name="file" required class="hidden" id="fs-file"
+            accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+          <div class="text-sm font-semibold text-[var(--color-brass-dark)]" id="fs-label">
+            Drag a file here, or click to browse
+          </div>
+          <div class="text-xs text-[var(--color-muted)] mt-1">PDF, image, or Excel · up to 25 MB</div>
+        </label>
+
+        <button type="submit" class="btn-primary w-full">Upload</button>
+      </form>
+    </aside>
+  </div>
+
+  <script is:inline>
+    const inp = document.getElementById("fs-file");
+    const lab = document.getElementById("fs-label");
+    if (inp && lab) {
+      inp.addEventListener("change", () => {
+        const f = inp.files && inp.files[0];
+        lab.textContent = f ? f.name : "Drag a file here, or click to browse";
+      });
+    }
+  </script>
+</PortalLayout>

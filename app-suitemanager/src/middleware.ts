@@ -57,9 +57,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (path === '/dashboard' && role !== 'strand' && role !== 'admin') {
     return Response.redirect(new URL('/my-property', context.request.url), 302);
   }
-  // /admin/templates is open to strand + admin (Karen at Strand HR is now
-  // a strand user). Everything else under /admin/ is admin-only.
-  if (path.startsWith('/admin/templates')) {
+  // /admin/templates and /admin/financials are open to strand + admin.
+  // Everything else under /admin/ is admin-only.
+  if (
+    path.startsWith('/admin/templates') ||
+    path.startsWith('/admin/financials')
+  ) {
     if (role !== 'strand' && role !== 'admin') {
       return Response.redirect(new URL('/dashboard', context.request.url), 302);
     }
