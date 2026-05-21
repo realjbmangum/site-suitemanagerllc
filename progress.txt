@@ -1,3 +1,103 @@
+## Session - 2026-05-20/21 — Document Portal: built, deployed, ready to demo
+
+**Where it lives:**
+- App: `app-suitemanager/` (nested in this repo)
+- Git: pushed to `realjbmangum/site-suitemanagerllc` `main`; CF Pages auto-deploys on push
+- Project: `app-suitemanagerllc` on Cloudflare Pages → `app-suitemanagerllc.pages.dev` (custom domain `app.suitemanagerllc.com` pending DNS)
+- D1: `suitemanager-portal` (id `a05dcf90-...4737d8`)
+- R2: `suitemanager-portal-files`
+
+**Auth + onboarding (shipped):**
+- PBKDF2-SHA256 100k iters (`src/lib/crypto.ts`)
+- D1-backed sessions, HttpOnly+Lax cookie, 12h TTL (`src/lib/session.ts`)
+- `src/middleware.ts`: route gating per role
+- Magic-link invite flow: admin creates user (NULL password + invite_token), user clicks `/invite/:token`, sets password via `/api/auth/activate`, gets session immediately. Invite tokens 7-day TTL.
+- `/api/auth/login`, `/api/auth/logout`, `/api/auth/activate`
+- Seed script `scripts/create-user.mjs` (UPSERT-by-email) for admins; magic link for everyone else
+
+**Roles (final):** `gm` | `strand` | `admin`
+- gm: own-property upload + Resources (read-only)
+- strand: Dashboard + Resources + HR Templates (manages both invoices and HR templates — Karen lives here too)
+- admin: everything (incl. /admin/properties, /admin/users, /admin/email-preview)
+- The `hr` role we briefly built was collapsed into `strand` (May 21) — separation-of-duties wasn't worth the role-management overhead at this scale
+
+**Admin surfaces:**
+- `/admin/users`: list + create (magic-link invite with copy-link UX) + edit (`/admin/users/[id]`) + delete (clears sessions + audit_events first to satisfy FK)
+- `/admin/properties`: 5 tiles (count, total rooms, states, avg rooms, Need-a-GM); brand/state/owner filters; sortable columns; row → detail
+- `/admin/properties/[id]`: full property profile with rooms, total docs, inbox count, invoice 30d $, recent docs list, assigned GMs, contact card
+- `/admin/templates`: HR/strand folder + template management (versioned, soft-archive via archived_at)
+- `/admin/email-preview`: live iframe preview of the invite email template, role variants (Graph mail wiring deferred)
+
+**Document flow (shipped end-to-end against R2 + D1):**
+- `/upload` (GM): drag-drop, category (invoice/statement/other), vendor, amount, note → POST `/api/upload` writes blob to R2 + row to documents + audit_events
+- `/dashboard` (strand/admin): status tabs (Inbox/Reviewed/All — default Inbox), tiles (Today/Week/Pending review/Storage), category pills with counts, property selector, free-text search, sortable columns, per-row Mark reviewed / Reopen / Download
+- `/dashboard/[id]`: inline PDF/image preview via `?inline=1`, GM note in brass call-out, vendor/amount/timestamps, action buttons, full audit timeline
+- `/api/documents/[id]/download` + `/review` (audit-logged)
+- `/resources` (everyone): GM browse + download
+- `/api/resources` + `/api/resources/folders` + `/api/resources/[id]/download`
+
+**Data:**
+- Properties schema expanded (May 20): code, brand, owner_group, parsed address (street/city/state/zip), room_count, phone, fax, emergency_phone, property_email
+- 33 ASA properties seeded from `data/ASA Location Phone List 2026.xlsx` (gitignored). Total 1,289 rooms.
+- Seed script at `scripts/seed-properties.mjs` (xlsx parser + auto-fix: Salibury→Salisbury, Harrisonburg CHORUM nulled to prevent collision with Greenville)
+- Test placeholder property + test docs + R2 blobs cleaned up
+
+**Brand + visual:**
+- Tailwind v4, navy `#1D1D33` + brass `#BB945C` + cream `#F5F4F1`
+- Real Suite Manager logo (logo1.png variant from marketing site) on login + invite + every page header (white-on-navy)
+- DM Serif Display for page titles, Inter for body/UI
+
+**Security posture (current):**
+- Internet-facing `/login`. PBKDF2 makes brute force slow; no rate limit yet.
+- Cloudflare Access was considered (set up briefly, then torn down — allowlist maintenance would be brittle as Chris adds properties)
+- Recommended hardening still TODO: rate limit on `/api/auth/login` + `/api/auth/activate`, optional Turnstile on login form, app-level account lockout
+
+**Email:**
+- Microsoft Graph chosen as transport (Suite Manager M365 tenant). Wiring deferred.
+- `src/lib/email/templates.ts` has `buildInviteEmail()` ready — table-based + inline styles, system fonts; loads logo from public marketing site URL (so Access wouldn't block it if reintroduced)
+- `/admin/email-preview` renders live preview for iteration
+
+**Notable bugs caught + fixed:**
+- `password_hash NOT NULL` blocked invite-pending users → migrated table to nullable (May 20)
+- D1 partial unique index didn't satisfy `ON CONFLICT(code)` → switched to full unique index (multi-NULL still allowed by SQLite default)
+- `/api/users/:id/delete` failed on users with audit history (FK to audit_events.user_id) → endpoint now clears audit rows before deleting
+- Inline doc preview was spamming audit log with download events → preview path (`?inline=1`) now skips audit write
+
+**Files of note (new this session):**
+- `src/lib/{ids,crypto,session,audit,files}.ts`, `src/lib/email/templates.ts`
+- `src/middleware.ts`
+- `src/layouts/PortalLayout.astro`
+- `src/pages/{index,login,upload,resources,dashboard}.astro`
+- `src/pages/dashboard/[id].astro`
+- `src/pages/invite/[token].astro`
+- `src/pages/admin/{users,properties,templates,email-preview}.astro`
+- `src/pages/admin/{users,properties}/[id].astro`
+- `src/pages/api/auth/{login,logout,activate}.ts`
+- `src/pages/api/users.ts` + `src/pages/api/users/[id]/{update,delete}.ts`
+- `src/pages/api/properties.ts`
+- `src/pages/api/upload.ts`
+- `src/pages/api/documents/[id]/{download,review}.ts`
+- `src/pages/api/resources/{index,folders}.ts` + `src/pages/api/resources/[id]/download.ts`
+- `scripts/{create-user,seed-properties}.mjs`
+- `worker/db/schema.sql`
+
+**Pending (next sessions):**
+- Wire Microsoft Graph for invite + upload-notification emails
+- Rate limiting on auth endpoints (CF WAF rule + app-level lockout)
+- Bulk-invite GMs from property list
+- Property selector on GM upload-form recent-uploads strip
+- Vendors table (deferred — Brian said not yet)
+- Optional: cleanup remaining "hr" CHECK-constraint relic in DB
+
+**Decisions logged this session:**
+- Per-GM logins, not per-property — needed for clean audit attribution
+- Magic-link only path for v1 (no admin-set passwords); admins seed via `create-user.mjs`
+- Strand = single role covering accounting + HR (folded `hr` in May 21)
+- Properties is admin-only (nav + middleware gates both confirmed)
+- Email is MS Graph, deferred — not SendGrid
+
+---
+
 ## Session - 2026-05-20 — Document Portal scaffold
 
 **Completed:**

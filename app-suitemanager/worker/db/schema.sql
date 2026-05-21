@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS properties (
   fax             TEXT,
   emergency_phone TEXT,                            -- 24/7 GM cell
   property_email  TEXT,                            -- property inbox
+  latitude        REAL,                             -- geocoded via Nominatim (scripts/geocode-properties.mjs)
+  longitude       REAL,
   active          INTEGER NOT NULL DEFAULT 1,
   created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );

@@ -78,6 +78,7 @@ const rows = await env.DB
     `SELECT
        p.id, p.name, p.code, p.brand, p.owner_group,
        p.address_city, p.address_state, p.address_zip,
+       p.latitude, p.longitude,
        p.room_count, p.phone, p.emergency_phone, p.property_email,
        (SELECT u.name FROM users u WHERE u.property_id = p.id AND u.role = 'gm' AND u.active = 1 LIMIT 1) AS gm_name,
        (SELECT COUNT(*) FROM documents d WHERE d.property_id = p.id) AS doc_count
@@ -91,10 +92,28 @@ const rows = await env.DB
     id: string; name: string; code: string | null; brand: string | null;
     owner_group: string | null;
     address_city: string | null; address_state: string | null; address_zip: string | null;
+    latitude: number | null; longitude: number | null;
     room_count: number | null; phone: string | null; emergency_phone: string | null;
     property_email: string | null;
     gm_name: string | null; doc_count: number;
   }>();
+
+// Map data: only properties with coords. Inlined as JSON for Leaflet.
+const mapPoints = rows.results
+  .filter((r) => r.latitude != null && r.longitude != null)
+  .map((r) => ({
+    id: r.id,
+    name: r.name,
+    code: r.code,
+    brand: r.brand,
+    city: r.address_city,
+    state: r.address_state,
+    rooms: r.room_count,
+    gm: r.gm_name,
+    lat: r.latitude as number,
+    lng: r.longitude as number,
+  }));
+const missingCoords = rows.results.filter((r) => r.latitude == null || r.longitude == null).length;
 
 const fmtBrand = (b: string | null) =>
   b === "asa" ? "Affordable Suites of America" :
@@ -160,6 +179,102 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{noGmProps}</div>
     </div>
   </div>
+
+  <!-- Map -->
+  {mapPoints.length > 0 && (
+    <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden mb-6">
+      <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+        <h2 class="font-semibold text-[var(--color-navy)]">Portfolio map</h2>
+        <span class="text-xs text-[var(--color-muted)]">
+          {mapPoints.length} pinned
+          {missingCoords > 0 && <span class="text-[var(--color-brass-dark)]"> · {missingCoords} without coords</span>}
+        </span>
+      </header>
+      <div id="portfolio-map" style="height:420px;width:100%;"></div>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+      />
+      <script
+        is:inline
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+      ></script>
+      <script
+        type="application/json"
+        id="portfolio-map-data"
+        set:html={JSON.stringify(mapPoints)}
+      ></script>
+      <script is:inline>
+        (function () {
+          function init() {
+            if (typeof L === "undefined") return setTimeout(init, 60);
+            var el = document.getElementById("portfolio-map");
+            if (!el) return;
+            var dataEl = document.getElementById("portfolio-map-data");
+            var pts = JSON.parse(dataEl.textContent || "[]");
+            if (pts.length === 0) return;
+
+            var map = L.map(el, { scrollWheelZoom: false }).setView([35.5, -82], 5);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "© OpenStreetMap contributors",
+              maxZoom: 18,
+            }).addTo(map);
+
+            var navy = "#1D1D33";
+            var plum = "#7A5C73";
+            var muted = "#6B6B78";
+            var brass = "#BB945C";
+
+            var bounds = [];
+            pts.forEach(function (p) {
+              var color = p.brand === "asa" ? navy : p.brand === "acs" ? plum : muted;
+              var marker = L.circleMarker([p.lat, p.lng], {
+                radius: 8,
+                color: "#fff",
+                weight: 2,
+                fillColor: color,
+                fillOpacity: 0.95,
+              }).addTo(map);
+              var loc = [p.city, p.state].filter(Boolean).join(", ");
+              var brandLabel = p.brand === "asa"
+                ? "Affordable Suites of America"
+                : p.brand === "acs"
+                ? "Affordable Corporate Suites"
+                : "Unbranded";
+              var rooms = p.rooms != null ? p.rooms + " rooms" : "—";
+              var gm = p.gm
+                ? "<div style='color:" + muted + ";font-size:11px;margin-top:4px'>GM: " + p.gm + "</div>"
+                : "<div style='color:" + brass + ";font-size:11px;margin-top:4px;font-weight:600'>Needs GM</div>";
+              var code = p.code
+                ? "<span style='font-family:monospace;font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;margin-left:6px'>" + p.code + "</span>"
+                : "";
+              marker.bindPopup(
+                "<div style='min-width:180px'>" +
+                  "<div style='font-weight:700;color:" + navy + ";font-size:14px'>" +
+                    "<a href='/admin/properties/" + p.id + "' style='color:" + navy + ";text-decoration:none'>" + p.name + "</a>" + code +
+                  "</div>" +
+                  "<div style='color:" + muted + ";font-size:11px'>" + brandLabel + "</div>" +
+                  "<div style='margin-top:6px;color:" + navy + ";font-size:12px'>" + loc + " · " + rooms + "</div>" +
+                  gm +
+                "</div>"
+              );
+              bounds.push([p.lat, p.lng]);
+            });
+            if (bounds.length > 1) {
+              map.fitBounds(bounds, { padding: [30, 30] });
+            } else if (bounds.length === 1) {
+              map.setView(bounds[0], 10);
+            }
+          }
+          init();
+        })();
+      </script>
+    </section>
+  )}
 
   <!-- Brand chips -->
   <div class="flex items-center gap-2 mb-3 flex-wrap">
