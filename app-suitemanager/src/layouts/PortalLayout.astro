@@ -30,7 +30,7 @@ const displayInitials = user ? initialsOf(user.name) : initials;
 // Role-aware nav. Admin sees everything.
 const role = user?.role;
 const navItems: { href: string; label: string }[] = [];
-if (role === "gm" || role === "admin") navItems.push({ href: "/upload", label: "Upload" });
+if (role === "gm") navItems.push({ href: "/my-property", label: "My Property" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", label: "Dashboard" });
 if (user) navItems.push({ href: "/resources", label: "Resources" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });

@@ -94,7 +94,7 @@ export function clearSessionCookie(secure: boolean): string {
 export function roleHome(role: SessionUser['role']): string {
   switch (role) {
     case 'gm':
-      return '/upload';
+      return '/my-property';
     case 'strand':
       return '/dashboard';
     case 'admin':

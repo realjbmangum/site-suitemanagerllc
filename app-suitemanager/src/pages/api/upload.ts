@@ -56,7 +56,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const documentId = generateId();
   const cleanName = sanitizeFilename(file.name);
-  const r2Key = `documents/${propertyId}/${category}/${documentId}-${cleanName}`;
+  // Property-scoped layout — keeps R2 permissions / browsing clean.
+  // properties/{propertyId}/gm-uploads/{category}/...
+  // Other doc kinds (financials, etc.) sit alongside gm-uploads under the property.
+  const r2Key = `properties/${propertyId}/gm-uploads/${category}/${documentId}-${cleanName}`;
 
   // Stream to R2.
   await env.FILES.put(r2Key, file.stream(), {

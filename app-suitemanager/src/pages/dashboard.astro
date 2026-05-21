@@ -11,6 +11,7 @@ const category = url.searchParams.get("category") || "all"; // all | invoice | s
 const filter = url.searchParams.get("filter") || "";        // '' | pending | today | week
 const propertyId = url.searchParams.get("property") || "";  // '' = all properties
 const q = (url.searchParams.get("q") || "").trim();
+const payment = url.searchParams.get("payment") || "";     // '' | unpaid | paid
 const sort = url.searchParams.get("sort") || "date";        // date | property | vendor | amount
 const dir = (url.searchParams.get("dir") || "desc") === "asc" ? "asc" : "desc";
 
@@ -26,7 +27,7 @@ const selectedProperty = propertyId
 const tiles = await env.DB.batch([
   env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-1 day')"),
   env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE created_at >= datetime('now','-7 day')"),
-  env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE status = 'new' AND flagged = 1"),
+  env.DB.prepare("SELECT COUNT(*) AS n FROM documents WHERE category = 'invoice' AND payment_status = 'unpaid'"),
   env.DB.prepare(
     `SELECT
       (SELECT COALESCE(SUM(size_bytes), 0) FROM documents) +
@@ -35,7 +36,7 @@ const tiles = await env.DB.batch([
 ]);
 const today = (tiles[0].results[0] as any).n as number;
 const week = (tiles[1].results[0] as any).n as number;
-const pending = (tiles[2].results[0] as any).n as number;
+const unpaid = (tiles[2].results[0] as any).n as number;
 const storageBytes = (tiles[3].results[0] as any).bytes as number;
 
 const fmtBytes = (b: number) => {
@@ -72,8 +73,12 @@ if (propertyId) {
   where.push("d.property_id = ?");
   args.push(propertyId);
 }
+if (payment === "unpaid" || payment === "paid") {
+  where.push("d.payment_status = ?");
+  args.push(payment);
+}
 if (filter === "pending") {
-  where.push("d.flagged = 1");
+  where.push("d.category = 'invoice' AND d.payment_status = 'unpaid'");
 } else if (filter === "today") {
   where.push("d.created_at >= datetime('now','-1 day')");
 } else if (filter === "week") {
@@ -97,7 +102,8 @@ const orderSql = `ORDER BY ${sortColumn[sort] ?? "d.created_at"} ${dir === "asc"
 const rows = await env.DB
   .prepare(
     `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.note,
-            d.flagged, d.status, d.created_at, d.reviewed_at,
+            d.flagged, d.status, d.payment_status, d.check_number, d.check_date,
+            d.created_at, d.reviewed_at,
             p.name AS property_name, u.name AS gm_name
      FROM documents d
      LEFT JOIN properties p ON p.id = d.property_id
@@ -110,8 +116,9 @@ const rows = await env.DB
   .all<{
     id: string; filename: string; category: string;
     vendor: string | null; amount_cents: number | null; note: string | null;
-    flagged: number; status: string; created_at: string;
-    reviewed_at: string | null;
+    flagged: number; status: string;
+    payment_status: string; check_number: string | null; check_date: string | null;
+    created_at: string; reviewed_at: string | null;
     property_name: string | null; gm_name: string | null;
   }>();
 
@@ -191,8 +198,8 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
         ? "border-[var(--color-brass)] bg-[var(--color-brass-light)]/30"
         : "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)] hover:bg-[var(--color-brass-light)]/30"
     }`}>
-      <div class="text-xs font-semibold text-[var(--color-brass-dark)] uppercase tracking-widest">Pending review</div>
-      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{pending}</div>
+      <div class="text-xs font-semibold text-[var(--color-brass-dark)] uppercase tracking-widest">Unpaid invoices</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{unpaid}</div>
     </a>
     <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4" title="Sum of GM uploads + HR templates in R2">
       <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Storage used</div>
@@ -362,7 +369,16 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
               )}
             </td>
             <td class="px-5 py-3">
-              <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
+              <div class="flex flex-col gap-1 items-start">
+                <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
+                {r.category === "invoice" && (
+                  r.payment_status === "paid" ? (
+                    <span class="pill bg-green-100 text-green-800 border border-green-200" title={`Check #${r.check_number || "?"} · ${r.check_date || "?"}`}>Paid</span>
+                  ) : (
+                    <span class="pill bg-[var(--color-brass-light)]/30 text-[var(--color-brass-dark)] border border-[var(--color-brass)]">Unpaid</span>
+                  )
+                )}
+              </div>
             </td>
             <td class="px-5 py-3 text-right tabular-nums text-[var(--color-navy)]">{fmtMoney(r.amount_cents)}</td>
             <td class="px-5 py-3 text-[var(--color-muted)]">

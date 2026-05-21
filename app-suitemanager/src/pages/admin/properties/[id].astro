@@ -97,7 +97,8 @@ const pillClass = (cat: string) =>
       <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">{p.name}</h1>
       {fullAddress && <p class="text-sm text-[var(--color-muted)] mt-1">{fullAddress}</p>}
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap">
+      <a href={`/my-property?property=${p.id}`} class="btn-ghost text-sm">Preview as GM</a>
       <a href={`/dashboard?property=${p.id}`} class="btn-ghost text-sm">View documents</a>
       <a href={`/admin/users?property=${p.id}`} class="btn-primary text-sm">Invite a GM</a>
     </div>

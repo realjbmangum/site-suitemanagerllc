@@ -49,11 +49,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Role gates (page routes). Admin can access every surface.
   const role = context.locals.user.role;
-  if (path === '/upload' && role !== 'gm' && role !== 'admin') {
+  if (path === '/my-property' && role !== 'gm' && role !== 'admin') {
     return Response.redirect(new URL('/dashboard', context.request.url), 302);
   }
-  if (path.startsWith('/dashboard') && role !== 'strand' && role !== 'admin') {
-    return Response.redirect(new URL('/upload', context.request.url), 302);
+  // GMs can OPEN a document detail page for their own property (the page
+  // enforces the property-match check). They cannot see the dashboard list.
+  if (path === '/dashboard' && role !== 'strand' && role !== 'admin') {
+    return Response.redirect(new URL('/my-property', context.request.url), 302);
   }
   // /admin/templates is open to strand + admin (Karen at Strand HR is now
   // a strand user). Everything else under /admin/ is admin-only.
