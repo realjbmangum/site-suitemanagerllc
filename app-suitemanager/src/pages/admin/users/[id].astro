@@ -1,0 +1,267 @@
+---
+import PortalLayout from "../../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const me = Astro.locals.user!;
+const { id } = Astro.params;
+const url = new URL(Astro.request.url);
+const saved = url.searchParams.get("saved") === "1";
+const error = url.searchParams.get("error");
+
+const user = await env.DB
+  .prepare(
+    `SELECT id, email, name, role, property_id, active,
+            invite_token, invite_expires_at,
+            password_hash IS NOT NULL AS activated,
+            created_at
+     FROM users WHERE id = ?`
+  )
+  .bind(id)
+  .first<{
+    id: string; email: string; name: string; role: string;
+    property_id: string | null; active: number;
+    invite_token: string | null; invite_expires_at: string | null;
+    activated: number; created_at: string;
+  }>();
+
+if (!user) return Astro.redirect("/admin/users?error=Not+found");
+
+const properties = await env.DB
+  .prepare("SELECT id, name, address_state FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string; address_state: string | null }>();
+
+const isSelf = user.id === me.id;
+
+// Recent activity for this user.
+const recent = await env.DB
+  .prepare(
+    `SELECT action, detail, document_id, resource_id, created_at
+     FROM audit_events WHERE user_id = ? ORDER BY created_at DESC LIMIT 15`
+  )
+  .bind(id)
+  .all<{ action: string; detail: string | null; document_id: string | null; resource_id: string | null; created_at: string }>();
+
+const fmtTime = (iso: string) => new Date(iso + "Z").toLocaleString();
+const fmtRel = (iso: string) => {
+  const d = new Date(iso + "Z");
+  const diff = (Date.now() - d.getTime()) / 60000;
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${Math.round(diff)} min ago`;
+  if (diff < 1440) return `${Math.round(diff / 60)} hr ago`;
+  return d.toLocaleDateString();
+};
+
+const actionLabel: Record<string, string> = {
+  login: "Signed in",
+  upload: "Uploaded a document",
+  download: "Downloaded a document",
+  review: "Marked reviewed",
+  reopen: "Reopened",
+  "user.invite": "Invited a user",
+  "user.update": "Updated a user",
+  "user.delete": "Removed a user",
+  "user.activate": "Set their password",
+  "property.create": "Created a property",
+  "folder.create": "Created a folder",
+  "resource.upload": "Uploaded a template",
+  "resource.download": "Downloaded a template",
+};
+
+const inviteUrl =
+  user.invite_token && !user.activated
+    ? `${url.origin}/invite/${user.invite_token}`
+    : null;
+---
+
+<PortalLayout title={user.name}>
+  <a href="/admin/users" class="text-sm text-[var(--color-muted)] hover:text-[var(--color-navy)] mb-4 inline-flex items-center gap-1">
+    ← Back to users
+  </a>
+
+  <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+    <div>
+      <div class="flex items-center gap-3 mb-2">
+        <span class="capitalize text-xs uppercase tracking-widest text-[var(--color-muted)]">{user.role}</span>
+        {user.activated ? (
+          <span class="text-xs text-green-700 font-semibold">Active</span>
+        ) : (
+          <span class="text-xs text-[var(--color-brass-dark)] font-semibold">Invite pending</span>
+        )}
+        {!user.active && <span class="text-xs text-red-600 font-semibold">Deactivated</span>}
+      </div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">{user.name}</h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">{user.email}</p>
+    </div>
+  </div>
+
+  {saved && (
+    <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-800">
+      Changes saved.
+    </div>
+  )}
+  {error && (
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+      {error}
+    </div>
+  )}
+
+  {inviteUrl && (
+    <div class="mb-6 rounded-xl border border-[var(--color-brass)] bg-[var(--color-brass-light)]/15 p-5">
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-brass-dark)]">
+        Invite pending
+      </div>
+      <p class="text-sm text-[var(--color-navy)] mt-1 mb-3">
+        This user hasn't set their password yet. Share this link — expires {user.invite_expires_at ? new Date(user.invite_expires_at + "Z").toLocaleDateString() : "soon"}.
+      </p>
+      <div class="flex items-center gap-2 flex-wrap">
+        <input
+          id="invite-link"
+          readonly
+          value={inviteUrl}
+          class="flex-1 min-w-[260px] rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-xs font-mono text-[var(--color-navy)]"
+        />
+        <button
+          type="button"
+          class="btn-primary text-sm"
+          data-copy-target="invite-link"
+        >
+          Copy link
+        </button>
+      </div>
+    </div>
+  )}
+
+  <div class="grid lg:grid-cols-[1fr_360px] gap-6">
+    <!-- Edit form -->
+    <form
+      method="POST"
+      action={`/api/users/${user.id}/update`}
+      class="bg-white border border-[var(--color-hairline)] rounded-xl p-6 space-y-5"
+    >
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Email</label>
+        <div class="text-sm text-[var(--color-navy)] font-mono">{user.email}</div>
+        <p class="text-xs text-[var(--color-muted)] mt-1">
+          Email is the identity — to change it, delete this user and re-invite under the new address.
+        </p>
+      </div>
+
+      <div>
+        <label for="name" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Full name</label>
+        <input id="name" name="name" type="text" required value={user.name}
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+      </div>
+
+      <div>
+        <label for="role" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Role</label>
+        <select id="role" name="role" required
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+          <option value="gm" selected={user.role === "gm"}>GM (hotel general manager)</option>
+          <option value="strand" selected={user.role === "strand"}>Strand accounting</option>
+          <option value="hr" selected={user.role === "hr"}>Strand HR</option>
+          <option value="admin" selected={user.role === "admin"}>Suite Manager admin</option>
+        </select>
+        {isSelf && (
+          <p class="text-xs text-[var(--color-muted)] mt-1">
+            You're editing your own account — you can't change yourself out of the admin role.
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label for="property_id" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+          Property <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(GMs only)</span>
+        </label>
+        <select id="property_id" name="property_id"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+          <option value="">— none —</option>
+          {properties.results.map((p) => (
+            <option value={p.id} selected={user.property_id === p.id}>
+              {p.name}{p.address_state ? `, ${p.address_state}` : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div class="border-t border-[var(--color-hairline)] pt-4">
+        <label class="inline-flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" name="active" value="1" checked={user.active === 1} disabled={isSelf}
+            class="w-4 h-4 accent-[var(--color-brass)]" />
+          <span class="text-sm font-semibold text-[var(--color-navy)]">Account active</span>
+        </label>
+        <p class="text-xs text-[var(--color-muted)] mt-1.5 pl-7">
+          Unchecking deactivates the account — they can't sign in, but their history is preserved.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="btn-primary text-sm">Save changes</button>
+        <a href="/admin/users" class="btn-ghost text-sm">Cancel</a>
+        {!isSelf && (
+          <form
+            method="POST"
+            action={`/api/users/${user.id}/delete`}
+            data-confirm={`Permanently delete ${user.email}? Their audit history will be cleared. Documents stay (uploaded_by becomes orphaned).`}
+            class="ml-auto"
+          >
+            <button type="submit" class="text-xs font-semibold text-red-600 hover:text-red-700">
+              Delete user
+            </button>
+          </form>
+        )}
+      </div>
+    </form>
+
+    <!-- Activity -->
+    <aside class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Recent activity</h2>
+      {recent.results.length === 0 ? (
+        <p class="text-sm text-[var(--color-muted)]">No activity yet.</p>
+      ) : (
+        <ol class="space-y-3">
+          {recent.results.map((e) => (
+            <li class="text-sm">
+              <div class="font-semibold text-[var(--color-navy)]">
+                {actionLabel[e.action] || e.action}
+              </div>
+              <div class="text-xs text-[var(--color-muted)]">
+                {fmtRel(e.created_at)}
+                {e.document_id && (
+                  <a href={`/dashboard/${e.document_id}`} class="ml-2 text-[var(--color-brass-dark)] hover:text-[var(--color-brass)]">
+                    open doc →
+                  </a>
+                )}
+              </div>
+              {e.detail && (
+                <div class="text-xs text-[var(--color-muted)] italic mt-0.5 truncate">
+                  {e.detail}
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </aside>
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const el = document.getElementById(btn.dataset.copyTarget);
+        if (!el) return;
+        try {
+          await navigator.clipboard.writeText(el.value);
+          const orig = btn.textContent;
+          btn.textContent = "Copied!";
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        } catch { el.select(); }
+      });
+    });
+    document.querySelectorAll("form[data-confirm]").forEach((form) => {
+      form.addEventListener("submit", (e) => {
+        if (!confirm(form.dataset.confirm || "Delete?")) e.preventDefault();
+      });
+    });
+  </script>
+</PortalLayout>
