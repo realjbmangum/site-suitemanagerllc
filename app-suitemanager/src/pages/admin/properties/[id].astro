@@ -1,0 +1,239 @@
+---
+import PortalLayout from "../../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const { id } = Astro.params;
+
+const p = await env.DB
+  .prepare(
+    `SELECT id, name, code, brand, owner_group,
+            address_street, address_city, address_state, address_zip,
+            room_count, phone, fax, emergency_phone, property_email,
+            active, created_at
+     FROM properties WHERE id = ?`
+  )
+  .bind(id)
+  .first<{
+    id: string; name: string; code: string | null; brand: string | null;
+    owner_group: string | null;
+    address_street: string | null; address_city: string | null;
+    address_state: string | null; address_zip: string | null;
+    room_count: number | null; phone: string | null;
+    fax: string | null; emergency_phone: string | null;
+    property_email: string | null;
+    active: number; created_at: string;
+  }>();
+
+if (!p) return Astro.redirect("/admin/properties?error=Not+found");
+
+const gms = await env.DB
+  .prepare(
+    `SELECT id, name, email, password_hash IS NOT NULL AS activated
+     FROM users WHERE property_id = ? AND role = 'gm' ORDER BY active DESC, name`
+  )
+  .bind(id)
+  .all<{ id: string; name: string; email: string; activated: number }>();
+
+const recent = await env.DB
+  .prepare(
+    `SELECT id, filename, category, vendor, amount_cents, status, created_at
+     FROM documents WHERE property_id = ? ORDER BY created_at DESC LIMIT 10`
+  )
+  .bind(id)
+  .all<{
+    id: string; filename: string; category: string;
+    vendor: string | null; amount_cents: number | null;
+    status: string; created_at: string;
+  }>();
+
+const stats = await env.DB
+  .prepare(
+    `SELECT
+      (SELECT COUNT(*) FROM documents WHERE property_id = ?) AS total,
+      (SELECT COUNT(*) FROM documents WHERE property_id = ? AND status = 'new') AS new_count,
+      (SELECT COALESCE(SUM(amount_cents), 0) FROM documents WHERE property_id = ? AND category = 'invoice' AND created_at >= datetime('now','-30 day')) AS invoice_30d`
+  )
+  .bind(id, id, id)
+  .first<{ total: number; new_count: number; invoice_30d: number }>();
+
+const fmtMoney = (cents: number | null) =>
+  cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
+const fmtRel = (iso: string) => {
+  const d = new Date(iso + "Z");
+  const diff = (Date.now() - d.getTime()) / 60000;
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${Math.round(diff)} min ago`;
+  if (diff < 1440) return `${Math.round(diff / 60)} hr ago`;
+  if (diff < 1440 * 30) return `${Math.round(diff / 1440)} days ago`;
+  return d.toLocaleDateString();
+};
+
+const brandLabel =
+  p.brand === "asa" ? "Affordable Suites of America" :
+  p.brand === "acs" ? "Affordable Corporate Suites" :
+  "Unbranded";
+
+const fullAddress = [p.address_street, p.address_city, p.address_state, p.address_zip]
+  .filter(Boolean)
+  .join(", ");
+
+const pillClass = (cat: string) =>
+  cat === "invoice" ? "pill-invoice" :
+  cat === "statement" ? "pill-statement" : "pill-other";
+---
+
+<PortalLayout title={p.name}>
+  <a href="/admin/properties" class="text-sm text-[var(--color-muted)] hover:text-[var(--color-navy)] mb-4 inline-flex items-center gap-1">
+    ← Back to properties
+  </a>
+
+  <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+    <div>
+      <div class="flex items-center gap-3 mb-2">
+        {p.code && <span class="font-mono text-xs px-2 py-1 rounded bg-[var(--color-hairline)] text-[var(--color-muted)]">{p.code}</span>}
+        <span class="text-xs uppercase tracking-widest text-[var(--color-muted)]">{brandLabel}</span>
+      </div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">{p.name}</h1>
+      {fullAddress && <p class="text-sm text-[var(--color-muted)] mt-1">{fullAddress}</p>}
+    </div>
+    <div class="flex items-center gap-2">
+      <a href={`/dashboard?property=${p.id}`} class="btn-ghost text-sm">View documents</a>
+      <a href={`/admin/users?property=${p.id}`} class="btn-primary text-sm">Invite a GM</a>
+    </div>
+  </div>
+
+  <!-- Stats tiles -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Rooms</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{p.room_count ?? "—"}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Documents</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.total ?? 0}</div>
+    </div>
+    <div class={`rounded-xl border p-4 ${(stats?.new_count ?? 0) > 0 ? "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)]" : "bg-white border-[var(--color-hairline)]"}`}>
+      <div class={`text-xs font-semibold uppercase tracking-widest ${(stats?.new_count ?? 0) > 0 ? "text-[var(--color-brass-dark)]" : "text-[var(--color-muted)]"}`}>In Inbox</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.new_count ?? 0}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Invoices 30d</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtMoney(stats?.invoice_30d ?? 0)}</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+    <!-- Left: documents + GMs -->
+    <div class="space-y-6">
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+          <h2 class="font-semibold text-[var(--color-navy)]">Recent documents</h2>
+          <a href={`/dashboard?property=${p.id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">See all →</a>
+        </header>
+        {recent.results.length === 0 ? (
+          <div class="px-5 py-10 text-center text-[var(--color-muted)] text-sm">
+            No documents from this property yet.
+          </div>
+        ) : (
+          <ul class="divide-y divide-[var(--color-hairline)]">
+            {recent.results.map((d) => (
+              <li>
+                <a href={`/dashboard/${d.id}`} class="flex items-center justify-between gap-3 px-5 py-3 hover:bg-[var(--color-cream)]">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class={`pill ${pillClass(d.category)} capitalize`}>{d.category}</span>
+                      <span class="text-sm text-[var(--color-navy)] truncate">{d.filename}</span>
+                    </div>
+                    <div class="text-xs text-[var(--color-muted)] mt-1">
+                      {d.vendor || "—"} · {fmtRel(d.created_at)}
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold text-[var(--color-navy)] tabular-nums">{fmtMoney(d.amount_cents)}</div>
+                    <div class="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">{d.status}</div>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+          <h2 class="font-semibold text-[var(--color-navy)]">General managers</h2>
+          <span class="text-xs text-[var(--color-muted)]">{gms.results.length} {gms.results.length === 1 ? "user" : "users"}</span>
+        </header>
+        {gms.results.length === 0 ? (
+          <div class="px-5 py-8 text-center text-[var(--color-muted)] text-sm">
+            No GM assigned yet. <a href={`/admin/users`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline">Invite one</a>.
+          </div>
+        ) : (
+          <ul class="divide-y divide-[var(--color-hairline)]">
+            {gms.results.map((g) => (
+              <li class="flex items-center justify-between px-5 py-3">
+                <div>
+                  <div class="font-semibold text-[var(--color-navy)]">{g.name}</div>
+                  <div class="text-xs text-[var(--color-muted)]">{g.email}</div>
+                </div>
+                {g.activated ? (
+                  <span class="text-xs text-green-700 font-semibold">Active</span>
+                ) : (
+                  <span class="text-xs text-[var(--color-brass-dark)] font-semibold">Invite pending</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+
+    <!-- Right: contact + meta -->
+    <aside class="space-y-4">
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Contact</h2>
+        <dl class="space-y-3 text-sm">
+          {p.phone && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Front desk</dt>
+              <dd class="text-[var(--color-navy)]"><a href={`tel:${p.phone}`} class="hover:text-[var(--color-brass-dark)]">{p.phone}</a></dd>
+            </div>
+          )}
+          {p.emergency_phone && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Emergency / GM cell</dt>
+              <dd class="text-[var(--color-navy)]"><a href={`tel:${p.emergency_phone}`} class="hover:text-[var(--color-brass-dark)]">{p.emergency_phone}</a></dd>
+            </div>
+          )}
+          {p.fax && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Fax</dt>
+              <dd class="text-[var(--color-navy)]">{p.fax}</dd>
+            </div>
+          )}
+          {p.property_email && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Email</dt>
+              <dd><a href={`mailto:${p.property_email}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] break-all">{p.property_email}</a></dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Details</h2>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Owner group</dt>
+            <dd class="text-[var(--color-navy)]">{p.owner_group || "—"}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Added</dt>
+            <dd class="text-[var(--color-navy)]">{new Date(p.created_at + "Z").toLocaleDateString()}</dd>
+          </div>
+        </dl>
+      </section>
+    </aside>
+  </div>
+</PortalLayout>

@@ -23,10 +23,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     .first<{ id: string; email: string }>();
   if (!target) return bounce(request, 'User not found.');
 
-  // Clean sessions, then delete the user. Documents/audit_events retain
-  // the user_id as historical reference.
+  // Audit events keep a NOT NULL FK to users(id), so we have to clear them
+  // before the user row can be removed. Documents retain uploaded_by, which
+  // would orphan once the user is gone — for now we delete those audit rows
+  // and accept the loss of historical attribution. Long-term fix: soft-delete
+  // (set active=0) instead.
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM audit_events WHERE user_id = ?').bind(id),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id),
   ]);
 

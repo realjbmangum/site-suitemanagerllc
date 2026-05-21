@@ -1,0 +1,288 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+
+const brand = url.searchParams.get("brand") || "all";       // all | asa | acs | none
+const state = url.searchParams.get("state") || "all";
+const owner = url.searchParams.get("owner") || "all";
+const q = (url.searchParams.get("q") || "").trim();
+const sort = url.searchParams.get("sort") || "name";
+const dir = (url.searchParams.get("dir") || "asc") === "desc" ? "desc" : "asc";
+
+// Aggregates — across ALL properties, regardless of filter.
+const aggregates = await env.DB.batch([
+  env.DB.prepare("SELECT COUNT(*) AS n FROM properties WHERE active = 1"),
+  env.DB.prepare("SELECT COALESCE(SUM(room_count), 0) AS rooms FROM properties WHERE active = 1"),
+  env.DB.prepare("SELECT COUNT(DISTINCT address_state) AS s FROM properties WHERE active = 1 AND address_state IS NOT NULL"),
+  env.DB.prepare("SELECT COALESCE(AVG(room_count), 0) AS avg FROM properties WHERE active = 1 AND room_count > 0"),
+  env.DB.prepare(
+    `SELECT
+      (SELECT COUNT(*) FROM properties WHERE active = 1 AND brand = 'asa') AS asa,
+      (SELECT COUNT(*) FROM properties WHERE active = 1 AND brand = 'acs') AS acs,
+      (SELECT COUNT(*) FROM properties WHERE active = 1 AND brand IS NULL) AS unbranded`
+  ),
+  env.DB.prepare(
+    `SELECT COUNT(DISTINCT u.property_id) AS staffed FROM users u
+     WHERE u.role = 'gm' AND u.active = 1 AND u.property_id IS NOT NULL`
+  ),
+]);
+
+const totalProps = (aggregates[0].results[0] as any).n as number;
+const totalRooms = (aggregates[1].results[0] as any).rooms as number;
+const totalStates = (aggregates[2].results[0] as any).s as number;
+const avgRooms = (aggregates[3].results[0] as any).avg as number;
+const brandCounts = aggregates[4].results[0] as { asa: number; acs: number; unbranded: number };
+const staffedProps = (aggregates[5].results[0] as any).staffed as number;
+const noGmProps = totalProps - staffedProps;
+
+// Distinct lookup lists for filter UI.
+const states = await env.DB
+  .prepare("SELECT DISTINCT address_state FROM properties WHERE address_state IS NOT NULL ORDER BY address_state")
+  .all<{ address_state: string }>();
+const owners = await env.DB
+  .prepare("SELECT DISTINCT owner_group FROM properties WHERE owner_group IS NOT NULL ORDER BY owner_group")
+  .all<{ owner_group: string }>();
+
+// Filtered list.
+const where: string[] = ["p.active = 1"];
+const args: unknown[] = [];
+if (brand !== "all") {
+  if (brand === "none") where.push("p.brand IS NULL");
+  else { where.push("p.brand = ?"); args.push(brand); }
+}
+if (state !== "all") { where.push("p.address_state = ?"); args.push(state); }
+if (owner !== "all") { where.push("p.owner_group = ?"); args.push(owner); }
+if (q) {
+  where.push("(LOWER(p.name) LIKE ? OR LOWER(COALESCE(p.code,'')) LIKE ? OR LOWER(COALESCE(p.address_city,'')) LIKE ?)");
+  const like = `%${q.toLowerCase()}%`;
+  args.push(like, like, like);
+}
+const whereSql = `WHERE ${where.join(" AND ")}`;
+
+const sortColumn: Record<string, string> = {
+  name: "p.name",
+  code: "p.code",
+  state: "p.address_state",
+  city: "p.address_city",
+  rooms: "p.room_count",
+  owner: "p.owner_group",
+  brand: "p.brand",
+};
+const orderSql = `ORDER BY ${sortColumn[sort] ?? "p.name"} ${dir === "asc" ? "ASC" : "DESC"}, p.name ASC`;
+
+const rows = await env.DB
+  .prepare(
+    `SELECT
+       p.id, p.name, p.code, p.brand, p.owner_group,
+       p.address_city, p.address_state, p.address_zip,
+       p.room_count, p.phone, p.emergency_phone, p.property_email,
+       (SELECT u.name FROM users u WHERE u.property_id = p.id AND u.role = 'gm' AND u.active = 1 LIMIT 1) AS gm_name,
+       (SELECT COUNT(*) FROM documents d WHERE d.property_id = p.id) AS doc_count
+     FROM properties p
+     ${whereSql}
+     ${orderSql}
+     LIMIT 200`
+  )
+  .bind(...args)
+  .all<{
+    id: string; name: string; code: string | null; brand: string | null;
+    owner_group: string | null;
+    address_city: string | null; address_state: string | null; address_zip: string | null;
+    room_count: number | null; phone: string | null; emergency_phone: string | null;
+    property_email: string | null;
+    gm_name: string | null; doc_count: number;
+  }>();
+
+const fmtBrand = (b: string | null) =>
+  b === "asa" ? "Affordable Suites of America" :
+  b === "acs" ? "Affordable Corporate Suites" :
+  "—";
+const brandPill = (b: string | null) =>
+  b === "asa" ? "bg-[var(--color-navy)] text-white" :
+  b === "acs" ? "bg-[var(--color-plum)] text-white" :
+  "bg-[var(--color-hairline)] text-[var(--color-muted)]";
+
+const buildHref = (overrides: Record<string, string | null>) => {
+  const u = new URL(url);
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + (u.search || "");
+};
+
+const sortHref = (col: string) => {
+  const sameCol = sort === col;
+  const nextDir = sameCol && dir === "asc" ? "desc" : "asc";
+  return buildHref({
+    sort: col === "name" ? null : col,
+    dir: nextDir === "asc" ? null : "desc",
+  });
+};
+const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : "↓") : "");
+---
+
+<PortalLayout title="Properties">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Properties
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Suite Manager portfolio · {rows.results.length} of {totalProps} shown
+      </p>
+    </div>
+  </div>
+
+  <!-- Tiles -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Properties</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{totalProps}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Total rooms</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{totalRooms.toLocaleString()}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">States</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{totalStates}</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Avg rooms</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{Math.round(avgRooms)}</div>
+    </div>
+    <div class={`rounded-xl border p-4 ${noGmProps > 0 ? "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)]" : "bg-white border-[var(--color-hairline)]"}`}>
+      <div class={`text-xs font-semibold uppercase tracking-widest ${noGmProps > 0 ? "text-[var(--color-brass-dark)]" : "text-[var(--color-muted)]"}`}>Need a GM</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{noGmProps}</div>
+    </div>
+  </div>
+
+  <!-- Brand chips -->
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
+    <a href={buildHref({ brand: null })} class={`pill ${brand === "all" ? "pill-statement" : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)]"}`}>
+      All brands
+    </a>
+    <a href={buildHref({ brand: "asa" })} class={`pill ${brand === "asa" ? "pill-statement" : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)]"}`}>
+      ASA · {brandCounts.asa}
+    </a>
+    <a href={buildHref({ brand: "acs" })} class={`pill ${brand === "acs" ? "bg-[var(--color-plum)] text-white" : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)]"}`}>
+      Corporate Suites · {brandCounts.acs}
+    </a>
+    {brandCounts.unbranded > 0 && (
+      <a href={buildHref({ brand: "none" })} class={`pill ${brand === "none" ? "pill-statement" : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)]"}`}>
+        Unbranded · {brandCounts.unbranded}
+      </a>
+    )}
+  </div>
+
+  <!-- Search + state + owner -->
+  <form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+    {brand !== "all" && <input type="hidden" name="brand" value={brand} />}
+    {sort !== "name" && <input type="hidden" name="sort" value={sort} />}
+    {dir !== "asc" && <input type="hidden" name="dir" value={dir} />}
+    <input
+      type="search"
+      name="q"
+      value={q}
+      placeholder="Search name, code, or city"
+      class="flex-1 min-w-[200px] rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
+    />
+    <select name="state" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+      <option value="all">All states</option>
+      {states.results.map((s) => (
+        <option value={s.address_state} selected={state === s.address_state}>{s.address_state}</option>
+      ))}
+    </select>
+    <select name="owner" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+      <option value="all">All owners</option>
+      {owners.results.map((o) => (
+        <option value={o.owner_group} selected={owner === o.owner_group}>{o.owner_group}</option>
+      ))}
+    </select>
+    <button type="submit" class="btn-ghost text-sm">Apply</button>
+  </form>
+
+  <!-- Table -->
+  <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+        <tr>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("name")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Property <span class="text-[var(--color-brass)]">{sortIndicator("name")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("code")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Code <span class="text-[var(--color-brass)]">{sortIndicator("code")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("city")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Location <span class="text-[var(--color-brass)]">{sortIndicator("city")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">
+            <a href={sortHref("owner")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Owner <span class="text-[var(--color-brass)]">{sortIndicator("owner")}</span>
+            </a>
+          </th>
+          <th class="text-right px-5 py-3">
+            <a href={sortHref("rooms")} class="inline-flex items-center gap-1 hover:text-[var(--color-navy)]">
+              Rooms <span class="text-[var(--color-brass)]">{sortIndicator("rooms")}</span>
+            </a>
+          </th>
+          <th class="text-left px-5 py-3">GM</th>
+          <th class="text-right px-5 py-3">Docs</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.results.length === 0 && (
+          <tr>
+            <td colspan="7" class="px-5 py-10 text-center text-[var(--color-muted)]">
+              No properties match this view.
+            </td>
+          </tr>
+        )}
+        {rows.results.map((r) => (
+          <tr class="border-t border-[var(--color-hairline)] hover:bg-[var(--color-cream)] cursor-pointer" data-href={`/admin/properties/${r.id}`}>
+            <td class="px-5 py-3">
+              <a href={`/admin/properties/${r.id}`} class="font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
+                {r.name}
+              </a>
+              {r.brand && (
+                <span class={`ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${brandPill(r.brand)}`}>
+                  {r.brand}
+                </span>
+              )}
+            </td>
+            <td class="px-5 py-3 font-mono text-xs text-[var(--color-muted)]">{r.code || "—"}</td>
+            <td class="px-5 py-3 text-[var(--color-navy)]">
+              {r.address_city || "—"}
+              {r.address_state && <span class="text-[var(--color-muted)]">, {r.address_state}</span>}
+            </td>
+            <td class="px-5 py-3 text-[var(--color-navy)]">{r.owner_group || "—"}</td>
+            <td class="px-5 py-3 text-right tabular-nums text-[var(--color-navy)]">{r.room_count ?? "—"}</td>
+            <td class="px-5 py-3">
+              {r.gm_name || <span class="text-[var(--color-brass-dark)] italic">Needs GM</span>}
+            </td>
+            <td class="px-5 py-3 text-right tabular-nums text-[var(--color-muted)]">{r.doc_count}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll("tr[data-href]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;
+        window.location.href = row.dataset.href;
+      });
+    });
+  </script>
+</PortalLayout>

@@ -9,9 +9,18 @@ const url = new URL(Astro.request.url);
 const status = url.searchParams.get("status") || "new";     // new (default) | reviewed | all
 const category = url.searchParams.get("category") || "all"; // all | invoice | statement | other
 const filter = url.searchParams.get("filter") || "";        // '' | pending | today | week
+const propertyId = url.searchParams.get("property") || "";  // '' = all properties
 const q = (url.searchParams.get("q") || "").trim();
 const sort = url.searchParams.get("sort") || "date";        // date | property | vendor | amount
 const dir = (url.searchParams.get("dir") || "desc") === "asc" ? "asc" : "desc";
+
+// All active properties for the selector.
+const propertyOptions = await env.DB
+  .prepare("SELECT id, name, address_state FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string; address_state: string | null }>();
+const selectedProperty = propertyId
+  ? propertyOptions.results.find((p) => p.id === propertyId) || null
+  : null;
 
 // Tile aggregates — always over ALL documents, not the filtered view.
 const tiles = await env.DB.batch([
@@ -58,6 +67,10 @@ if (status !== "all") {
 if (category !== "all") {
   where.push("d.category = ?");
   args.push(category);
+}
+if (propertyId) {
+  where.push("d.property_id = ?");
+  args.push(propertyId);
 }
 if (filter === "pending") {
   where.push("d.flagged = 1");
@@ -153,7 +166,9 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
         Incoming documents
       </h1>
       <p class="text-sm text-[var(--color-muted)] mt-1">
-        Strand Hospitality back-office inbox · {rows.results.length} {rows.results.length === 1 ? "match" : "matches"}
+        {selectedProperty
+          ? `${selectedProperty.name}${selectedProperty.address_state ? ", " + selectedProperty.address_state : ""}`
+          : "Strand Hospitality back-office inbox"} · {rows.results.length} {rows.results.length === 1 ? "match" : "matches"}
       </p>
     </div>
   </div>
@@ -228,7 +243,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
     ))}
   </div>
 
-  <form method="GET" class="mb-4">
+  <form method="GET" class="mb-4 flex flex-wrap items-center gap-2">
     {status !== "new" && <input type="hidden" name="status" value={status} />}
     {category !== "all" && <input type="hidden" name="category" value={category} />}
     {filter && <input type="hidden" name="filter" value={filter} />}
@@ -239,8 +254,29 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       name="q"
       value={q}
       placeholder="Search property, file, or vendor"
-      class="w-full sm:w-96 rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
+      class="flex-1 min-w-[220px] sm:max-w-96 rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]"
     />
+    <select
+      name="property"
+      class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)] min-w-[200px]"
+      onchange="this.form.submit()"
+    >
+      <option value="">All properties</option>
+      {propertyOptions.results.map((p) => (
+        <option value={p.id} selected={propertyId === p.id}>
+          {p.name}{p.address_state ? `, ${p.address_state}` : ""}
+        </option>
+      ))}
+    </select>
+    <button type="submit" class="btn-ghost text-sm">Apply</button>
+    {selectedProperty && (
+      <a
+        href={buildHref({ property: null })}
+        class="text-xs text-[var(--color-muted)] hover:text-[var(--color-navy)]"
+      >
+        Clear property filter
+      </a>
+    )}
   </form>
 
   <script is:inline>
