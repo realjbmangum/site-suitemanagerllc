@@ -32,9 +32,11 @@ const role = user?.role;
 const navItems: { href: string; label: string }[] = [];
 if (role === "gm") navItems.push({ href: "/my-property", label: "My Property" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", label: "Dashboard" });
-if (user) navItems.push({ href: "/resources", label: "Resources" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/admin/financials", label: "Financials" });
-if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
+// One "Resources" per role: GMs get the read view, Strand/admin get the
+// management view. (Replaces the old split of "Resources" + "HR Templates".)
+if (role === "gm") navItems.push({ href: "/resources", label: "Resources" });
+if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "Resources" });
 if (role === "admin") navItems.push({ href: "/admin/properties", label: "Properties" });
 if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
 // /admin/email-preview still exists (reachable by URL) but is unlinked —

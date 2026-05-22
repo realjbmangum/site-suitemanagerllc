@@ -10,7 +10,7 @@ const error = url.searchParams.get("error");
 
 const doc = await env.DB
   .prepare(
-    `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.note,
+    `SELECT d.id, d.filename, d.category, d.vendor, d.invoice_number, d.amount_cents, d.note,
             d.size_bytes, d.mime_type, d.status, d.flagged, d.created_at, d.reviewed_at,
             d.payment_status, d.check_number, d.check_date, d.paid_at, d.paid_by,
             d.property_id, d.uploaded_by,
@@ -25,6 +25,7 @@ const doc = await env.DB
   .bind(id)
   .first<{
     id: string; filename: string; category: string; vendor: string | null;
+    invoice_number: string | null;
     amount_cents: number | null; note: string | null;
     size_bytes: number; mime_type: string;
     status: string; flagged: number;
@@ -266,6 +267,12 @@ const actionLabel: Record<string, string> = {
             <dt class="text-xs text-[var(--color-muted)]">Vendor</dt>
             <dd class="text-[var(--color-navy)] font-medium">{doc.vendor || "—"}</dd>
           </div>
+          {doc.invoice_number && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Invoice #</dt>
+              <dd class="text-[var(--color-navy)] font-medium font-mono">{doc.invoice_number}</dd>
+            </div>
+          )}
           <div>
             <dt class="text-xs text-[var(--color-muted)]">Amount</dt>
             <dd class="text-[var(--color-navy)] font-medium tabular-nums">{fmtMoney(doc.amount_cents)}</dd>

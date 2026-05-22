@@ -217,6 +217,14 @@ const viewerType = (mime: string) =>
         </div>
 
         <div>
+          <label for="invoice_number" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Invoice number <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
+          </label>
+          <input id="invoice_number" name="invoice_number" type="text" placeholder="e.g. INV-10472"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+
+        <div>
           <label for="note" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Note (optional)</label>
           <textarea id="note" name="note" rows="2"
             class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"></textarea>

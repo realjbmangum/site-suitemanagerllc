@@ -55,13 +55,13 @@ const viewerType = (mime: string) =>
   mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 ---
 
-<PortalLayout title="HR Resources">
+<PortalLayout title="Resources">
   <section>
     <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-      HR Resources
+      Resources
     </h1>
     <p class="text-[var(--color-muted)] mt-1 mb-8 max-w-2xl">
-      Templates and forms from Strand HR. View or print — uploads of completed forms go through your HR system.
+      Forms and templates from Suite Manager and Strand — operational, accounting, and HR. View or print as you need them.
     </p>
 
     {folders.results.length === 0 && (unfiled?.n ?? 0) === 0 ? (

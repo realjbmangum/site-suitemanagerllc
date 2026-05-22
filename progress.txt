@@ -1,3 +1,112 @@
+## Session - 2026-05-21/22 — CRM build-out: properties, payments, financials, viewer; Chris demo
+
+Chris saw the portal, loved it, Strand asking for their own accounts. Demo to
+Strand at 10am May 22. Heavy feature session driven by Chris's emailed ideas.
+
+**Properties became a real CRM module:**
+- Schema expanded earlier; this session added `latitude`/`longitude`
+- `scripts/geocode-properties.mjs` — free Nominatim geocoder (1 req/sec,
+  custom UA), city/state fallback. All 32 active properties geocoded.
+- `/admin/properties` (admin only): 5 metric tiles (count, total rooms,
+  states, avg rooms, Need-a-GM), brand chips, state/owner/text filters,
+  sortable columns, **Leaflet + OpenStreetMap portfolio map** (markers
+  color-coded by brand, popups link to detail)
+- `/admin/properties/[id]`: full profile — code, brand, address, contact
+  card, tiles (rooms / docs / inbox / invoice 30d $), recent docs,
+  financials section, assigned GMs, Preview-as-GM button
+- 33 ASA properties seeded from xlsx; leftover test property cleaned up
+- DB count settled at 32 active properties (1,289 rooms)
+
+**Payment workflow on invoices (Chris idea #1):**
+- documents schema: `payment_status` (default 'unpaid'), `check_number`,
+  `check_date`, `paid_at`, `paid_by`
+- `POST /api/documents/[id]/payment` — Strand/admin marks paid w/ check
+  # + date; reopen; audit-logged
+- Document detail: payment card (Mark paid form for strand/admin,
+  read-only status for GM); Dashboard rows show paid/unpaid pill;
+  'Unpaid invoices' tile + filter
+
+**GM property hub (`/my-property`):**
+- Replaced the bare `/upload` form. Property header (name/code/address/
+  contact), tiles (rooms / docs / unpaid invoices + $), upload form,
+  property's documents with payment pills, financials section
+- `/upload` redirects here; roleHome('gm') → `/my-property`; nav item
+  'My Property'
+- GMs can open `/dashboard/[id]` for their OWN property's docs (read-only,
+  property-match enforced); Mark reviewed / Mark paid role-gated out
+
+**Financial Statements module (Chris idea #2):**
+- New `financial_statements` table — property-scoped, time-series
+  (period_year/month), statement_type (profit_loss/balance_sheet/
+  cash_flow/budget/other), title, description, archived_at
+- `POST /api/financials` (strand/admin upload), `GET /api/financials/
+  [id]/download` (role-scoped, ?inline=1 support)
+- `/admin/financials` — list/filter + sticky upload form
+- Embedded financials section on `/my-property` and `/admin/properties/[id]`
+- Nav 'Financials' for strand/admin
+
+**HR Templates — full management pass:**
+- Folders: reorder (▲▼), rename, delete (non-destructive — templates
+  move to Unfiled). `POST /api/resources/folders/[id]` (rename|delete|reorder)
+- Templates: replace (new version, bumps version, removes old blob),
+  edit/move, archive (soft-hide). `POST /api/resources/[id]`
+  (update|replace|archive)
+
+**User management:**
+- `/admin/users/[id]` edit page — name/role/property/active; email
+  read-only; self-edit guards; invite-resend; recent-activity sidebar
+- `POST /api/users/[id]/update`; delete endpoint clears audit_events
+  first to satisfy FK
+
+**Roles simplified:** `hr` folded into `strand` (Strand Hospitality = one
+org; one role covers accounting + HR templates). Code + schema CHECK
+updated; 0 hr users existed so no data migration.
+
+**UX fixes:**
+- Drag-and-drop actually works now — dashed boxes were styled labels with
+  hidden inputs (click-only). Shared `[data-dropzone]` script in
+  PortalLayout wires dragenter/over/leave/drop on every upload zone.
+- In-app file viewer modal — click View on any template/financial →
+  PDF/image opens in a panel over the page (Download button, Esc/backdrop
+  close). `/api/resources/[id]/download` gained ?inline=1 (was always
+  attachment — that's why template View downloaded instead of viewing).
+- 'Emails' removed from nav (email-preview is a preview tool, not a
+  feature, until Graph mail is wired — page kept, reachable by URL)
+
+**R2 layout reorg** (clean break, prod had 0 docs):
+- `properties/{propertyId}/gm-uploads/{category}/...` for GM uploads
+- `properties/{propertyId}/financials/{year}/{mm}/{type}/...` for financials
+- `resources/{folderId}/...` for HR templates (not property-scoped)
+
+**Bugs caught + fixed this session:**
+- `git push` from a chained `cd ..` hit the monorepo by mistake — reverted
+  the bogus monorepo commit, re-committed to site-suitemanagerllc. Now use
+  absolute `git -C` paths.
+- D1 partial unique index didn't satisfy `ON CONFLICT(code)` → full unique
+  index
+- Stray test property resurfaced → deleted + R2 blobs cleaned
+
+**Commits this session (site-suitemanagerllc/main):** d918bdd, a9c7500,
+7b1a8ea, fe90a45, 089f15d, 0516411, e439854, cb3ec59, 615a307, dd39fca,
+3bdc146, c4e4eed (+ docs)
+
+**Client comms (drafts in tasks/):**
+- `EMAIL-chris-ready-to-demo.md` — first demo invite + sheet-error notes
+- `EMAIL-chris-updates-2.md` — plain-English writeup of payments / GM
+  page / financials
+
+**Pending / next:**
+- Owners as a real role (Chris idea #3) — owners table + property_owners
+  join + owner login scoped to their properties
+- Microsoft Graph email wiring (invites + upload notifications)
+- Rate limiting on auth endpoints
+- Bulk-invite GMs from property list
+- Owner-level portfolio health dashboard (discussing scope next)
+- Sheet corrections to confirm with Chris (Harrisonburg CHORUM,
+  6 properties missing state)
+
+---
+
 ## Session - 2026-05-20/21 — Document Portal: built, deployed, ready to demo
 
 **Where it lives:**

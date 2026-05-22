@@ -48,14 +48,15 @@ const viewerType = (mime: string) =>
   mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 ---
 
-<PortalLayout title="HR Templates" context="Strand HR">
+<PortalLayout title="Resources">
   <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
     <div>
       <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-        HR Templates
+        Resources
       </h1>
       <p class="text-sm text-[var(--color-muted)] mt-1">
-        Upload forms and templates GMs at every property can view and print.
+        Forms and templates GMs can view and print. Organize them into folders —
+        Operational, Accounting, HR, whatever fits.
       </p>
     </div>
   </div>

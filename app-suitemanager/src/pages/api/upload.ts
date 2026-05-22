@@ -53,6 +53,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const vendor = String(form.get('vendor') || '').trim() || null;
   const amount = fmtAmountCents(form.get('amount'));
   const note = String(form.get('note') || '').trim() || null;
+  const invoiceNumber = String(form.get('invoice_number') || '').trim() || null;
 
   const documentId = generateId();
   const cleanName = sanitizeFilename(file.name);
@@ -72,9 +73,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   await env.DB
     .prepare(
       `INSERT INTO documents
-         (id, property_id, uploaded_by, category, vendor, amount_cents, note,
-          r2_key, filename, size_bytes, mime_type, status, flagged)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`
+         (id, property_id, uploaded_by, category, vendor, invoice_number,
+          amount_cents, note, r2_key, filename, size_bytes, mime_type, status, flagged)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`
     )
     .bind(
       documentId,
@@ -82,6 +83,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       user.id,
       category,
       vendor,
+      invoiceNumber,
       amount,
       note,
       r2Key,

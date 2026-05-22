@@ -1,0 +1,807 @@
+f34ee778-c04f-4439-b87e-a48e3433545e/9-0
+
+Brian Mangum: Now, good morning, Chris. f34ee778-c04f-4439-b87e-a48e3433545e/10-0
+
+Megan Previc: Who is just coming into my office, so... f34ee778-c04f-4439-b87e-a48e3433545e/12-0
+
+Chris  Rutherford: Hey, what's up? f34ee778-c04f-4439-b87e-a48e3433545e/11-0
+
+Megan Previc: The. f34ee778-c04f-4439-b87e-a48e3433545e/13-0
+
+Brian Mangum: Okay, what's up? f34ee778-c04f-4439-b87e-a48e3433545e/14-0
+
+Chris  Rutherford: How are you? f34ee778-c04f-4439-b87e-a48e3433545e/15-0
+
+Brian Mangum: Fantastic! How are you doing today? f34ee778-c04f-4439-b87e-a48e3433545e/17-0
+
+Chris  Rutherford: Well, it's raining and I'm in Fredericksburg, f34ee778-c04f-4439-b87e-a48e3433545e/17-1 and God, this girl can talk, so... f34ee778-c04f-4439-b87e-a48e3433545e/18-0
+
+Brian Mangum: You're doing amazing. Got it. f34ee778-c04f-4439-b87e-a48e3433545e/19-0
+
+Chris  Rutherford: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/21-0
+
+Brian Mangum: I was just catching up with Annette. It was good to see her again. f34ee778-c04f-4439-b87e-a48e3433545e/24-0
+
+Chris  Rutherford: Yeah, she's still, she's still trouble. f34ee778-c04f-4439-b87e-a48e3433545e/23-0
+
+Brian Mangum: Um... f34ee778-c04f-4439-b87e-a48e3433545e/22-0
+
+Annette Bingham: And. f34ee778-c04f-4439-b87e-a48e3433545e/25-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/27-0
+
+Chris  Rutherford: Huge, huge liability on the huge liability on f34ee778-c04f-4439-b87e-a48e3433545e/27-1 the balance sheet, so... f34ee778-c04f-4439-b87e-a48e3433545e/26-0
+
+Mike Lindsay: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/29-0
+
+Brian Mangum: Ha ha ha ha. f34ee778-c04f-4439-b87e-a48e3433545e/28-0
+
+Annette Bingham: Ha ha! f34ee778-c04f-4439-b87e-a48e3433545e/30-0
+
+Mike Lindsay: Absolutely. f34ee778-c04f-4439-b87e-a48e3433545e/32-0
+
+Chris  Rutherford: Is Julie gonna join as well, Megan, or no? Okay. f34ee778-c04f-4439-b87e-a48e3433545e/31-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/33-0 Yeah, Julie's on. She was having some audio issues. f34ee778-c04f-4439-b87e-a48e3433545e/33-1 I think she's going in. f34ee778-c04f-4439-b87e-a48e3433545e/35-0
+
+Megan Previc: We're all here together, Chris. f34ee778-c04f-4439-b87e-a48e3433545e/36-0
+
+Chris  Rutherford: Okay, good. All right. So, why don't you kind of, f34ee778-c04f-4439-b87e-a48e3433545e/34-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/36-1
+
+Chris  Rutherford: I guess I kind of kind of let you know what we're trying to do here. So, f34ee778-c04f-4439-b87e-a48e3433545e/36-2 Mike and Annette, I kind of invited them in the last minute, f34ee778-c04f-4439-b87e-a48e3433545e/36-3 just thinking, hey, these guys might have some input to this f34ee778-c04f-4439-b87e-a48e3433545e/36-4 that would be helpful. f34ee778-c04f-4439-b87e-a48e3433545e/37-0 and have a different view and I didn't invite Melanie yet because I'm not sure f34ee778-c04f-4439-b87e-a48e3433545e/37-1 that, you know, she understands all the flows that we're f34ee778-c04f-4439-b87e-a48e3433545e/37-2 looking for. But I think once we put this thing f34ee778-c04f-4439-b87e-a48e3433545e/37-3 together, so we kind of, what we did, what did we create over at Stay BT? f34ee778-c04f-4439-b87e-a48e3433545e/37-4 We created something similar. Do y'all still use that, Mike and Annette? f34ee778-c04f-4439-b87e-a48e3433545e/38-0
+
+Mike Lindsay: Yeah, SharePoint. f34ee778-c04f-4439-b87e-a48e3433545e/40-0
+
+Chris  Rutherford: SharePoint. Brian built that too, didn't you? f34ee778-c04f-4439-b87e-a48e3433545e/39-0
+
+Mike Lindsay: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/42-0 Yep, his name is all over still. f34ee778-c04f-4439-b87e-a48e3433545e/43-0
+
+Chris  Rutherford: So, this is, so is this is, so for lack of a better terminology, f34ee778-c04f-4439-b87e-a48e3433545e/41-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/43-1
+
+Chris  Rutherford: we can kind of use this as a similar, this is gonna be mimic SharePoint to a f34ee778-c04f-4439-b87e-a48e3433545e/43-2 certain degree, right? f34ee778-c04f-4439-b87e-a48e3433545e/44-0
+
+Brian Mangum: Yeah, I would argue that SharePoint would be f34ee778-c04f-4439-b87e-a48e3433545e/44-1 the Buick and this is more of the Porsche. f34ee778-c04f-4439-b87e-a48e3433545e/46-0
+
+Chris  Rutherford: ****, I don't need to pay for a Porsche, man. I, you know, I can get by. f34ee778-c04f-4439-b87e-a48e3433545e/45-0
+
+Brian Mangum: Uh-uh. f34ee778-c04f-4439-b87e-a48e3433545e/46-1
+
+Chris  Rutherford: I'd rather you go if I could. So, anyway, OK, so that's good, so... f34ee778-c04f-4439-b87e-a48e3433545e/47-0
+
+Brian Mangum: Okay, this is a this is Alexis. f34ee778-c04f-4439-b87e-a48e3433545e/48-0
+
+Chris  Rutherford: Okay, I've got that figured out. So that's good. f34ee778-c04f-4439-b87e-a48e3433545e/48-1 So I'm guessing technology is better, but we wanted something where Megan f34ee778-c04f-4439-b87e-a48e3433545e/48-2 didn't have and Julie, you know, we wanted some central thing that the GMs f34ee778-c04f-4439-b87e-a48e3433545e/48-3 would absolutely buy into and use that we could eliminate, you know, f34ee778-c04f-4439-b87e-a48e3433545e/48-4 all the email traffic. I don't know that we eliminated it all, f34ee778-c04f-4439-b87e-a48e3433545e/48-5 obviously, but we minimize it dramatically. f34ee778-c04f-4439-b87e-a48e3433545e/49-0 And I had some vision of, you know, like, as I'm going around, just so Megan knows, f34ee778-c04f-4439-b87e-a48e3433545e/49-1 this is full of invoices that haven't been paid. So heads up. Yeah, f34ee778-c04f-4439-b87e-a48e3433545e/49-2 there's some way that the GMs would be able to not only see all the invoices for f34ee778-c04f-4439-b87e-a48e3433545e/49-3 a particular vendor in their portal, but also f34ee778-c04f-4439-b87e-a48e3433545e/51-0 we leave some space in there for Megan and her team to go in and say, hey, f34ee778-c04f-4439-b87e-a48e3433545e/51-1 this has been paid by check number, blah, blah, blah, on May 15th, right? f34ee778-c04f-4439-b87e-a48e3433545e/51-2 That way they don't have to call Megan. They can get right to the portal and get f34ee778-c04f-4439-b87e-a48e3433545e/51-3 the information. Now, the key is to keep the portal updated, f34ee778-c04f-4439-b87e-a48e3433545e/51-4 as you know. I mean, it's garbage in is garbage out, right? So f34ee778-c04f-4439-b87e-a48e3433545e/50-0
+
+Brian Mangum: Right. f34ee778-c04f-4439-b87e-a48e3433545e/53-0
+
+Chris  Rutherford: plus all the storage for forms. So I kind of wanted to, f34ee778-c04f-4439-b87e-a48e3433545e/53-1 while he probably walks us through this, and that Mike, f34ee778-c04f-4439-b87e-a48e3433545e/53-2 if y'all had some ideas as well, that say, let's add this, let's add this, you know, f34ee778-c04f-4439-b87e-a48e3433545e/53-3 Brian being the architect, he will, he's willing to add, edit whatever. f34ee778-c04f-4439-b87e-a48e3433545e/53-4 The same goes for Julie and Megan. So this is kind of more of a f34ee778-c04f-4439-b87e-a48e3433545e/53-5 brainstorming of take a look at it. f34ee778-c04f-4439-b87e-a48e3433545e/52-0
+
+Brian Mangum: I. f34ee778-c04f-4439-b87e-a48e3433545e/55-0
+
+Chris  Rutherford: And let's think about it for a few days and then come back to the table with, hey, f34ee778-c04f-4439-b87e-a48e3433545e/55-1 let's add this. I thought about this. I was in the shower and all of a sudden, f34ee778-c04f-4439-b87e-a48e3433545e/55-2 hey, why can't we put that in there? So that's probably going to happen. f34ee778-c04f-4439-b87e-a48e3433545e/54-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/55-3
+
+Chris  Rutherford: Before we turn it over to the GMs, I want to have like two or so turns of f34ee778-c04f-4439-b87e-a48e3433545e/55-4 that before we give it to them and then we edit it every week, you know, so. f34ee778-c04f-4439-b87e-a48e3433545e/56-0
+
+Brian Mangum: Yeah. And I think we can absolutely have f34ee778-c04f-4439-b87e-a48e3433545e/56-1 Annette and Mike, you know, as users in the system for the next week f34ee778-c04f-4439-b87e-a48e3433545e/56-2 or two and test it, use it, understand what needs to be changed and f34ee778-c04f-4439-b87e-a48e3433545e/56-3 updated. In fact, Megan and Julie have already given some f34ee778-c04f-4439-b87e-a48e3433545e/56-4 great feedback just in the last 20, being in it for 24 hours. So f34ee778-c04f-4439-b87e-a48e3433545e/57-0 Those were things and directions I've taken away and already kind of mocked up. f34ee778-c04f-4439-b87e-a48e3433545e/57-1 But yeah, I mean, once it's kind of more fully fleshed out f34ee778-c04f-4439-b87e-a48e3433545e/57-2 too, we can put controls on it as well so that f34ee778-c04f-4439-b87e-a48e3433545e/57-3 Chris, you're not only getting reporting weekly f34ee778-c04f-4439-b87e-a48e3433545e/57-4 or you're able to keep a track on who's actually putting stuff in and who's not f34ee778-c04f-4439-b87e-a48e3433545e/57-5 and really keep everyone accountable. f34ee778-c04f-4439-b87e-a48e3433545e/58-0
+
+Chris  Rutherford: Would this have the ability to like have like the daily report fed into it so it f34ee778-c04f-4439-b87e-a48e3433545e/58-1 didn't have to get emailed every day? f34ee778-c04f-4439-b87e-a48e3433545e/59-0
+
+Brian Mangum: I was looking at that today, this morning. It looks like Jonas Quorum is very picky f34ee778-c04f-4439-b87e-a48e3433545e/59-1 at who they choose to share their API with. It's doable. f34ee778-c04f-4439-b87e-a48e3433545e/59-2 We would need them to play ball, but pretty much anything in Quorum that's f34ee778-c04f-4439-b87e-a48e3433545e/59-3 available to you, we could feed in here if they're willing f34ee778-c04f-4439-b87e-a48e3433545e/59-4 to play ball. f34ee778-c04f-4439-b87e-a48e3433545e/60-0
+
+Chris  Rutherford: Well, that would be interesting if we could get f34ee778-c04f-4439-b87e-a48e3433545e/60-1 him to, it almost be like, hey, you have historicals, f34ee778-c04f-4439-b87e-a48e3433545e/60-2 everything's in there, you know. f34ee778-c04f-4439-b87e-a48e3433545e/61-0 Okay, alright, well. f34ee778-c04f-4439-b87e-a48e3433545e/62-0
+
+Brian Mangum: Your average daily rates, all that stuff, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/65-0
+
+Chris  Rutherford: Yeah, yeah, yeah. Well, I don't know that I necessarily mind the f34ee778-c04f-4439-b87e-a48e3433545e/65-1 email every morning, but I mean, it's every day, you know, f34ee778-c04f-4439-b87e-a48e3433545e/65-2 and then when you get back to look, so it may be nice just to have in the f34ee778-c04f-4439-b87e-a48e3433545e/65-3 portal and you say, because I really want the ones that are f34ee778-c04f-4439-b87e-a48e3433545e/63-0
+
+Brian Mangum: What? f34ee778-c04f-4439-b87e-a48e3433545e/65-4
+
+Chris  Rutherford: the end of the month numbers, right, all the time. So f34ee778-c04f-4439-b87e-a48e3433545e/64-0
+
+Brian Mangum: Right. f34ee778-c04f-4439-b87e-a48e3433545e/67-0 What's nice about doing it yourself is now when you're in the portal, f34ee778-c04f-4439-b87e-a48e3433545e/67-1 you can see trends across properties. And if you want to dial in, f34ee778-c04f-4439-b87e-a48e3433545e/67-2 maybe one property is below a threshold, you can see that very easily without f34ee778-c04f-4439-b87e-a48e3433545e/67-3 having to look at a full report. f34ee778-c04f-4439-b87e-a48e3433545e/66-0
+
+Chris  Rutherford: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/69-0 All right, do you want to throw it up there and kind f34ee778-c04f-4439-b87e-a48e3433545e/68-0
+
+Brian Mangum: Yeah, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/69-1
+
+Chris  Rutherford: of... f34ee778-c04f-4439-b87e-a48e3433545e/70-0
+
+Brian Mangum: So let me just share, confirm everybody can see that. f34ee778-c04f-4439-b87e-a48e3433545e/70-1 This is on a small screen because I've got two windows up. f34ee778-c04f-4439-b87e-a48e3433545e/71-0 Hopefully everyone can see it okay. f34ee778-c04f-4439-b87e-a48e3433545e/72-0
+
+Mike Lindsay: Yep, we can see it. f34ee778-c04f-4439-b87e-a48e3433545e/73-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/74-0
+
+Brian Mangum: All right, so what we have on the left hand side is f34ee778-c04f-4439-b87e-a48e3433545e/74-1 the GM view and what they would see when they log into their portal. Right now, f34ee778-c04f-4439-b87e-a48e3433545e/74-2 I'm the GM of Augusta. Congratulations to me. f34ee778-c04f-4439-b87e-a48e3433545e/75-0
+
+Chris  Rutherford: Okay, that we could use you down there, so... f34ee778-c04f-4439-b87e-a48e3433545e/76-0
+
+Brian Mangum: So here's what I see. I see one unpaid invoice. f34ee778-c04f-4439-b87e-a48e3433545e/76-1 I see I've got two documents uploaded. I've got quick stats like 49 rooms, f34ee778-c04f-4439-b87e-a48e3433545e/76-2 my address, my phone number. Let's say I get an invoice today. f34ee778-c04f-4439-b87e-a48e3433545e/76-3 I would drag that into here. And yes, Megan, that has been fixed. f34ee778-c04f-4439-b87e-a48e3433545e/76-4 So you can drag documents now. f34ee778-c04f-4439-b87e-a48e3433545e/77-0 I would mark it as an invoice. I put the amount on it. f34ee778-c04f-4439-b87e-a48e3433545e/78-0 and hit send. And now that shows up here on the right f34ee778-c04f-4439-b87e-a48e3433545e/78-1 hand side in this queue, which is a more full featured view, f34ee778-c04f-4439-b87e-a48e3433545e/78-2 which you can see all the different tabs up here for Chris or for Julie or for f34ee778-c04f-4439-b87e-a48e3433545e/78-3 Megan. That is then sortable by either the type f34ee778-c04f-4439-b87e-a48e3433545e/78-4 of document it is, whether it's an invoice statement or f34ee778-c04f-4439-b87e-a48e3433545e/78-5 other, f34ee778-c04f-4439-b87e-a48e3433545e/79-0 but also by property, if I just want to look at that certain f34ee778-c04f-4439-b87e-a48e3433545e/79-1 property. So GM View, very, very simple. I've got my document portal here, f34ee778-c04f-4439-b87e-a48e3433545e/79-2 and I've got a resources button here, which is where all the HR stuff's going f34ee778-c04f-4439-b87e-a48e3433545e/79-3 to live. f34ee778-c04f-4439-b87e-a48e3433545e/80-0 And then on the strand side, you've got more full featured, f34ee778-c04f-4439-b87e-a48e3433545e/80-1 which I'll walk in through that a little bit now. f34ee778-c04f-4439-b87e-a48e3433545e/81-0 Any questions so far on that side of things? f34ee778-c04f-4439-b87e-a48e3433545e/83-0
+
+Chris  Rutherford: So can you have something where we can approve invoices that like, f34ee778-c04f-4439-b87e-a48e3433545e/83-1 let's say you put an invoice here and it looks like you manually have to put in f34ee778-c04f-4439-b87e-a48e3433545e/83-2 the price and the vendor, right? Can it trigger like anything over X goes f34ee778-c04f-4439-b87e-a48e3433545e/83-3 to Annette or Mike and anything over Y goes to me or you know, f34ee778-c04f-4439-b87e-a48e3433545e/83-4 something like that as well? That's an automatic trigger that, hey, f34ee778-c04f-4439-b87e-a48e3433545e/83-5 you have an approval waiting. Obviously, I don't want to. f34ee778-c04f-4439-b87e-a48e3433545e/82-0
+
+Brian Mangum: Sure. f34ee778-c04f-4439-b87e-a48e3433545e/84-0
+
+Chris  Rutherford: Approve, and I don't want these guys to approve f34ee778-c04f-4439-b87e-a48e3433545e/84-1 $50 invoices, but... f34ee778-c04f-4439-b87e-a48e3433545e/87-0 Just trying to think how we can get in front of that and use this portal as sort f34ee778-c04f-4439-b87e-a48e3433545e/85-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/86-0 Yeah, if you said, if you put it at say... f34ee778-c04f-4439-b87e-a48e3433545e/87-1
+
+Chris  Rutherford: of an approval process. f34ee778-c04f-4439-b87e-a48e3433545e/88-0
+
+Brian Mangum: If you put that at say 500 bucks, then yes, f34ee778-c04f-4439-b87e-a48e3433545e/88-1 anything uploaded that's 500 or more would sit in some kind of waiting queue f34ee778-c04f-4439-b87e-a48e3433545e/88-2 before it gets approved. f34ee778-c04f-4439-b87e-a48e3433545e/89-0
+
+Chris  Rutherford: Because this would not have like, okay, so how about auto draft stuff that we f34ee778-c04f-4439-b87e-a48e3433545e/89-1 don't see as invoices? How do we get those in here where we can f34ee778-c04f-4439-b87e-a48e3433545e/89-2 actually see utility bill consumptions or anything that we have auto drafted? f34ee778-c04f-4439-b87e-a48e3433545e/89-3 How can we get that stuff in here, Megan? f34ee778-c04f-4439-b87e-a48e3433545e/90-0
+
+Megan Previc: I mean, I guess I would have to submit that. f34ee778-c04f-4439-b87e-a48e3433545e/90-1 I don't know, like it. f34ee778-c04f-4439-b87e-a48e3433545e/91-0 I don't know. f34ee778-c04f-4439-b87e-a48e3433545e/92-0
+
+Chris  Rutherford: OK, well. f34ee778-c04f-4439-b87e-a48e3433545e/94-0
+
+Megan Previc: Once it's all in here, we would be able to export this f34ee778-c04f-4439-b87e-a48e3433545e/94-1 information. f34ee778-c04f-4439-b87e-a48e3433545e/95-0 Like, we would be able to download the document, f34ee778-c04f-4439-b87e-a48e3433545e/95-1 and we possibly export stuff into Excel, like the vendor name, amount, f34ee778-c04f-4439-b87e-a48e3433545e/95-2 invoice number, or anything like that. f34ee778-c04f-4439-b87e-a48e3433545e/99-0
+
+Chris  Rutherford: Right, well, I'm not trying to make more work, f34ee778-c04f-4439-b87e-a48e3433545e/96-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/99-1
+
+Chris  Rutherford: but I'm just trying to think how you get everything in there. f34ee778-c04f-4439-b87e-a48e3433545e/97-0
+
+Megan Previc: But. f34ee778-c04f-4439-b87e-a48e3433545e/98-0
+
+Brian Mangum: It. f34ee778-c04f-4439-b87e-a48e3433545e/100-0
+
+Megan Previc: Because it's just like they're putting it here and then we have to take it and put f34ee778-c04f-4439-b87e-a48e3433545e/100-1 it in document. So it would be. f34ee778-c04f-4439-b87e-a48e3433545e/101-0 Easier, or if it was like a... f34ee778-c04f-4439-b87e-a48e3433545e/102-0 Export, import. f34ee778-c04f-4439-b87e-a48e3433545e/103-0
+
+Brian Mangum: If we had some kind of, or if we had some kind of feed in f34ee778-c04f-4439-b87e-a48e3433545e/103-1 Acumatica, that would be even. f34ee778-c04f-4439-b87e-a48e3433545e/104-0
+
+Megan Previc: Yeah, that would be amazing. f34ee778-c04f-4439-b87e-a48e3433545e/110-0
+
+Chris  Rutherford: Good luck with that ****. I mean, these guys are ridiculous. f34ee778-c04f-4439-b87e-a48e3433545e/105-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/110-1
+
+Chris  Rutherford: So let us just get access to Acumatica and then we'll figure that out. f34ee778-c04f-4439-b87e-a48e3433545e/106-0
+
+Megan Previc: It. f34ee778-c04f-4439-b87e-a48e3433545e/107-0 Pizza. f34ee778-c04f-4439-b87e-a48e3433545e/110-2
+
+Chris  Rutherford: But that would be a nice feature right there is if you loaded it in here, f34ee778-c04f-4439-b87e-a48e3433545e/108-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/109-0 Yes. f34ee778-c04f-4439-b87e-a48e3433545e/110-3
+
+Chris  Rutherford: this was the this was the brain and then it had artery that led to, you know, f34ee778-c04f-4439-b87e-a48e3433545e/110-4 Acumatica or whatever. That would be really slick. f34ee778-c04f-4439-b87e-a48e3433545e/112-0
+
+Megan Previc: Yes, yes, that one. f34ee778-c04f-4439-b87e-a48e3433545e/114-0
+
+Chris  Rutherford: And then the approval would live in Acumatica like it does today for Annette f34ee778-c04f-4439-b87e-a48e3433545e/111-0
+
+Brian Mangum: As. f34ee778-c04f-4439-b87e-a48e3433545e/113-0
+
+Megan Previc: What? f34ee778-c04f-4439-b87e-a48e3433545e/114-1
+
+Chris  Rutherford: and Mike, right? f34ee778-c04f-4439-b87e-a48e3433545e/115-0
+
+Megan Previc: What was that? f34ee778-c04f-4439-b87e-a48e3433545e/116-0 Are you asking me? f34ee778-c04f-4439-b87e-a48e3433545e/117-0
+
+Brian Mangum: Well done. Yep. f34ee778-c04f-4439-b87e-a48e3433545e/118-0
+
+Chris  Rutherford: So. f34ee778-c04f-4439-b87e-a48e3433545e/120-0 If that could work, and then the then then the approval f34ee778-c04f-4439-b87e-a48e3433545e/120-1 process for the for the above property people, like Annette, Mike, Melanie, f34ee778-c04f-4439-b87e-a48e3433545e/120-2 or Mel, I need to quit calling her Melanie, f34ee778-c04f-4439-b87e-a48e3433545e/120-3 and even me would still go through the Acumatica process. In other words, f34ee778-c04f-4439-b87e-a48e3433545e/120-4 when you put something big in there, they get pinged, hey, f34ee778-c04f-4439-b87e-a48e3433545e/121-0 There's an invoice that requires your approval. That already is in place. f34ee778-c04f-4439-b87e-a48e3433545e/121-1 We just need to figure out how to travel, how to route the invoice in there. f34ee778-c04f-4439-b87e-a48e3433545e/124-0 It would take a step away from you. f34ee778-c04f-4439-b87e-a48e3433545e/122-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/123-0
+
+Brian Mangum: Ohh. f34ee778-c04f-4439-b87e-a48e3433545e/126-0 Quick search, and I can do a deeper dive after this f34ee778-c04f-4439-b87e-a48e3433545e/126-1 call, but Acumatica does have an API, so it's absolutely doable technically. f34ee778-c04f-4439-b87e-a48e3433545e/126-2 What is not known and what I'll research is what that cost might look like, f34ee778-c04f-4439-b87e-a48e3433545e/126-3 if anything. f34ee778-c04f-4439-b87e-a48e3433545e/127-0
+
+Chris  Rutherford: Right. f34ee778-c04f-4439-b87e-a48e3433545e/128-0
+
+Megan Previc: Perfect. f34ee778-c04f-4439-b87e-a48e3433545e/129-0
+
+Chris  Rutherford: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/133-0
+
+Brian Mangum: Some software companies just have an open API where they're like, yeah, f34ee778-c04f-4439-b87e-a48e3433545e/133-1 connect to it and we'll try to govern the amount of polls you're pulling or pushing f34ee778-c04f-4439-b87e-a48e3433545e/130-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/131-0 Love you. f34ee778-c04f-4439-b87e-a48e3433545e/132-0
+
+Chris  Rutherford: Right. f34ee778-c04f-4439-b87e-a48e3433545e/133-2
+
+Brian Mangum: across. Others want a big fee for it. So I'll find out. f34ee778-c04f-4439-b87e-a48e3433545e/134-0
+
+Chris  Rutherford: Well, I doubt that they're a big fee, you know. I mean, f34ee778-c04f-4439-b87e-a48e3433545e/134-1 I imagine M3 would probably be that. The guys that they deal with primarily, f34ee778-c04f-4439-b87e-a48e3433545e/134-2 they're a little more... f34ee778-c04f-4439-b87e-a48e3433545e/135-0 Um... f34ee778-c04f-4439-b87e-a48e3433545e/136-0 Proprietary, okay, alright. f34ee778-c04f-4439-b87e-a48e3433545e/137-0
+
+Brian Mangum: Yeah, I'll scope that out. f34ee778-c04f-4439-b87e-a48e3433545e/138-0
+
+Chris  Rutherford: So, Annette, Mike, any comments, any suggestions about what you would like f34ee778-c04f-4439-b87e-a48e3433545e/138-1 to see added, edited, cleaned up in this page? f34ee778-c04f-4439-b87e-a48e3433545e/138-2 I know it's like a quick snapshot. We can give you access to it so you can f34ee778-c04f-4439-b87e-a48e3433545e/138-3 play with it in your spare time. f34ee778-c04f-4439-b87e-a48e3433545e/140-0
+
+Mike Lindsay: No, not so far. I mean, once we get in there, f34ee778-c04f-4439-b87e-a48e3433545e/140-1 I'm sure we'll have some questions. f34ee778-c04f-4439-b87e-a48e3433545e/139-0
+
+Annette Bingham: No. f34ee778-c04f-4439-b87e-a48e3433545e/143-0 Yeah, they're just just going through it, playing with a little bit, f34ee778-c04f-4439-b87e-a48e3433545e/141-0
+
+Brian Mangum: OK. f34ee778-c04f-4439-b87e-a48e3433545e/143-1
+
+Annette Bingham: see what we we got in there. f34ee778-c04f-4439-b87e-a48e3433545e/144-0
+
+Chris  Rutherford: Well, well, the other, the other thing in the hotel, f34ee778-c04f-4439-b87e-a48e3433545e/144-1 one of the things I wanna add is like, uh. .. f34ee778-c04f-4439-b87e-a48e3433545e/145-0 something on the hotel information page that has the passwords for the fire f34ee778-c04f-4439-b87e-a48e3433545e/145-1 system, the passwords for blah, blah, blah. That way, f34ee778-c04f-4439-b87e-a48e3433545e/145-2 any of us could log in and say, I don't know that, f34ee778-c04f-4439-b87e-a48e3433545e/145-3 I can't cut the fire alarm off at 3:00 in the morning, f34ee778-c04f-4439-b87e-a48e3433545e/145-4 but I can log in here real quick and say, oh, f34ee778-c04f-4439-b87e-a48e3433545e/145-5 the passcode is Scooby-Doo or whatever the hell they've called it, right? f34ee778-c04f-4439-b87e-a48e3433545e/147-0 I think we want to have some master sheet on the hotel. Right now, f34ee778-c04f-4439-b87e-a48e3433545e/147-1 I think it's a hodgepodge that would also list, here's the utility company, f34ee778-c04f-4439-b87e-a48e3433545e/147-2 here's the account number, something that's a fact sheet for every f34ee778-c04f-4439-b87e-a48e3433545e/147-3 hotel should live in here as well. f34ee778-c04f-4439-b87e-a48e3433545e/146-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/148-0 I like it. In fact, I foresee this screen here, f34ee778-c04f-4439-b87e-a48e3433545e/148-1 which is the property screen for you that you have access to, Chris, f34ee778-c04f-4439-b87e-a48e3433545e/148-2 or any ownership. I'm in Augusta now for the example, f34ee778-c04f-4439-b87e-a48e3433545e/148-3 but I see it being a full-fledged CRM of sorts that hosts that exact type of f34ee778-c04f-4439-b87e-a48e3433545e/148-4 information, master sheets and f34ee778-c04f-4439-b87e-a48e3433545e/149-0 High-level documentation of the state of the union of that property. f34ee778-c04f-4439-b87e-a48e3433545e/150-0
+
+Chris  Rutherford: State of the Union, I love it. Yeah, so... f34ee778-c04f-4439-b87e-a48e3433545e/151-0 Yeah, that way you can put, yeah, I'm thinking the things that we always f34ee778-c04f-4439-b87e-a48e3433545e/151-1 struggle to find in a moment's notice, and let's say we, you know... f34ee778-c04f-4439-b87e-a48e3433545e/155-0 Yeah, you need a fire inspection report. I want that to live in here. You know, f34ee778-c04f-4439-b87e-a48e3433545e/155-1 I always want to eliminate the paper that sits around in the office in the files f34ee778-c04f-4439-b87e-a48e3433545e/152-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/153-0 Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/155-2
+
+Chris  Rutherford: and have it all live in here where anybody can access it. f34ee778-c04f-4439-b87e-a48e3433545e/155-3 And there's no question about it. You know, f34ee778-c04f-4439-b87e-a48e3433545e/155-4 we ought to have a section for their most recent QAs that live in here. You know, f34ee778-c04f-4439-b87e-a48e3433545e/155-5 it's just, you know, f34ee778-c04f-4439-b87e-a48e3433545e/154-0
+
+Megan Previc: licenses and stuff like that. f34ee778-c04f-4439-b87e-a48e3433545e/156-0
+
+Brian Mangum: Licenses, yeah. Contracts. f34ee778-c04f-4439-b87e-a48e3433545e/158-0
+
+Chris  Rutherford: permits, all that. Contracts, yeah, a copy of the linen contracts, f34ee778-c04f-4439-b87e-a48e3433545e/158-1 everybody knows what it should be. I mean, this thing has legs as I keep using with f34ee778-c04f-4439-b87e-a48e3433545e/157-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/158-2
+
+Chris  Rutherford: Brian, but I don't want it to be a bunch of f34ee778-c04f-4439-b87e-a48e3433545e/158-3 minutiae as well. I think it all needs to be relative stuff f34ee778-c04f-4439-b87e-a48e3433545e/158-4 and then f34ee778-c04f-4439-b87e-a48e3433545e/159-0 Maybe every now and then we have to have a cleansing of the well, maybe. f34ee778-c04f-4439-b87e-a48e3433545e/159-1 But I mean, I see this having the potential to be a f34ee778-c04f-4439-b87e-a48e3433545e/159-2 little more than what we did in SharePoint. f34ee778-c04f-4439-b87e-a48e3433545e/159-3 This is more of a state of the union of the hotel from an accounting standpoint, f34ee778-c04f-4439-b87e-a48e3433545e/159-4 a form standpoint, an informational standpoint. f34ee778-c04f-4439-b87e-a48e3433545e/159-5 And if you have access to this, you don't need to worry about f34ee778-c04f-4439-b87e-a48e3433545e/161-0 Hey, where's that file? Where's this file? You know, f34ee778-c04f-4439-b87e-a48e3433545e/161-1 nobody knows how to get to the cameras. We can have some instructional stuff on f34ee778-c04f-4439-b87e-a48e3433545e/160-0
+
+Brian Mangum: Right. f34ee778-c04f-4439-b87e-a48e3433545e/161-2
+
+Chris  Rutherford: this when we when we change that. I mean, just I see this being the lifeblood of a f34ee778-c04f-4439-b87e-a48e3433545e/161-3 hotel site. f34ee778-c04f-4439-b87e-a48e3433545e/163-0
+
+Brian Mangum: You love it. It's music to my ears. I currently have it mocked up for the f34ee778-c04f-4439-b87e-a48e3433545e/162-0
+
+Chris  Rutherford: I bet it is. f34ee778-c04f-4439-b87e-a48e3433545e/163-1
+
+Brian Mangum: property view to be viewable by owners and GMs. Whereas if I'm a GM, f34ee778-c04f-4439-b87e-a48e3433545e/163-2 I can only see my property. f34ee778-c04f-4439-b87e-a48e3433545e/164-0 Do we need to change that so that I could see other properties as a GM, f34ee778-c04f-4439-b87e-a48e3433545e/164-1 or that would be only for ownership or for strand? f34ee778-c04f-4439-b87e-a48e3433545e/168-0
+
+Chris  Rutherford: No, I think I think each GM needs to have f34ee778-c04f-4439-b87e-a48e3433545e/165-0
+
+Brian Mangum: Administrative type. f34ee778-c04f-4439-b87e-a48e3433545e/168-1
+
+Chris  Rutherford: access to Augusta, right? One has wherever they're hired. Yeah, f34ee778-c04f-4439-b87e-a48e3433545e/166-0
+
+Brian Mangum: Right, their own property. f34ee778-c04f-4439-b87e-a48e3433545e/168-2
+
+Chris  Rutherford: because there may be HR. Well, we're not going to put anything out. f34ee778-c04f-4439-b87e-a48e3433545e/167-0
+
+Brian Mangum: not the other properties. f34ee778-c04f-4439-b87e-a48e3433545e/168-3
+
+Chris  Rutherford: I saw an offer letter in here. I don't think we want to do that and put f34ee778-c04f-4439-b87e-a48e3433545e/169-0
+
+Brian Mangum: I want to, yeah, I want to walk through that too with f34ee778-c04f-4439-b87e-a48e3433545e/168-4
+
+Chris  Rutherford: that in here. f34ee778-c04f-4439-b87e-a48e3433545e/169-1
+
+Brian Mangum: Julie and Megan just to talk through that. But real quick on the property side, f34ee778-c04f-4439-b87e-a48e3433545e/169-2 if you see here, f34ee778-c04f-4439-b87e-a48e3433545e/170-0 I've got property document, I'm in Augusta on the left. f34ee778-c04f-4439-b87e-a48e3433545e/170-1 I've got my property documents that I've uploaded and I've got financial f34ee778-c04f-4439-b87e-a48e3433545e/170-2 statements, which could be contracts, we could do all that other stuff. f34ee778-c04f-4439-b87e-a48e3433545e/170-3 I'm only seeing Augusta, which if I look right here as an admin, f34ee778-c04f-4439-b87e-a48e3433545e/170-4 I'm seeing the same things, two different views, but. f34ee778-c04f-4439-b87e-a48e3433545e/171-0 Augusta is only going to see Augusta today, f34ee778-c04f-4439-b87e-a48e3433545e/171-1 and the next GM would only see that property. f34ee778-c04f-4439-b87e-a48e3433545e/172-0 All right, so we'll leave that as is. Moving on to the template side, f34ee778-c04f-4439-b87e-a48e3433545e/172-1 I think Megan had asked for maybe a spot to put templated information, f34ee778-c04f-4439-b87e-a48e3433545e/172-2 not necessarily filled out information. I put an offer letter in here just as an f34ee778-c04f-4439-b87e-a48e3433545e/172-3 example. f34ee778-c04f-4439-b87e-a48e3433545e/173-0 We added some folders. Go ahead. f34ee778-c04f-4439-b87e-a48e3433545e/175-0
+
+Megan Previc: So I have a question. This is Julie. You've got two different, f34ee778-c04f-4439-b87e-a48e3433545e/175-1 two different tabs at the top, one for resources and one for HR f34ee778-c04f-4439-b87e-a48e3433545e/174-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/175-2
+
+Megan Previc: templates. I wasn't sure. I'm thinking we may only need one or we f34ee778-c04f-4439-b87e-a48e3433545e/175-3 need. f34ee778-c04f-4439-b87e-a48e3433545e/179-0 Perhaps we need one section and it's, you know, f34ee778-c04f-4439-b87e-a48e3433545e/179-1 HR templates and then another section would be operation templates or, you know, f34ee778-c04f-4439-b87e-a48e3433545e/179-2 any forms for anything that possibly could be needed by the managers could all f34ee778-c04f-4439-b87e-a48e3433545e/177-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/179-3
+
+Megan Previc: go in resources, but it's not necessarily just HR. f34ee778-c04f-4439-b87e-a48e3433545e/178-0
+
+Brian Mangum: Yeah, I'm a fan of... f34ee778-c04f-4439-b87e-a48e3433545e/185-0
+
+Chris  Rutherford: Well, I think she's on to something there. We want to make this very easy. Like, f34ee778-c04f-4439-b87e-a48e3433545e/180-0
+
+Megan Previc: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/181-0
+
+Annette Bingham: I like that. f34ee778-c04f-4439-b87e-a48e3433545e/185-1
+
+Chris  Rutherford: we want to make something very easy for them to click on and be like, okay, f34ee778-c04f-4439-b87e-a48e3433545e/182-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/185-2
+
+Chris  Rutherford: this is operational. This is accounting. Maybe we have it to where we break it f34ee778-c04f-4439-b87e-a48e3433545e/183-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/185-3
+
+Chris  Rutherford: down. Like, you want an expense report? That's an accounting form. You know, f34ee778-c04f-4439-b87e-a48e3433545e/185-4 you need to get it there or whatever. Maybe you make it to where we add that f34ee778-c04f-4439-b87e-a48e3433545e/185-5 and make resources go away. And we make a little more specific is how f34ee778-c04f-4439-b87e-a48e3433545e/185-6 I think I do it. That way, there's not. f34ee778-c04f-4439-b87e-a48e3433545e/184-0
+
+Brian Mangum: But. f34ee778-c04f-4439-b87e-a48e3433545e/186-0
+
+Chris  Rutherford: Five 1000 files and resources. f34ee778-c04f-4439-b87e-a48e3433545e/188-0
+
+Brian Mangum: Yeah, I'm a fan of simplification. The resources today on the admin side, f34ee778-c04f-4439-b87e-a48e3433545e/188-1 on the right side, is just basically a mirror of what the f34ee778-c04f-4439-b87e-a48e3433545e/188-2 GMC is on the left-hand side. Whereas the HR template section today is f34ee778-c04f-4439-b87e-a48e3433545e/187-0
+
+Megan Previc: Sure. f34ee778-c04f-4439-b87e-a48e3433545e/188-3
+
+Brian Mangum: more of an administrative place where you can create folders, move folders, f34ee778-c04f-4439-b87e-a48e3433545e/188-4 and now you can delete folders. I saw that as a bug that you guys said. f34ee778-c04f-4439-b87e-a48e3433545e/189-0 to create like a hierarchy of where you want to put things. f34ee778-c04f-4439-b87e-a48e3433545e/189-1 We don't have to have both. I mean, we could absolutely get rid of resources f34ee778-c04f-4439-b87e-a48e3433545e/189-2 on the admin side. You don't need that. f34ee778-c04f-4439-b87e-a48e3433545e/190-0 But the thought here is to have a folder system here where you would add a folder f34ee778-c04f-4439-b87e-a48e3433545e/190-1 and start putting files in that folder for them to use. f34ee778-c04f-4439-b87e-a48e3433545e/191-0
+
+Megan Previc: And that's where you do it in order for them to see it under resources, f34ee778-c04f-4439-b87e-a48e3433545e/191-1 are you saying? f34ee778-c04f-4439-b87e-a48e3433545e/193-0
+
+Brian Mangum: Correct. Resources is more for the GM. In fact, f34ee778-c04f-4439-b87e-a48e3433545e/192-0
+
+Megan Previc: Ohh, okay, okay. f34ee778-c04f-4439-b87e-a48e3433545e/193-1
+
+Brian Mangum: you probably don't even need resources on your side because the templates. f34ee778-c04f-4439-b87e-a48e3433545e/195-0
+
+Megan Previc: So, okay. So the templates we would be managing f34ee778-c04f-4439-b87e-a48e3433545e/195-1 where we would be, basically that would be behind the scenes f34ee778-c04f-4439-b87e-a48e3433545e/195-2 HR templates or whatever we call it for everything that we need to put out there f34ee778-c04f-4439-b87e-a48e3433545e/194-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/195-3
+
+Megan Previc: for managers, but it'll show up for them under f34ee778-c04f-4439-b87e-a48e3433545e/195-4 resources. f34ee778-c04f-4439-b87e-a48e3433545e/197-0
+
+Brian Mangum: Correct. In fact, we probably should just rename HR f34ee778-c04f-4439-b87e-a48e3433545e/196-0
+
+Megan Previc: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/197-1
+
+Brian Mangum: templates to resources and remove this other one at the top. f34ee778-c04f-4439-b87e-a48e3433545e/201-0
+
+Megan Previc: Oh, okay, so it would just be one place for f34ee778-c04f-4439-b87e-a48e3433545e/201-1 everything, including what they would see. Okay, that would be easier to have less, f34ee778-c04f-4439-b87e-a48e3433545e/198-0
+
+Brian Mangum: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/199-0 Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/201-2
+
+Megan Previc: less is more to me. f34ee778-c04f-4439-b87e-a48e3433545e/200-0
+
+Brian Mangum: Absolutely. f34ee778-c04f-4439-b87e-a48e3433545e/204-0
+
+Megan Previc: And you know, I don't envision, I was thinking about it, f34ee778-c04f-4439-b87e-a48e3433545e/204-1 I don't envision using this for new hire paperwork or anything, f34ee778-c04f-4439-b87e-a48e3433545e/204-2 because that should all be handled through our HR system called Engage. f34ee778-c04f-4439-b87e-a48e3433545e/202-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/204-3
+
+Megan Previc: So I was thinking about privacy and confidentiality in terms of HR documents, f34ee778-c04f-4439-b87e-a48e3433545e/203-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/204-4
+
+Megan Previc: but I'm not so... f34ee778-c04f-4439-b87e-a48e3433545e/205-0 certain I would even need that. f34ee778-c04f-4439-b87e-a48e3433545e/206-0 for this particular system. f34ee778-c04f-4439-b87e-a48e3433545e/207-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/208-0
+
+Megan Previc: Print. f34ee778-c04f-4439-b87e-a48e3433545e/209-0
+
+Chris  Rutherford: Yeah, and Engage, each employee has their own login for f34ee778-c04f-4439-b87e-a48e3433545e/209-1 Engage. They can see their benefits. They can see everything in there too, f34ee778-c04f-4439-b87e-a48e3433545e/209-2 right? f34ee778-c04f-4439-b87e-a48e3433545e/212-0
+
+Megan Previc: Yeah, and I figured out how to upload documents f34ee778-c04f-4439-b87e-a48e3433545e/212-1 in there yesterday or the day before into employees files and stuff. f34ee778-c04f-4439-b87e-a48e3433545e/210-0
+
+Chris  Rutherford: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/212-2
+
+Megan Previc: I don't know exactly what access managers and employees have yet. f34ee778-c04f-4439-b87e-a48e3433545e/212-3 I still have quite a bit to figure out, but it looks like we won't need any f34ee778-c04f-4439-b87e-a48e3433545e/212-4 confidential information in this. f34ee778-c04f-4439-b87e-a48e3433545e/214-0 At least not for HR, that would need to be in this in this f34ee778-c04f-4439-b87e-a48e3433545e/211-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/214-1
+
+Megan Previc: thing. What is this thing called? Document portal. There we go. f34ee778-c04f-4439-b87e-a48e3433545e/215-0
+
+Brian Mangum: Whatever Chris wants to call it, today's document portal. f34ee778-c04f-4439-b87e-a48e3433545e/213-0
+
+Annette Bingham: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/215-1
+
+Brian Mangum: It doesn't really have an official app name. f34ee778-c04f-4439-b87e-a48e3433545e/216-0 Yep. f34ee778-c04f-4439-b87e-a48e3433545e/217-0
+
+Megan Previc: Max, I know employees wouldn't have access to f34ee778-c04f-4439-b87e-a48e3433545e/217-1 this, but... f34ee778-c04f-4439-b87e-a48e3433545e/218-0
+
+Chris  Rutherford: Well, like that, like the written warning thing you put f34ee778-c04f-4439-b87e-a48e3433545e/218-1 out this morning, you know, that would live in here, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/222-0
+
+Megan Previc: Yeah, the template could be out here. Yeah, exactly. Yeah, f34ee778-c04f-4439-b87e-a48e3433545e/222-1 that's what I kind of envision it for right now. f34ee778-c04f-4439-b87e-a48e3433545e/222-2 I don't think it's going to be become bigger than that for HR, f34ee778-c04f-4439-b87e-a48e3433545e/222-3 unless you guys have ideas you want to use it that way in it for HR. So. f34ee778-c04f-4439-b87e-a48e3433545e/221-0
+
+Chris  Rutherford: Yeah, I... f34ee778-c04f-4439-b87e-a48e3433545e/220-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/224-0
+
+Chris  Rutherford: I think it'll be heavier towards the accounting and. f34ee778-c04f-4439-b87e-a48e3433545e/225-0
+
+Megan Previc: Yeah, me too. f34ee778-c04f-4439-b87e-a48e3433545e/227-0
+
+Brian Mangum: Agreed. And if we start tacking on HR specific f34ee778-c04f-4439-b87e-a48e3433545e/227-1 things, there's some compliance things we need to f34ee778-c04f-4439-b87e-a48e3433545e/227-2 talk through and more cost and all that fun. f34ee778-c04f-4439-b87e-a48e3433545e/226-0
+
+Chris  Rutherford: Oh, oh, oh, yeah, that was keep it, keep it easy. f34ee778-c04f-4439-b87e-a48e3433545e/227-3
+
+Brian Mangum: So Engage is built from the ground up for all that. So f34ee778-c04f-4439-b87e-a48e3433545e/230-0
+
+Megan Previc: Yeah, I want to utilize Engage as much as f34ee778-c04f-4439-b87e-a48e3433545e/230-1 possible for HR stuff, but this is where, because I don't see a place in Engage yet f34ee778-c04f-4439-b87e-a48e3433545e/230-2 any way to store stuff like templates and whatnot in forms, f34ee778-c04f-4439-b87e-a48e3433545e/228-0
+
+Brian Mangum: Mm. f34ee778-c04f-4439-b87e-a48e3433545e/230-3
+
+Megan Previc: unless I'm just not seeing it yet for people to access. f34ee778-c04f-4439-b87e-a48e3433545e/231-0
+
+Brian Mangum: Are there forms that GMs and other employees need to fill out in order to f34ee778-c04f-4439-b87e-a48e3433545e/231-1 get information to you? f34ee778-c04f-4439-b87e-a48e3433545e/232-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/234-0
+
+Brian Mangum: And is that a, do you know today if that's like a PDF f34ee778-c04f-4439-b87e-a48e3433545e/233-0
+
+Megan Previc: Could be. f34ee778-c04f-4439-b87e-a48e3433545e/234-1
+
+Brian Mangum: that they download and manually type in or is that a form from Engage that you go f34ee778-c04f-4439-b87e-a48e3433545e/234-2 on a website and type in the information? f34ee778-c04f-4439-b87e-a48e3433545e/235-0
+
+Megan Previc: Well, I don't know what Engage offers, but I just created a Word template, f34ee778-c04f-4439-b87e-a48e3433545e/235-1 which I can also make it a PDF syllable. But based on my experience with dealing f34ee778-c04f-4439-b87e-a48e3433545e/235-2 with Strand, we just have managers submit via email f34ee778-c04f-4439-b87e-a48e3433545e/235-3 their write-ups to be approved, if they need to be approved, f34ee778-c04f-4439-b87e-a48e3433545e/235-4 and then whatever. f34ee778-c04f-4439-b87e-a48e3433545e/236-0 When it's done, the administer to the employee, f34ee778-c04f-4439-b87e-a48e3433545e/236-1 they would upload it to Engage. f34ee778-c04f-4439-b87e-a48e3433545e/239-0
+
+Brian Mangum: Is that the nature of that specific example? f34ee778-c04f-4439-b87e-a48e3433545e/239-1 Is the nature of the information being sent to you private? Is it sensitive data? f34ee778-c04f-4439-b87e-a48e3433545e/237-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/239-2
+
+Brian Mangum: Okay, it is, okay. f34ee778-c04f-4439-b87e-a48e3433545e/238-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/241-0 Yeah, there might be others that would be of it, f34ee778-c04f-4439-b87e-a48e3433545e/240-0
+
+Brian Mangum: It. f34ee778-c04f-4439-b87e-a48e3433545e/241-1
+
+Megan Previc: but generally. f34ee778-c04f-4439-b87e-a48e3433545e/243-0
+
+Brian Mangum: I think it's worth saying for non-sensitive data, f34ee778-c04f-4439-b87e-a48e3433545e/242-0
+
+Megan Previc: No. f34ee778-c04f-4439-b87e-a48e3433545e/243-1
+
+Brian Mangum: if there's information that I need to get to you as an employee that's not f34ee778-c04f-4439-b87e-a48e3433545e/243-2 sensitive, we could very easily build a form here f34ee778-c04f-4439-b87e-a48e3433545e/243-3 that then when I fill it out, it actually submits that document in here f34ee778-c04f-4439-b87e-a48e3433545e/243-4 to the document portal for you to review. f34ee778-c04f-4439-b87e-a48e3433545e/244-0
+
+Megan Previc: Call Singh. f34ee778-c04f-4439-b87e-a48e3433545e/245-0 Are we possibly going through in your injection? f34ee778-c04f-4439-b87e-a48e3433545e/246-0
+
+Chris  Rutherford: I don't know if she's ordering French fries or not, f34ee778-c04f-4439-b87e-a48e3433545e/246-1 but we can't hear what you're saying. f34ee778-c04f-4439-b87e-a48e3433545e/247-0
+
+Megan Previc: Hold on, you can't hear me. f34ee778-c04f-4439-b87e-a48e3433545e/248-0
+
+Chris  Rutherford: Hey, you're better now. f34ee778-c04f-4439-b87e-a48e3433545e/250-0
+
+Megan Previc: I was just saying that I'll keep that in mind, but I don't, f34ee778-c04f-4439-b87e-a48e3433545e/250-1 I can't think of a use for it at this moment. f34ee778-c04f-4439-b87e-a48e3433545e/249-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/250-2
+
+Megan Previc: Something that would be completed would be during onboarding and that would be f34ee778-c04f-4439-b87e-a48e3433545e/250-3 handled in Engage. And there may be other documents that can f34ee778-c04f-4439-b87e-a48e3433545e/250-4 be done in Engage so that employees f34ee778-c04f-4439-b87e-a48e3433545e/253-0 only have one portal to go to, which is Engage. f34ee778-c04f-4439-b87e-a48e3433545e/251-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/253-1
+
+Megan Previc: I wouldn't want them to have to get into this as well. I see this as just. f34ee778-c04f-4439-b87e-a48e3433545e/252-0
+
+Brian Mangum: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/254-0
+
+Megan Previc: for an HR for an HR standpoint, anyway. f34ee778-c04f-4439-b87e-a48e3433545e/255-0 Thank you. f34ee778-c04f-4439-b87e-a48e3433545e/256-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/257-0 Force. f34ee778-c04f-4439-b87e-a48e3433545e/259-0
+
+Annette Bingham: I... f34ee778-c04f-4439-b87e-a48e3433545e/258-0
+
+Brian Mangum: Ca. f34ee778-c04f-4439-b87e-a48e3433545e/260-0 Annette, do you have a question? f34ee778-c04f-4439-b87e-a48e3433545e/262-0
+
+Annette Bingham: I'm just trying to understand the HR, the HR part. f34ee778-c04f-4439-b87e-a48e3433545e/262-1 I understand where Julie's coming from the for now under Engage. f34ee778-c04f-4439-b87e-a48e3433545e/263-0 Under Engage now, we submit the I-9s, all that information, f34ee778-c04f-4439-b87e-a48e3433545e/263-1 all that's in Engage right now, and then we receive an email from Engage f34ee778-c04f-4439-b87e-a48e3433545e/263-2 to verify the I-9 and process that. f34ee778-c04f-4439-b87e-a48e3433545e/264-0 on through two. I guess it would be Julie HR. f34ee778-c04f-4439-b87e-a48e3433545e/264-1 Is this still the way we do it? f34ee778-c04f-4439-b87e-a48e3433545e/265-0 With the Engage now. f34ee778-c04f-4439-b87e-a48e3433545e/266-0
+
+Megan Previc: I had a I had a phone call with. Hold on, you were on mute. Oh, sorry. f34ee778-c04f-4439-b87e-a48e3433545e/266-1 Megan's leading the way here. So, I had a meeting with Kate, f34ee778-c04f-4439-b87e-a48e3433545e/266-2 our account manager, yesterday, and she explained. f34ee778-c04f-4439-b87e-a48e3433545e/269-0 dozens of questions about all of this because I haven't yet seen it actually in f34ee778-c04f-4439-b87e-a48e3433545e/267-0
+
+Annette Bingham: But. f34ee778-c04f-4439-b87e-a48e3433545e/269-1
+
+Megan Previc: use. I can get into it. But I haven't seen, you know. f34ee778-c04f-4439-b87e-a48e3433545e/268-0
+
+Annette Bingham: And I'm. f34ee778-c04f-4439-b87e-a48e3433545e/270-0 Okay, I'm sorry I didn't hear anything you said. f34ee778-c04f-4439-b87e-a48e3433545e/271-0
+
+Megan Previc: You can't hear me at all. f34ee778-c04f-4439-b87e-a48e3433545e/272-0
+
+Chris  Rutherford: Yeah, yeah, y'all must be having an internet issue f34ee778-c04f-4439-b87e-a48e3433545e/272-1 there. f34ee778-c04f-4439-b87e-a48e3433545e/273-0
+
+Megan Previc: Can you hear me now? f34ee778-c04f-4439-b87e-a48e3433545e/274-0 It's the computer. f34ee778-c04f-4439-b87e-a48e3433545e/275-0 Group. f34ee778-c04f-4439-b87e-a48e3433545e/281-0
+
+Annette Bingham: Yeah, kind of sounds like you're underwater. f34ee778-c04f-4439-b87e-a48e3433545e/276-0
+
+Brian Mangum: Set. f34ee778-c04f-4439-b87e-a48e3433545e/281-1
+
+Annette Bingham: Are you in South Carolina, in the ocean? f34ee778-c04f-4439-b87e-a48e3433545e/277-0
+
+Brian Mangum: Sounds like... f34ee778-c04f-4439-b87e-a48e3433545e/279-0
+
+Megan Previc: What? f34ee778-c04f-4439-b87e-a48e3433545e/278-0
+
+Chris  Rutherford: But. f34ee778-c04f-4439-b87e-a48e3433545e/280-0 But. f34ee778-c04f-4439-b87e-a48e3433545e/282-0
+
+Megan Previc: Ring. f34ee778-c04f-4439-b87e-a48e3433545e/284-0
+
+Brian Mangum: Sounds like more of a laptop microphone issue if maybe you're not close enough to f34ee778-c04f-4439-b87e-a48e3433545e/283-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/284-1
+
+Brian Mangum: it. f34ee778-c04f-4439-b87e-a48e3433545e/286-0
+
+Chris  Rutherford: Brian will sell you a laptop microphone if you need one. f34ee778-c04f-4439-b87e-a48e3433545e/285-0
+
+Megan Previc: Hello. f34ee778-c04f-4439-b87e-a48e3433545e/287-0
+
+Brian Mangum: I'm out, I'm out of that business. f34ee778-c04f-4439-b87e-a48e3433545e/288-0
+
+Chris  Rutherford: And. f34ee778-c04f-4439-b87e-a48e3433545e/290-0
+
+Megan Previc: Can you hear us? f34ee778-c04f-4439-b87e-a48e3433545e/289-0
+
+Annette Bingham: Jet. f34ee778-c04f-4439-b87e-a48e3433545e/291-0
+
+Chris  Rutherford: The. f34ee778-c04f-4439-b87e-a48e3433545e/292-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/293-0
+
+Megan Previc: Yeah, yes. f34ee778-c04f-4439-b87e-a48e3433545e/294-0
+
+Annette Bingham: I can hear you now, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/295-0
+
+Megan Previc: Oh, okay. So Kate told me yesterday that yes, f34ee778-c04f-4439-b87e-a48e3433545e/295-1 it sounds like the E-verify process will be the same as what you're used to. f34ee778-c04f-4439-b87e-a48e3433545e/296-0 But... f34ee778-c04f-4439-b87e-a48e3433545e/297-0 Of. f34ee778-c04f-4439-b87e-a48e3433545e/298-0 Engage is gonna handle all of that. f34ee778-c04f-4439-b87e-a48e3433545e/299-0 I'm going to utilize them as much as I possibly can. f34ee778-c04f-4439-b87e-a48e3433545e/300-0 Because of my other responsibilities, they do offer a lot of services, f34ee778-c04f-4439-b87e-a48e3433545e/300-1 and they will be the ones to let us know if there's an issue with the. f34ee778-c04f-4439-b87e-a48e3433545e/301-0 With an employee. f34ee778-c04f-4439-b87e-a48e3433545e/302-0 But we will not actually, I won't have to touch all of those i9s f34ee778-c04f-4439-b87e-a48e3433545e/302-1 myself. f34ee778-c04f-4439-b87e-a48e3433545e/303-0 Did you hear me? f34ee778-c04f-4439-b87e-a48e3433545e/304-0
+
+Annette Bingham: But. f34ee778-c04f-4439-b87e-a48e3433545e/305-0
+
+Chris  Rutherford: Yeah, we, yeah, yeah, I'm with you. I think you keep as much in Engage as box f34ee778-c04f-4439-b87e-a48e3433545e/305-1 as you possibly can. f34ee778-c04f-4439-b87e-a48e3433545e/306-0
+
+Megan Previc: They offer a lot. I don't know how much AS Manager used f34ee778-c04f-4439-b87e-a48e3433545e/306-1 them before, but I'm planning to work very closely f34ee778-c04f-4439-b87e-a48e3433545e/306-2 with them to make sure that they're handling things and responsive and doing f34ee778-c04f-4439-b87e-a48e3433545e/306-3 all the things they should be for you guys. f34ee778-c04f-4439-b87e-a48e3433545e/307-0
+
+Annette Bingham: OK, Ed. f34ee778-c04f-4439-b87e-a48e3433545e/308-0
+
+Megan Previc: So, I'll be the mediator to make sure all f34ee778-c04f-4439-b87e-a48e3433545e/308-1 that gets taken care of. f34ee778-c04f-4439-b87e-a48e3433545e/309-0
+
+Annette Bingham: Okay, and the policy and procedures that were f34ee778-c04f-4439-b87e-a48e3433545e/309-1 written by LG, that's changing as soon as we transfer f34ee778-c04f-4439-b87e-a48e3433545e/309-2 over to suite manager? f34ee778-c04f-4439-b87e-a48e3433545e/310-0 Is that correct? f34ee778-c04f-4439-b87e-a48e3433545e/311-0
+
+Megan Previc: Written by who? f34ee778-c04f-4439-b87e-a48e3433545e/312-0
+
+Annette Bingham: Well, it would... f34ee778-c04f-4439-b87e-a48e3433545e/313-0
+
+Chris  Rutherford: What do you mean the policy, like the handbook? f34ee778-c04f-4439-b87e-a48e3433545e/314-0
+
+Annette Bingham: Yes, Sir. f34ee778-c04f-4439-b87e-a48e3433545e/315-0
+
+Chris  Rutherford: Yeah, there's a new handbook. f34ee778-c04f-4439-b87e-a48e3433545e/316-0 But it's... f34ee778-c04f-4439-b87e-a48e3433545e/318-0
+
+Megan Previc: I'll send it to you guys. Did you guys get a copy yet? f34ee778-c04f-4439-b87e-a48e3433545e/317-0
+
+Annette Bingham: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/319-0
+
+Megan Previc: I'll send it to you if you haven't seen it. f34ee778-c04f-4439-b87e-a48e3433545e/320-0
+
+Annette Bingham: No, I have no idea if that would be great. Thank you. f34ee778-c04f-4439-b87e-a48e3433545e/321-0
+
+Mike Lindsay: Yeah, I don't think I've seen it either. f34ee778-c04f-4439-b87e-a48e3433545e/322-0
+
+Megan Previc: Okay, I'll send it to both of you. f34ee778-c04f-4439-b87e-a48e3433545e/324-0 What I know has changed, but I may not know everything that's f34ee778-c04f-4439-b87e-a48e3433545e/323-0
+
+Mike Lindsay: I. f34ee778-c04f-4439-b87e-a48e3433545e/324-1
+
+Megan Previc: changed. f34ee778-c04f-4439-b87e-a48e3433545e/325-0 Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/326-0
+
+Annette Bingham: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/327-0 Okay, I think that we have we had a uniform f34ee778-c04f-4439-b87e-a48e3433545e/327-1 agreement in the the only that that's really just the onboarding, the policy, f34ee778-c04f-4439-b87e-a48e3433545e/327-2 us and the uniform agreement were all f34ee778-c04f-4439-b87e-a48e3433545e/328-0 Standard in our. f34ee778-c04f-4439-b87e-a48e3433545e/329-0 under the Engage portal that we have now. f34ee778-c04f-4439-b87e-a48e3433545e/330-0
+
+Megan Previc: Alarm. f34ee778-c04f-4439-b87e-a48e3433545e/331-0 I have certain documents I like to have people sign when they're hired, of course, f34ee778-c04f-4439-b87e-a48e3433545e/331-1 receipt of the handbook. f34ee778-c04f-4439-b87e-a48e3433545e/332-0 I know. f34ee778-c04f-4439-b87e-a48e3433545e/333-0 Personal information of course, the W-4 withholding, whatever, f34ee778-c04f-4439-b87e-a48e3433545e/333-1 but if there's something that you want and you said a uniform agreement, f34ee778-c04f-4439-b87e-a48e3433545e/333-2 we can do. f34ee778-c04f-4439-b87e-a48e3433545e/334-0 Like the one you have, we can use it. I don't know that I have it yet still, f34ee778-c04f-4439-b87e-a48e3433545e/334-1 because when they transitioned. f34ee778-c04f-4439-b87e-a48e3433545e/335-0 That includes the onboarding documents. f34ee778-c04f-4439-b87e-a48e3433545e/336-0 So, I can ask and get a copy of that, maybe from... f34ee778-c04f-4439-b87e-a48e3433545e/337-0 Manager. f34ee778-c04f-4439-b87e-a48e3433545e/339-0 And then edit it for her suite. f34ee778-c04f-4439-b87e-a48e3433545e/338-0
+
+Annette Bingham: The. f34ee778-c04f-4439-b87e-a48e3433545e/340-0
+
+Megan Previc: But anyway, I'll work with them on getting that f34ee778-c04f-4439-b87e-a48e3433545e/340-1 onboarding stuff done. I'll send you guys a copy of it. f34ee778-c04f-4439-b87e-a48e3433545e/341-0 I have, and then we can make any edits. f34ee778-c04f-4439-b87e-a48e3433545e/342-0
+
+Chris  Rutherford: Hey, have you ever, you're still kind of in and out, f34ee778-c04f-4439-b87e-a48e3433545e/342-1 but I think we all heard that, but have you had any chats directly with f34ee778-c04f-4439-b87e-a48e3433545e/342-2 Alicia Walton? f34ee778-c04f-4439-b87e-a48e3433545e/344-0
+
+Megan Previc: Not really, no. It was Megan that pretty much led f34ee778-c04f-4439-b87e-a48e3433545e/344-1 everything. I think Alicia was built for a couple f34ee778-c04f-4439-b87e-a48e3433545e/344-2 weeks or something. And so Megan was the one that I dealt f34ee778-c04f-4439-b87e-a48e3433545e/344-3 with. I've seen a couple of emails from Alicia, f34ee778-c04f-4439-b87e-a48e3433545e/344-4 but I haven't talked with her. f34ee778-c04f-4439-b87e-a48e3433545e/343-0
+
+Chris  Rutherford: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/345-0
+
+Megan Previc: I can certainly give her a call. f34ee778-c04f-4439-b87e-a48e3433545e/346-0
+
+Chris  Rutherford: Liz is still there, right? Mike and that she's still there. f34ee778-c04f-4439-b87e-a48e3433545e/347-0
+
+Annette Bingham: I believe so, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/348-0
+
+Mike Lindsay: Yeah, she was on a she was on a cruise for like f34ee778-c04f-4439-b87e-a48e3433545e/348-1 two or three weeks. f34ee778-c04f-4439-b87e-a48e3433545e/349-0
+
+Chris  Rutherford: Yeah, good for her. Okay. f34ee778-c04f-4439-b87e-a48e3433545e/350-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/351-0
+
+Annette Bingham: I do, I haven't, well, I don't know. I guess I could ask these questions to f34ee778-c04f-4439-b87e-a48e3433545e/351-1 Julie later, but under, yeah, I'll ask off this call. f34ee778-c04f-4439-b87e-a48e3433545e/351-2 It was about FMLA and then we also had the workman's comp. f34ee778-c04f-4439-b87e-a48e3433545e/352-0 certain hospitals, that sort of thing. Never mind. I'll ask you the letter. f34ee778-c04f-4439-b87e-a48e3433545e/353-0
+
+Megan Previc: I may not know the answers, but you can ask me. f34ee778-c04f-4439-b87e-a48e3433545e/354-0 Well, I'll get the Answers. f34ee778-c04f-4439-b87e-a48e3433545e/355-0
+
+Brian Mangum: Any other specific questions or comments on the document portal side of things or f34ee778-c04f-4439-b87e-a48e3433545e/355-1 features you want to see? f34ee778-c04f-4439-b87e-a48e3433545e/356-0
+
+Megan Previc: Play the song. f34ee778-c04f-4439-b87e-a48e3433545e/357-0
+
+Chris  Rutherford: I didn't hear. f34ee778-c04f-4439-b87e-a48e3433545e/358-0
+
+Brian Mangum: What was that? f34ee778-c04f-4439-b87e-a48e3433545e/359-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/360-0
+
+Brian Mangum: I heard I like it. f34ee778-c04f-4439-b87e-a48e3433545e/362-0
+
+Megan Previc: It's on your end, 'cause in that cooker. f34ee778-c04f-4439-b87e-a48e3433545e/361-0
+
+Chris  Rutherford: Oh. f34ee778-c04f-4439-b87e-a48e3433545e/366-0 I think she's outside; I think Maggot has her, like, f34ee778-c04f-4439-b87e-a48e3433545e/366-1 outside the building, trying to talk through a window. f34ee778-c04f-4439-b87e-a48e3433545e/364-0
+
+Megan Previc: Mmh. f34ee778-c04f-4439-b87e-a48e3433545e/365-0 Viva. f34ee778-c04f-4439-b87e-a48e3433545e/367-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/369-0
+
+Megan Previc: That's the last time you guys. I think it's you and Brian at this point. f34ee778-c04f-4439-b87e-a48e3433545e/371-0
+
+Chris  Rutherford: No, I can hear you fine, so you must be in front of it and then f34ee778-c04f-4439-b87e-a48e3433545e/371-1 Julie's behind you walking around. f34ee778-c04f-4439-b87e-a48e3433545e/370-0
+
+Megan Previc: Oh, where is it going here? f34ee778-c04f-4439-b87e-a48e3433545e/373-0
+
+Chris  Rutherford: Okay, so why don't we give Annette and Mike f34ee778-c04f-4439-b87e-a48e3433545e/373-1 some access to it too, so they can play with it for a couple f34ee778-c04f-4439-b87e-a48e3433545e/373-2 days and maybe everybody think on it, you know, and then maybe Tuesday, f34ee778-c04f-4439-b87e-a48e3433545e/373-3 you know, between now and Tuesday, if you run into something or think of f34ee778-c04f-4439-b87e-a48e3433545e/373-4 something, send it to, does everybody know how to communicate f34ee778-c04f-4439-b87e-a48e3433545e/373-5 with Brian? f34ee778-c04f-4439-b87e-a48e3433545e/372-0
+
+Megan Previc: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/374-0
+
+Chris  Rutherford: And that might don't. f34ee778-c04f-4439-b87e-a48e3433545e/377-0 But he'll give you access to it, so hit that email will be when he sends f34ee778-c04f-4439-b87e-a48e3433545e/375-0
+
+Brian Mangum: All read. f34ee778-c04f-4439-b87e-a48e3433545e/376-0
+
+Annette Bingham: Brian, I still... f34ee778-c04f-4439-b87e-a48e3433545e/377-1
+
+Chris  Rutherford: you access, you know, for you to be able to log in. f34ee778-c04f-4439-b87e-a48e3433545e/377-2 How about that? f34ee778-c04f-4439-b87e-a48e3433545e/378-0
+
+Brian Mangum: Yeah, I'll send access and you guys will have f34ee778-c04f-4439-b87e-a48e3433545e/378-1 my email and phone number. And upload documents once you get in, f34ee778-c04f-4439-b87e-a48e3433545e/378-2 like, try to break it. That's the test. f34ee778-c04f-4439-b87e-a48e3433545e/379-0
+
+Chris  Rutherford: And now let me ask you this, Annette and Mike specifically. f34ee778-c04f-4439-b87e-a48e3433545e/379-1 Do you think there's a GM or two that should look at this and have some insight? f34ee778-c04f-4439-b87e-a48e3433545e/380-0
+
+Annette Bingham: Uhh... f34ee778-c04f-4439-b87e-a48e3433545e/381-0
+
+Mike Lindsay: Uh. f34ee778-c04f-4439-b87e-a48e3433545e/382-0
+
+Annette Bingham: I think so, yeah. f34ee778-c04f-4439-b87e-a48e3433545e/383-0
+
+Mike Lindsay: Maybe somebody like Lynn. f34ee778-c04f-4439-b87e-a48e3433545e/386-0
+
+Chris  Rutherford: Okay, I like that. f34ee778-c04f-4439-b87e-a48e3433545e/384-0
+
+Mike Lindsay: Engage. f34ee778-c04f-4439-b87e-a48e3433545e/385-0
+
+Annette Bingham: Mm. f34ee778-c04f-4439-b87e-a48e3433545e/387-0 Maybe. f34ee778-c04f-4439-b87e-a48e3433545e/388-0
+
+Mike Lindsay: Um, and then... f34ee778-c04f-4439-b87e-a48e3433545e/392-0
+
+Annette Bingham: Maybe Mike, maybe Mike, Mike White, who's not as computer savvy. f34ee778-c04f-4439-b87e-a48e3433545e/390-0
+
+Mike Lindsay: Sorry. f34ee778-c04f-4439-b87e-a48e3433545e/393-0
+
+Annette Bingham: I mean, we, I'm, we, we know we'll she can she can flow f34ee778-c04f-4439-b87e-a48e3433545e/393-1 through this, but we've got. f34ee778-c04f-4439-b87e-a48e3433545e/395-0 Like Lisa in Gastonia struggles with computers, f34ee778-c04f-4439-b87e-a48e3433545e/395-1 these maybe take a good one and then take one that's not as... f34ee778-c04f-4439-b87e-a48e3433545e/394-0
+
+Mike Lindsay: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/396-0
+
+Annette Bingham: Savvy and see, just can compare, maybe see where I, you know, f34ee778-c04f-4439-b87e-a48e3433545e/396-1 what we need to work on and... f34ee778-c04f-4439-b87e-a48e3433545e/397-0
+
+Chris  Rutherford: Okay, well, I'm a fan of Lynn and maybe Lisa. f34ee778-c04f-4439-b87e-a48e3433545e/398-0 Once one's Graham, Mike, and the other one Mike, f34ee778-c04f-4439-b87e-a48e3433545e/398-1 then the other one's Gastonia, so they're Graham and Affordable Suites f34ee778-c04f-4439-b87e-a48e3433545e/398-2 and. f34ee778-c04f-4439-b87e-a48e3433545e/399-0 Gastonia Affordable Suites. f34ee778-c04f-4439-b87e-a48e3433545e/401-0 And we send them an invite. f34ee778-c04f-4439-b87e-a48e3433545e/400-0
+
+Brian Mangum: I just got here. f34ee778-c04f-4439-b87e-a48e3433545e/404-0 Like, do we send that over today for all these f34ee778-c04f-4439-b87e-a48e3433545e/402-0
+
+Annette Bingham: Mm. f34ee778-c04f-4439-b87e-a48e3433545e/404-1
+
+Brian Mangum: names? f34ee778-c04f-4439-b87e-a48e3433545e/406-0
+
+Chris  Rutherford: Yeah, I think so. And then we just maybe preface that email, f34ee778-c04f-4439-b87e-a48e3433545e/406-1 say, hey, you're going to get a log in. You know, f34ee778-c04f-4439-b87e-a48e3433545e/406-2 we're working on a portal that will have some accounting that, you know, f34ee778-c04f-4439-b87e-a48e3433545e/406-3 kind of a one-stop shop for your hotel, blah, blah, blah. We're open to ideas. f34ee778-c04f-4439-b87e-a48e3433545e/406-4 Log in, play with it, blah, blah, blah. So there's nothing in here that's f34ee778-c04f-4439-b87e-a48e3433545e/407-0 Secret, right? f34ee778-c04f-4439-b87e-a48e3433545e/405-0
+
+Brian Mangum: No. f34ee778-c04f-4439-b87e-a48e3433545e/408-0
+
+Chris  Rutherford: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/411-0
+
+Brian Mangum: All of the uploads today are just fake, generic stuff. f34ee778-c04f-4439-b87e-a48e3433545e/409-0
+
+Chris  Rutherford: Generic. Yeah, OK. f34ee778-c04f-4439-b87e-a48e3433545e/411-1
+
+Brian Mangum: And then if I can get feedback too, once you guys are using it on the f34ee778-c04f-4439-b87e-a48e3433545e/411-2 property, actual property page and what should go f34ee778-c04f-4439-b87e-a48e3433545e/411-3 there in the segments of the information for that state of the union, f34ee778-c04f-4439-b87e-a48e3433545e/411-4 that will be helpful for kind of phase two. f34ee778-c04f-4439-b87e-a48e3433545e/410-0
+
+Chris  Rutherford: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/412-0
+
+Brian Mangum: But let's just say those names one more time. f34ee778-c04f-4439-b87e-a48e3433545e/412-1 We got Annette and Mike will get access and you said Lisa. f34ee778-c04f-4439-b87e-a48e3433545e/414-0
+
+Chris  Rutherford: Lisa Smart and Gastonia, she's Gastonia Affordable Suites. f34ee778-c04f-4439-b87e-a48e3433545e/413-0
+
+Brian Mangum: Yep. f34ee778-c04f-4439-b87e-a48e3433545e/414-1
+
+Chris  Rutherford: And then Lynn, what's Lynn's last name? f34ee778-c04f-4439-b87e-a48e3433545e/415-0
+
+Annette Bingham: McClank. f34ee778-c04f-4439-b87e-a48e3433545e/420-0
+
+Chris  Rutherford: Yeah, don't tell her I forgot. Lynn McLean and Graham. f34ee778-c04f-4439-b87e-a48e3433545e/416-0
+
+Mike Lindsay: McLean. f34ee778-c04f-4439-b87e-a48e3433545e/418-0
+
+Brian Mangum: And what? f34ee778-c04f-4439-b87e-a48e3433545e/417-0
+
+Mike Lindsay: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/419-0
+
+Annette Bingham: What? f34ee778-c04f-4439-b87e-a48e3433545e/421-0
+
+Brian Mangum: Ingram, okay. f34ee778-c04f-4439-b87e-a48e3433545e/423-0
+
+Annette Bingham: Well, it's actually just Jessica McLean. Jessica McLean. f34ee778-c04f-4439-b87e-a48e3433545e/423-1 Can we also throw Mike and Florence in there because he didn't have anything f34ee778-c04f-4439-b87e-a48e3433545e/423-2 else better to do. f34ee778-c04f-4439-b87e-a48e3433545e/424-0
+
+Chris  Rutherford: Nah, I don't want anything for Mike and f34ee778-c04f-4439-b87e-a48e3433545e/422-0
+
+Brian Mangum: The. f34ee778-c04f-4439-b87e-a48e3433545e/424-1
+
+Chris  Rutherford: Florence. f34ee778-c04f-4439-b87e-a48e3433545e/425-0
+
+Annette Bingham: Okay. f34ee778-c04f-4439-b87e-a48e3433545e/426-0
+
+Brian Mangum: All right, and then I got Julie's email. We'll get Glenda added and Donna added as f34ee778-c04f-4439-b87e-a48e3433545e/426-1 well for testing. f34ee778-c04f-4439-b87e-a48e3433545e/428-0 So, cool. All right. Anything else? f34ee778-c04f-4439-b87e-a48e3433545e/427-0
+
+Chris  Rutherford: All right. f34ee778-c04f-4439-b87e-a48e3433545e/429-0 But by next week, I think we want to have some sort of f34ee778-c04f-4439-b87e-a48e3433545e/429-1 framework to start really working to button up, right? f34ee778-c04f-4439-b87e-a48e3433545e/429-2 That we don't want this to go on and on. f34ee778-c04f-4439-b87e-a48e3433545e/430-0
+
+Brian Mangum: Yeah, yeah, and I'll move quick too. So as you send feedback, f34ee778-c04f-4439-b87e-a48e3433545e/430-1 we'll make those changes same time, real time, same day. So. f34ee778-c04f-4439-b87e-a48e3433545e/431-0
+
+Chris  Rutherford: We'll probably have this figured out and how to communicate with Acumatica before f34ee778-c04f-4439-b87e-a48e3433545e/431-1 we actually have access to Acumatica. f34ee778-c04f-4439-b87e-a48e3433545e/432-0
+
+Brian Mangum: I am going to have that as a takeaway today. f34ee778-c04f-4439-b87e-a48e3433545e/432-1 I'm going to look at their API and see if there's any cost. f34ee778-c04f-4439-b87e-a48e3433545e/433-0
+
+Chris  Rutherford: Super, and then with quorum as well. f34ee778-c04f-4439-b87e-a48e3433545e/435-0
+
+Brian Mangum: Forum, I know is a pain because I've gone down f34ee778-c04f-4439-b87e-a48e3433545e/435-1 that path before, but I will re-engage with that and see. f34ee778-c04f-4439-b87e-a48e3433545e/434-0
+
+Chris  Rutherford: OK, alright. f34ee778-c04f-4439-b87e-a48e3433545e/436-0
+
+Brian Mangum: I would just need to know if we can do it. I would need to know from you the type of f34ee778-c04f-4439-b87e-a48e3433545e/436-1 info where there's average daily rate or what type of info do you want to see at a f34ee778-c04f-4439-b87e-a48e3433545e/438-0
+
+Chris  Rutherford: Well, I'm just trying to get the daily report f34ee778-c04f-4439-b87e-a48e3433545e/436-2
+
+Brian Mangum: high level. f34ee778-c04f-4439-b87e-a48e3433545e/438-1
+
+Chris  Rutherford: that they already sent out via email to come into this, to end up in this bucket. f34ee778-c04f-4439-b87e-a48e3433545e/437-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/439-0
+
+Brian Mangum: Can you forward me a copy of that daily report so I can see the information on it? f34ee778-c04f-4439-b87e-a48e3433545e/438-2
+
+Chris  Rutherford: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/440-0 Yeah, Annette, can he buzz at the Brian? I've got it right here. Sorry. f34ee778-c04f-4439-b87e-a48e3433545e/440-1 I'll buzz it to you. f34ee778-c04f-4439-b87e-a48e3433545e/441-0
+
+Brian Mangum: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/442-0
+
+Megan Previc: I mean, even, could we even like just do, even if they don't do an API, f34ee778-c04f-4439-b87e-a48e3433545e/442-1 can we like export and import it somewhere for you? You know what I mean? f34ee778-c04f-4439-b87e-a48e3433545e/443-0
+
+Brian Mangum: Absolutely, yeah, we can parse it. If we can get the email, f34ee778-c04f-4439-b87e-a48e3433545e/443-1 we can absolutely feed that data from the email into this system. f34ee778-c04f-4439-b87e-a48e3433545e/444-0
+
+Megan Previc: Yeah. Is there a way you can automatically f34ee778-c04f-4439-b87e-a48e3433545e/444-1 email out of there? f34ee778-c04f-4439-b87e-a48e3433545e/445-0
+
+Brian Mangum: out of this document portal. f34ee778-c04f-4439-b87e-a48e3433545e/446-0
+
+Megan Previc: I know about a Jonas Quorum, do you know? f34ee778-c04f-4439-b87e-a48e3433545e/447-0
+
+Chris  Rutherford: Yes. f34ee778-c04f-4439-b87e-a48e3433545e/449-0
+
+Megan Previc: If you can set up, I mean, that's not what you would need to do, f34ee778-c04f-4439-b87e-a48e3433545e/448-0
+
+Brian Mangum: Yes, you can. f34ee778-c04f-4439-b87e-a48e3433545e/449-1
+
+Megan Previc: correct? Like... f34ee778-c04f-4439-b87e-a48e3433545e/455-0
+
+Chris  Rutherford: Yeah, there's already automated reports that f34ee778-c04f-4439-b87e-a48e3433545e/450-0
+
+Brian Mangum: Well, the thing is, is you have to... f34ee778-c04f-4439-b87e-a48e3433545e/455-1
+
+Chris  Rutherford: come out, right? Like we get the daily report at 8 o'clock f34ee778-c04f-4439-b87e-a48e3433545e/451-0
+
+Brian Mangum: The. f34ee778-c04f-4439-b87e-a48e3433545e/455-2
+
+Chris  Rutherford: every morning. And then every so often we get a balanced f34ee778-c04f-4439-b87e-a48e3433545e/452-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/453-0 Oh. f34ee778-c04f-4439-b87e-a48e3433545e/455-3
+
+Chris  Rutherford: due report as well that goes to the hotels or goes to these guys. f34ee778-c04f-4439-b87e-a48e3433545e/454-0
+
+Megan Previc: Right. f34ee778-c04f-4439-b87e-a48e3433545e/455-4
+
+Chris  Rutherford: So they absolutely have that ability. f34ee778-c04f-4439-b87e-a48e3433545e/456-0
+
+Megan Previc: Okay, okay. Yeah, that's all we would. f34ee778-c04f-4439-b87e-a48e3433545e/458-0
+
+Brian Mangum: The thing is you have to add every, that email address, f34ee778-c04f-4439-b87e-a48e3433545e/458-1 that new email address, you have to add it at every property f34ee778-c04f-4439-b87e-a48e3433545e/458-2 level. So times 30 something, you have to go in and do it one time. Yep. f34ee778-c04f-4439-b87e-a48e3433545e/457-0
+
+Megan Previc: One time. f34ee778-c04f-4439-b87e-a48e3433545e/460-0
+
+Brian Mangum: They don't make it easy, is my point. It'll take a few hours to get it all set f34ee778-c04f-4439-b87e-a48e3433545e/459-0
+
+Megan Previc: Yeah, I mean. f34ee778-c04f-4439-b87e-a48e3433545e/460-1
+
+Brian Mangum: up. f34ee778-c04f-4439-b87e-a48e3433545e/461-0
+
+Megan Previc: Do it one time, and then it's set up, you know. f34ee778-c04f-4439-b87e-a48e3433545e/462-0
+
+Brian Mangum: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/463-0
+
+Megan Previc: Yeah. f34ee778-c04f-4439-b87e-a48e3433545e/464-0
+
+Brian Mangum: All right, well, good. Well, appreciate all the feedback. f34ee778-c04f-4439-b87e-a48e3433545e/464-1 I've got some homework to do, and I'll get these accounts created. f34ee778-c04f-4439-b87e-a48e3433545e/465-0
+
+Chris  Rutherford: All right. f34ee778-c04f-4439-b87e-a48e3433545e/466-0
+
+Brian Mangum: Y'all think of anything in the meantime, shoot me an email. f34ee778-c04f-4439-b87e-a48e3433545e/466-1 I'll be happy to look at it. f34ee778-c04f-4439-b87e-a48e3433545e/467-0
+
+Annette Bingham: Thanks, Brian. Thanks, everybody. f34ee778-c04f-4439-b87e-a48e3433545e/469-0
+
+Chris  Rutherford: Alright, see ya. f34ee778-c04f-4439-b87e-a48e3433545e/468-0
+
+Mike Lindsay: Thanks. f34ee778-c04f-4439-b87e-a48e3433545e/470-0
+
+Megan Previc: Thank you. f34ee778-c04f-4439-b87e-a48e3433545e/475-0
+
+Brian Mangum: Thank you. See ya. f34ee778-c04f-4439-b87e-a48e3433545e/477-0
+
+Mike Lindsay: Bye-bye.

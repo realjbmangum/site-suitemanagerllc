@@ -178,6 +178,13 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
           : "Strand Hospitality back-office inbox"} · {rows.results.length} {rows.results.length === 1 ? "match" : "matches"}
       </p>
     </div>
+    <a
+      href={"/api/documents/export" + (url.search || "")}
+      class="btn-ghost text-sm"
+      title="Download the current view as a CSV (opens in Excel)"
+    >
+      Export to Excel
+    </a>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
