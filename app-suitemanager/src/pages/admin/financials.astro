@@ -87,6 +87,8 @@ const fmtBytes = (b: number) => {
 };
 const fmtDate = (iso: string) =>
   new Date(iso + "Z").toLocaleDateString();
+const viewerType = (mime: string) =>
+  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 
 const now = new Date();
 const defaultYear = now.getFullYear();
@@ -195,7 +197,13 @@ const buildHref = (overrides: Record<string, string | null>) => {
                   )}
                 </div>
                 <div class="flex gap-2 shrink-0">
-                  <a class="btn-ghost text-xs" href={`/api/financials/${r.id}/download?inline=1`} target="_blank" rel="noopener">View</a>
+                  <a class="btn-ghost text-xs"
+                    href={`/api/financials/${r.id}/download?inline=1`}
+                    target="_blank" rel="noopener"
+                    data-viewer-url={`/api/financials/${r.id}/download?inline=1`}
+                    data-viewer-download={`/api/financials/${r.id}/download`}
+                    data-viewer-name={r.filename}
+                    data-viewer-type={viewerType(r.mime_type)}>View</a>
                   <a class="btn-primary text-xs" href={`/api/financials/${r.id}/download`} download>Download</a>
                 </div>
               </li>

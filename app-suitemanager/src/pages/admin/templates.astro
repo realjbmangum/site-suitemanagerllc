@@ -44,6 +44,8 @@ const fileTypeLabel = (mime: string) => {
   if (mime.includes("jpeg")) return "JPG";
   return "FILE";
 };
+const viewerType = (mime: string) =>
+  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 ---
 
 <PortalLayout title="HR Templates" context="Strand HR">
@@ -208,7 +210,13 @@ const fileTypeLabel = (mime: string) => {
                   <p class="text-xs text-[var(--color-muted)] mt-1 font-mono">{t.filename}</p>
                 </div>
                 <div class="flex items-center gap-3 shrink-0 text-sm">
-                  <a class="btn-ghost text-xs" href={`/api/resources/${t.id}/download`} target="_blank" rel="noopener">View</a>
+                  <a class="btn-ghost text-xs"
+                    href={`/api/resources/${t.id}/download?inline=1`}
+                    target="_blank" rel="noopener"
+                    data-viewer-url={`/api/resources/${t.id}/download?inline=1`}
+                    data-viewer-download={`/api/resources/${t.id}/download`}
+                    data-viewer-name={t.filename}
+                    data-viewer-type={viewerType(t.mime_type)}>View</a>
                   <form method="POST" action={`/api/resources/${t.id}`}
                     data-confirm={`Archive "${t.title}"? It will no longer show for GMs. It stays in the system, just hidden.`}>
                     <input type="hidden" name="action" value="archive" />

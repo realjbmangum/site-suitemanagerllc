@@ -95,6 +95,8 @@ const fullAddress = [p.address_street, p.address_city, p.address_state, p.addres
 const pillClass = (cat: string) =>
   cat === "invoice" ? "pill-invoice" :
   cat === "statement" ? "pill-statement" : "pill-other";
+const viewerType = (mime: string) =>
+  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 ---
 
 <PortalLayout title={p.name} context={p.name}>
@@ -306,7 +308,13 @@ const pillClass = (cat: string) =>
                 <div class="text-xs text-[var(--color-muted)] mt-0.5 font-mono truncate">{f.filename}</div>
               </div>
               <div class="flex gap-2 shrink-0">
-                <a class="btn-ghost text-xs" href={`/api/financials/${f.id}/download?inline=1`} target="_blank" rel="noopener">View</a>
+                <a class="btn-ghost text-xs"
+                  href={`/api/financials/${f.id}/download?inline=1`}
+                  target="_blank" rel="noopener"
+                  data-viewer-url={`/api/financials/${f.id}/download?inline=1`}
+                  data-viewer-download={`/api/financials/${f.id}/download`}
+                  data-viewer-name={f.filename}
+                  data-viewer-type={viewerType(f.mime_type)}>View</a>
                 <a class="btn-primary text-xs" href={`/api/financials/${f.id}/download`} download>Download</a>
               </div>
             </li>
