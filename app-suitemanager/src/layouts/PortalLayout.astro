@@ -27,11 +27,22 @@ const initialsOf = (name: string) =>
 const displayName = user?.name ?? userName;
 const displayInitials = user ? initialsOf(user.name) : initials;
 
-// Role-aware nav. Admin sees everything.
 const role = user?.role;
-const navItems: { href: string; label: string }[] = [];
+
+// Pending-approval count for the admin nav badge.
+let pendingApprovals = 0;
+if (role === "admin" && Astro.locals.runtime?.env?.DB) {
+  const r = await Astro.locals.runtime.env.DB
+    .prepare("SELECT COUNT(*) AS n FROM documents WHERE approval_status = 'pending'")
+    .first<{ n: number }>();
+  pendingApprovals = r?.n ?? 0;
+}
+
+// Role-aware nav. Admin sees everything.
+const navItems: { href: string; label: string; badge?: number }[] = [];
 if (role === "gm") navItems.push({ href: "/my-property", label: "My Property" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/dashboard", label: "Dashboard" });
+if (role === "admin") navItems.push({ href: "/admin/approvals", label: "Approvals", badge: pendingApprovals });
 if (role === "strand" || role === "admin") navItems.push({ href: "/admin/financials", label: "Financials" });
 // One "Resources" per role: GMs get the read view, Strand/admin get the
 // management view. (Replaces the old split of "Resources" + "HR Templates".)
@@ -39,6 +50,7 @@ if (role === "gm") navItems.push({ href: "/resources", label: "Resources" });
 if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "Resources" });
 if (role === "admin") navItems.push({ href: "/admin/properties", label: "Properties" });
 if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
+if (role === "admin") navItems.push({ href: "/admin/settings", label: "Settings" });
 // /admin/email-preview still exists (reachable by URL) but is unlinked —
 // it's a preview tool, not a feature, until Microsoft Graph mail is wired.
 
@@ -83,13 +95,18 @@ const isActive = (href: string) =>
                   <li>
                     <a
                       href={item.href}
-                      class={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                      class={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${
                         isActive(item.href)
                           ? "bg-[var(--color-brass)] text-[var(--color-navy)]"
                           : "text-[var(--color-brass-light)] hover:text-white hover:bg-white/10"
                       }`}
                     >
                       {item.label}
+                      {item.badge ? (
+                        <span class="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                          {item.badge}
+                        </span>
+                      ) : null}
                     </a>
                   </li>
                 ))}

@@ -13,13 +13,15 @@ const doc = await env.DB
     `SELECT d.id, d.filename, d.category, d.vendor, d.invoice_number, d.amount_cents, d.note,
             d.size_bytes, d.mime_type, d.status, d.flagged, d.created_at, d.reviewed_at,
             d.payment_status, d.check_number, d.check_date, d.paid_at, d.paid_by,
+            d.approval_status, d.approval_reason, d.approval_decided_at, d.approval_decided_by,
             d.property_id, d.uploaded_by,
             p.name AS property_name, u.name AS gm_name, u.email AS gm_email,
-            pb.name AS paid_by_name
+            pb.name AS paid_by_name, ab.name AS approval_decided_by_name
      FROM documents d
      LEFT JOIN properties p ON p.id = d.property_id
      LEFT JOIN users u ON u.id = d.uploaded_by
      LEFT JOIN users pb ON pb.id = d.paid_by
+     LEFT JOIN users ab ON ab.id = d.approval_decided_by
      WHERE d.id = ?`
   )
   .bind(id)
@@ -31,6 +33,11 @@ const doc = await env.DB
     status: string; flagged: number;
     created_at: string; reviewed_at: string | null;
     payment_status: string;
+    approval_status: string;
+    approval_reason: string | null;
+    approval_decided_at: string | null;
+    approval_decided_by: string | null;
+    approval_decided_by_name: string | null;
     check_number: string | null; check_date: string | null;
     paid_at: string | null; paid_by: string | null;
     property_id: string; uploaded_by: string;
@@ -48,7 +55,9 @@ if (me.role === "gm" && doc.property_id !== me.propertyId) {
 }
 
 const canEdit = me.role === "strand" || me.role === "admin";
+const canApprove = me.role === "admin";
 const isInvoice = doc.category === "invoice";
+const needsApproval = doc.approval_status && doc.approval_status !== "not_required";
 const backHref = me.role === "gm" ? "/my-property" : "/dashboard";
 const backLabel = me.role === "gm" ? "Back to my property" : "Back to dashboard";
 
@@ -107,6 +116,9 @@ const actionLabel: Record<string, string> = {
   assign: "Assigned",
   "payment.mark": "Marked paid",
   "payment.unmark": "Unmarked paid",
+  "approval.requested": "Approval requested",
+  "approval.approve": "Approved",
+  "approval.deny": "Denied",
 };
 ---
 
@@ -134,6 +146,15 @@ const actionLabel: Record<string, string> = {
         )}
         {doc.flagged === 1 && doc.status === "new" && (
           <span class="pill bg-[var(--color-brass)] text-white">Pending review</span>
+        )}
+        {needsApproval && (
+          doc.approval_status === "pending" ? (
+            <span class="pill bg-amber-100 text-amber-800 border border-amber-300">Awaiting approval</span>
+          ) : doc.approval_status === "approved" ? (
+            <span class="pill bg-green-100 text-green-800 border border-green-200">Approved</span>
+          ) : (
+            <span class="pill bg-red-100 text-red-700 border border-red-200">Denied</span>
+          )
         )}
         {isInvoice && (
           doc.payment_status === "paid" ? (
@@ -201,6 +222,81 @@ const actionLabel: Record<string, string> = {
             Note from {doc.gm_name?.split(" ")[0] || "GM"}
           </h2>
           <p class="text-sm text-[var(--color-navy)] leading-relaxed whitespace-pre-wrap">{doc.note}</p>
+        </section>
+      )}
+
+      {needsApproval && (
+        <section class={`rounded-xl p-5 border ${
+          doc.approval_status === "approved" ? "bg-green-50 border-green-200" :
+          doc.approval_status === "denied" ? "bg-red-50 border-red-200" :
+          "bg-amber-50 border-amber-300"
+        }`}>
+          <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Approval</h2>
+
+          {doc.approval_status === "pending" ? (
+            canApprove ? (
+              <form method="POST" action={`/api/documents/${doc.id}/approval`} class="space-y-3">
+                <p class="text-sm text-[var(--color-navy)]">
+                  This invoice is over the approval threshold. Approve or deny it.
+                </p>
+                <div>
+                  <label for="reason" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+                    Reason <span class="font-normal normal-case tracking-normal">(required to deny)</span>
+                  </label>
+                  <input id="reason" name="reason" type="text" placeholder="Optional note / reason for denial"
+                    class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+                </div>
+                <div class="flex gap-2">
+                  <button type="submit" name="decision" value="deny"
+                    class="flex-1 text-sm font-semibold px-3 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">
+                    Deny
+                  </button>
+                  <button type="submit" name="decision" value="approve" class="btn-primary text-sm flex-1">
+                    Approve
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p class="text-sm text-[var(--color-navy)]">
+                Awaiting approval from Suite Manager. The decision will appear here.
+              </p>
+            )
+          ) : (
+            <div class="space-y-1 text-sm">
+              <div class="flex items-baseline justify-between">
+                <span class="text-[var(--color-muted)]">Decision</span>
+                <span class={`font-bold ${doc.approval_status === "approved" ? "text-green-800" : "text-red-700"}`}>
+                  {doc.approval_status === "approved" ? "Approved" : "Denied"}
+                </span>
+              </div>
+              {doc.approval_decided_by_name && (
+                <div class="flex items-baseline justify-between">
+                  <span class="text-[var(--color-muted)]">By</span>
+                  <span class="text-[var(--color-navy)]">{doc.approval_decided_by_name}</span>
+                </div>
+              )}
+              {doc.approval_decided_at && (
+                <div class="flex items-baseline justify-between">
+                  <span class="text-[var(--color-muted)]">When</span>
+                  <span class="text-[var(--color-navy)]">{fmtTime(doc.approval_decided_at)}</span>
+                </div>
+              )}
+              {doc.approval_reason && (
+                <p class="text-sm text-[var(--color-navy)] mt-2 pt-2 border-t border-[var(--color-hairline)]">
+                  “{doc.approval_reason}”
+                </p>
+              )}
+              {canApprove && (
+                <form method="POST" action={`/api/documents/${doc.id}/approval`} class="mt-3 pt-3 border-t border-[var(--color-hairline)]">
+                  {/* Re-open: send back to pending by re-submitting nothing isn't supported;
+                      decisions are final for the audit trail. */}
+                  <p class="text-xs text-[var(--color-muted)]">
+                    Decisions are final. To revisit, the GM re-uploads the invoice.
+                  </p>
+                </form>
+              )}
+            </div>
+          )}
         </section>
       )}
 

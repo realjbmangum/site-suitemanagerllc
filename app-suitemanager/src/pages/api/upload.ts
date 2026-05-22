@@ -7,6 +7,7 @@ import {
   fmtAmountCents,
   sanitizeFilename,
 } from '../../lib/files';
+import { getApprovalThresholdCents } from '../../lib/settings';
 
 export const prerender = false;
 
@@ -70,12 +71,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Flag heuristic: very large file or `other` category with no vendor.
   const flagged = file.size > 10 * 1024 * 1024 || (category === 'other' && !vendor) ? 1 : 0;
 
+  // Approval gate: invoices at/above the threshold need sign-off.
+  const threshold = await getApprovalThresholdCents(env.DB);
+  const approvalStatus =
+    category === 'invoice' && amount != null && amount >= threshold
+      ? 'pending'
+      : 'not_required';
+
   await env.DB
     .prepare(
       `INSERT INTO documents
          (id, property_id, uploaded_by, category, vendor, invoice_number,
-          amount_cents, note, r2_key, filename, size_bytes, mime_type, status, flagged)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`
+          amount_cents, note, r2_key, filename, size_bytes, mime_type,
+          status, flagged, approval_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`
     )
     .bind(
       documentId,
@@ -90,7 +99,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       cleanName,
       file.size,
       file.type,
-      flagged
+      flagged,
+      approvalStatus
     )
     .run();
 
@@ -98,6 +108,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     documentId,
     detail: `${category} · ${cleanName}`,
   });
+
+  if (approvalStatus === 'pending') {
+    await logAudit(env.DB, user.id, 'approval.requested', {
+      documentId,
+      detail: amount != null ? `$${(amount / 100).toFixed(2)}` : '',
+    });
+    // TODO(graph-mail): email an approval link to the admin/owner.
+  }
 
   // TODO(graph-mail): notify Strand Accounting (invoice/statement) or SM admin (other).
 

@@ -66,9 +66,30 @@ CREATE TABLE IF NOT EXISTS documents (
   status        TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','reviewed','archived')),
   flagged       INTEGER NOT NULL DEFAULT 0,
   assigned_to   TEXT REFERENCES users(id),
+  -- Payment workflow
+  payment_status TEXT NOT NULL DEFAULT 'unpaid',           -- 'unpaid' | 'paid'
+  check_number   TEXT,
+  check_date     TEXT,
+  paid_at        TEXT,
+  paid_by        TEXT REFERENCES users(id),
+  -- Approval workflow (invoices at/above the threshold setting)
+  approval_status      TEXT NOT NULL DEFAULT 'not_required', -- 'not_required' | 'pending' | 'approved' | 'denied'
+  approval_reason      TEXT,
+  approval_decided_by  TEXT REFERENCES users(id),
+  approval_decided_at  TEXT,
+  invoice_number TEXT,
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   reviewed_at   TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_documents_approval ON documents(approval_status);
+
+-- App settings (key-value). e.g. approval_threshold_cents.
+CREATE TABLE IF NOT EXISTS settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT OR IGNORE INTO settings (key, value) VALUES ('approval_threshold_cents', '50000');
 
 -- Resources — HR-uploaded templates GMs can browse and download
 CREATE TABLE IF NOT EXISTS resource_folders (

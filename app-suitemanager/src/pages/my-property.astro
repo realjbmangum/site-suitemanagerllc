@@ -40,7 +40,7 @@ if (!p) return Astro.redirect("/dashboard?error=Property+not+found");
 const docs = await env.DB
   .prepare(
     `SELECT id, filename, category, vendor, amount_cents, note, status,
-            payment_status, check_number, check_date, created_at
+            payment_status, check_number, check_date, approval_status, created_at
      FROM documents
      WHERE property_id = ?
      ORDER BY created_at DESC LIMIT 30`
@@ -51,6 +51,7 @@ const docs = await env.DB
     vendor: string | null; amount_cents: number | null; note: string | null;
     status: string;
     payment_status: string; check_number: string | null; check_date: string | null;
+    approval_status: string;
     created_at: string;
   }>();
 
@@ -254,8 +255,17 @@ const viewerType = (mime: string) =>
                 <a href={`/dashboard/${d.id}`} class="block px-5 py-3 hover:bg-[var(--color-cream)]">
                   <div class="flex items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2 mb-0.5">
+                      <div class="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span class={`pill ${pillClass(d.category)} capitalize`}>{d.category}</span>
+                        {d.approval_status === "pending" && (
+                          <span class="pill bg-amber-100 text-amber-800 border border-amber-300">Awaiting approval</span>
+                        )}
+                        {d.approval_status === "approved" && (
+                          <span class="pill bg-green-100 text-green-800 border border-green-200">Approved</span>
+                        )}
+                        {d.approval_status === "denied" && (
+                          <span class="pill bg-red-100 text-red-700 border border-red-200">Denied</span>
+                        )}
                         {d.category === "invoice" && (
                           d.payment_status === "paid" ? (
                             <span class="pill bg-green-100 text-green-800 border border-green-200">Paid</span>
