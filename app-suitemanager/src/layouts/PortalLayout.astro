@@ -125,5 +125,52 @@ const isActive = (href: string) =>
     <main class={bare ? "min-h-screen flex items-center justify-center px-4" : "max-w-6xl mx-auto px-6 py-10"}>
       <slot />
     </main>
+
+    <script is:inline>
+      // Drag-and-drop wiring for every [data-dropzone] on the page.
+      // Each dropzone wraps an <input type="file">; an optional element with
+      // [data-dropzone-label] shows the chosen filename.
+      (function () {
+        // Stop the browser from navigating away when a file is dropped
+        // outside a zone.
+        window.addEventListener("dragover", function (e) { e.preventDefault(); });
+        window.addEventListener("drop", function (e) { e.preventDefault(); });
+
+        document.querySelectorAll("[data-dropzone]").forEach(function (zone) {
+          var input = zone.querySelector('input[type="file"]');
+          if (!input) return;
+          var label = zone.querySelector("[data-dropzone-label]");
+          var defaultText = label ? label.textContent : "";
+
+          function showName() {
+            if (!label) return;
+            var f = input.files && input.files[0];
+            label.textContent = f ? f.name : defaultText;
+          }
+          input.addEventListener("change", showName);
+
+          ["dragenter", "dragover"].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) {
+              e.preventDefault();
+              zone.classList.add("dropzone-active");
+            });
+          });
+          ["dragleave", "dragend"].forEach(function (ev) {
+            zone.addEventListener(ev, function () {
+              zone.classList.remove("dropzone-active");
+            });
+          });
+          zone.addEventListener("drop", function (e) {
+            e.preventDefault();
+            zone.classList.remove("dropzone-active");
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (files && files.length > 0) {
+              input.files = files;
+              showName();
+            }
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

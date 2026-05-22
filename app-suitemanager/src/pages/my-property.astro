@@ -174,11 +174,10 @@ const pillClass = (cat: string) =>
           <input type="hidden" name="property_id" value={targetPropertyId} />
         )}
 
-        <label class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-6 py-8 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
+        <label data-dropzone class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-6 py-8 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
           <input type="file" name="file" class="hidden" required
-            accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-            id="file-input" />
-          <div class="text-[var(--color-brass-dark)] font-semibold text-sm" id="file-label">
+            accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+          <div data-dropzone-label class="text-[var(--color-brass-dark)] font-semibold text-sm">
             Drag a file here, or click to browse
           </div>
           <div class="text-xs text-[var(--color-muted)] mt-1">
@@ -317,14 +316,4 @@ const pillClass = (cat: string) =>
     </div>
   </section>
 
-  <script is:inline>
-    const inp = document.getElementById("file-input");
-    const lab = document.getElementById("file-label");
-    if (inp && lab) {
-      inp.addEventListener("change", () => {
-        const f = inp.files && inp.files[0];
-        lab.textContent = f ? f.name : "Drag a file here, or click to browse";
-      });
-    }
-  </script>
 </PortalLayout>

@@ -67,3 +67,9 @@ html, body {
   transition: background-color 150ms;
 }
 .btn-ghost:hover { background-color: white; }
+
+/* Drag-and-drop active state */
+.dropzone-active {
+  background-color: var(--color-brass-light) !important;
+  border-color: var(--color-brass-dark) !important;
+}
