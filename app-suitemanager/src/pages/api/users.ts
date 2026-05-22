@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { generateId, generateToken } from '../../lib/ids';
 import { logAudit } from '../../lib/audit';
+import { buildInviteEmail } from '../../lib/email/templates';
+import { trySend } from '../../lib/email/graph';
 
 export const prerender = false;
 
@@ -55,10 +57,37 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     detail: `invited ${email} as ${role}`,
   });
 
+  // Send the invite email (best-effort — the copy-link in the UI is the
+  // fallback if Graph mail isn't configured or the send fails).
+  const origin = new URL(request.url).origin;
+  let propertyName: string | undefined;
+  if (role === 'gm' && propertyId) {
+    const prop = await env.DB
+      .prepare('SELECT name FROM properties WHERE id = ?')
+      .bind(propertyId)
+      .first<{ name: string }>();
+    propertyName = prop?.name;
+  }
+  const invite = buildInviteEmail({
+    recipientName: name,
+    recipientEmail: email,
+    role,
+    inviteUrl: `${origin}/invite/${inviteToken}`,
+    expiresAt: expires,
+    inviterName: locals.user.name,
+    propertyName,
+  });
+  const emailed = await trySend(env, {
+    to: email,
+    subject: invite.subject,
+    html: invite.html,
+  });
+
   // Redirect back to /admin/users with the new invite token shown so admin can
-  // copy/share the link.
+  // copy/share the link (and a flag for whether the email went out).
   const back = new URL('/admin/users', request.url);
   back.searchParams.set('invited', inviteToken);
+  back.searchParams.set('emailed', emailed ? '1' : '0');
   return redirect(back.toString(), 302);
 };
 

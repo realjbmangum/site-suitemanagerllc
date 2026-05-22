@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Microsoft Graph Email — Setup Guide</title>
+<style>
+  :root {
+    --navy: #1D1D33;
+    --brass: #BB945C;
+    --brass-dark: #9C7A48;
+    --cream: #F5F4F1;
+    --paper: #FFFFFF;
+    --hairline: #E5E3DE;
+    --muted: #6B6B78;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--navy);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+  header {
+    background: var(--navy);
+    color: #fff;
+    border-bottom: 3px solid var(--brass);
+    padding: 28px 24px;
+    text-align: center;
+  }
+  header .kicker {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--brass); margin-bottom: 6px;
+  }
+  header h1 { margin: 0; font-size: 24px; }
+  h2 {
+    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--brass-dark); margin: 38px 0 12px;
+  }
+  .step {
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin: 14px 0;
+    display: flex;
+    gap: 16px;
+  }
+  .num {
+    flex-shrink: 0;
+    width: 34px; height: 34px;
+    background: var(--navy); color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px;
+  }
+  .step h3 { margin: 4px 0 6px; font-size: 17px; }
+  .step p, .step ul { margin: 6px 0; }
+  .step ul { padding-left: 20px; }
+  .path {
+    background: var(--cream);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    color: var(--navy);
+  }
+  .callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .callout.warn { background: #FBEFD9; border: 1px solid var(--brass); }
+  .callout.info { background: #EDF1F6; border: 1px solid #C9D4E0; }
+  .callout strong { color: var(--navy); }
+  table {
+    width: 100%; border-collapse: collapse; margin: 14px 0;
+    background: var(--paper); border: 1px solid var(--hairline);
+    border-radius: 10px; overflow: hidden; font-size: 14px;
+  }
+  th {
+    background: var(--cream); text-align: left; padding: 9px 12px;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted);
+  }
+  td { padding: 10px 12px; border-top: 1px solid var(--hairline); vertical-align: top; }
+  .yes { color: #B4452C; font-weight: 700; }
+  .no { color: #2C7A4B; font-weight: 700; }
+  pre {
+    background: var(--navy); color: #EDE7DA;
+    padding: 16px 18px; border-radius: 10px;
+    overflow-x: auto; font-size: 13px; line-height: 1.5;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .lead {
+    background: var(--paper); border: 1px solid var(--hairline);
+    border-left: 4px solid var(--brass);
+    border-radius: 10px; padding: 16px 20px; margin: 18px 0;
+    font-size: 14px;
+  }
+  .lead ul { margin: 8px 0; padding-left: 20px; }
+  footer {
+    text-align: center; color: var(--muted); font-size: 12px;
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--hairline);
+  }
+  a { color: var(--brass-dark); }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Suite Manager Portal</div>
+  <h1>Microsoft Graph Email — Setup Guide</h1>
+</header>
+
+<div class="wrap">
+
+  <p class="lead">
+    This authorizes the portal to send email through Suite Manager's
+    Microsoft&nbsp;365. Work through the eight steps below. You'll end with
+    <strong>four values</strong> — three you hand back, one (the secret) you
+    load yourself.
+    <ul>
+      <li>Configured on <strong>Suite Manager's</strong> M365 — the portal sends email <em>as</em> Suite Manager, not as you.</li>
+      <li>Requires a <strong>Global Administrator</strong> on Suite Manager's M365. If that isn't you, Chris grants the role temporarily or you screen-share with their M365 admin.</li>
+      <li>Pick a from-address — a dedicated mailbox like <span class="path">portal@suitemanagerllc.com</span> (a shared mailbox is fine, no paid license needed).</li>
+    </ul>
+  </p>
+
+  <h2>The setup</h2>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div>
+      <h3>Open the admin center</h3>
+      <p>Go to <span class="path">entra.microsoft.com</span> and sign in with the Suite Manager Global Admin account. (This is the Microsoft Entra admin center — "Entra ID" is the new name for Azure AD.)</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div>
+      <h3>Register the app</h3>
+      <p>Left sidebar: <span class="path">Identity → Applications → App registrations → + New registration</span></p>
+      <ul>
+        <li><strong>Name:</strong> Suite Manager Portal — Mail</li>
+        <li><strong>Supported account types:</strong> Accounts in this organizational directory only</li>
+        <li><strong>Redirect URI:</strong> leave blank</li>
+        <li>Click <strong>Register</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div>
+      <h3>Copy two IDs</h3>
+      <p>On the app's <strong>Overview</strong> page, copy and save:</p>
+      <ul>
+        <li><strong>Application (client) ID</strong></li>
+        <li><strong>Directory (tenant) ID</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div>
+      <h3>Grant the email permission</h3>
+      <p>App's left sidebar: <span class="path">API permissions → + Add a permission → Microsoft Graph → Application permissions</span></p>
+      <p>Search <strong>Mail.Send</strong>, check it, click <strong>Add permissions</strong>.</p>
+      <p>Then click <strong>Grant admin consent for [Suite Manager]</strong> → Yes. The Mail.Send row must show a green <strong>Granted</strong> check — if it doesn't, email won't be authorized.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div>
+      <h3>Create a client secret</h3>
+      <p>App's left sidebar: <span class="path">Certificates &amp; secrets → Client secrets → + New client secret</span></p>
+      <ul>
+        <li><strong>Description:</strong> Portal mail</li>
+        <li><strong>Expires:</strong> 24 months (the maximum)</li>
+        <li>Click <strong>Add</strong></li>
+      </ul>
+      <div class="callout warn">
+        <strong>Copy the <code>Value</code> immediately</strong> — the column labeled Value, not Secret ID. It is shown <strong>once</strong> and never again. Navigate away and you'll have to delete it and make a new one. Also set a calendar reminder ~22 months out to rotate it — when it expires, email silently stops.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">6</div>
+    <div>
+      <h3>Confirm the sender mailbox</h3>
+      <p>Confirm your from-address (e.g. <span class="path">portal@suitemanagerllc.com</span>) exists as a licensed mailbox at <span class="path">admin.microsoft.com</span>. If it doesn't, create it — a shared mailbox works and needs no paid license.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">7</div>
+    <div>
+      <h3>Hand it back</h3>
+      <table>
+        <tr><th>Value</th><th>Sensitive</th><th>Action</th></tr>
+        <tr><td>Directory (tenant) ID</td><td class="no">No</td><td>Paste it to Claude</td></tr>
+        <tr><td>Application (client) ID</td><td class="no">No</td><td>Paste it to Claude</td></tr>
+        <tr><td>Sender mailbox address</td><td class="no">No</td><td>Paste it to Claude</td></tr>
+        <tr><td>Client secret <strong>Value</strong></td><td class="yes">Yes</td><td>Set it yourself — see below</td></tr>
+      </table>
+      <div class="callout info">
+        <strong>Set the secret:</strong> Cloudflare dashboard → Workers &amp; Pages →
+        <span class="path">app-suitemanagerllc</span> → Settings → Variables and secrets →
+        Add → Type <strong>Secret</strong> → Name <span class="path">GRAPH_CLIENT_SECRET</span>
+        → paste the Value → Save. One field, two minutes.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">8</div>
+    <div>
+      <h3>Lock the app to one mailbox <em style="color:var(--muted);font-weight:400;">— recommended, optional</em></h3>
+      <p>By default the Mail.Send permission lets the app send as <strong>any</strong> mailbox in the tenant. Restrict it to just the portal mailbox via Exchange Online PowerShell:</p>
+      <pre><code>Connect-ExchangeOnline
+New-ApplicationAccessPolicy -AppId &lt;client-id&gt; `
+  -PolicyScopeGroupId portal@suitemanagerllc.com `
+  -AccessRight RestrictAccess `
+  -Description "Restrict portal app to the portal mailbox"</code></pre>
+      <p>Optional for getting email working, but worth doing before real volume. Claude can walk you through it separately.</p>
+    </div>
+  </div>
+
+  <h2>What happens next</h2>
+  <p class="lead">
+    Once Claude has the three non-secret values and the secret is set in Cloudflare:
+    <ul>
+      <li><code>src/lib/email/graph.ts</code> — token exchange + Graph <code>sendMail</code></li>
+      <li>Invite emails — the login link auto-sends on every new user</li>
+      <li>Approval-request email to admins (the link Chris clicks)</li>
+      <li>Upload notifications to Strand</li>
+    </ul>
+    Roughly one focused session once the credentials exist.
+  </p>
+
+  <footer>
+    Suite Manager Portal · Ascend Systems · Phase 2 — Microsoft Graph email
+  </footer>
+</div>
+</body>
+</html>

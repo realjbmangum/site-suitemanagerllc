@@ -190,3 +190,154 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// --- Shared shell for short transactional emails -------------------------
+function transactionalShell(opts: {
+  preheader: string;
+  heading: string;
+  bodyHtml: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  accent?: string; // header bar accent under the logo
+}): string {
+  const accent = opts.accent || BRAND.brass;
+  return `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="x-apple-disable-message-reformatting" />
+</head>
+<body style="margin:0;padding:0;background:${BRAND.cream};">
+  <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:${BRAND.cream};opacity:0;">${escapeHtml(opts.preheader)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.cream};">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ${BRAND.hairline};border-radius:14px;overflow:hidden;font-family:${FONT_STACK};color:${BRAND.text};">
+        <tr><td align="center" style="background:${BRAND.navy};padding:22px 24px;border-bottom:2px solid ${accent};">
+          <img src="${BRAND.logoUrl}" alt="Suite Manager" width="170" style="display:block;width:170px;height:auto;filter:brightness(0) invert(1);" />
+        </td></tr>
+        <tr><td style="padding:32px 40px 8px 40px;">
+          <h1 style="margin:0;font-size:21px;line-height:1.3;font-weight:700;color:${BRAND.navy};">${escapeHtml(opts.heading)}</h1>
+        </td></tr>
+        <tr><td style="padding:8px 40px 0 40px;font-size:15px;line-height:1.6;color:${BRAND.text};">
+          ${opts.bodyHtml}
+        </td></tr>
+        ${
+          opts.ctaLabel && opts.ctaUrl
+            ? `<tr><td align="center" style="padding:26px 40px 8px 40px;">
+                 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                   <td align="center" style="background:${BRAND.navy};border-radius:8px;">
+                     <a href="${opts.ctaUrl}" target="_blank" style="display:inline-block;padding:13px 26px;font-family:${FONT_STACK};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">${escapeHtml(opts.ctaLabel)}</a>
+                   </td>
+                 </tr></table>
+               </td></tr>`
+            : ''
+        }
+        <tr><td style="padding:24px 40px;background:${BRAND.cream};border-top:1px solid ${BRAND.hairline};">
+          <p style="margin:0;font-size:12px;line-height:1.6;color:${BRAND.muted};">
+            Suite Manager document portal &middot; &copy; ${new Date().getFullYear()} Suite Manager LLC
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function detailRow(label: string, value: string): string {
+  return `<tr>
+    <td style="padding:4px 0;font-size:13px;color:${BRAND.muted};width:130px;">${escapeHtml(label)}</td>
+    <td style="padding:4px 0;font-size:14px;color:${BRAND.navy};font-weight:600;">${escapeHtml(value)}</td>
+  </tr>`;
+}
+
+// --- Approval request (to admins) ---------------------------------------
+export interface ApprovalRequestEmailInput {
+  recipientName?: string;
+  propertyName: string;
+  vendor: string | null;
+  amountFormatted: string;
+  invoiceNumber?: string | null;
+  uploadedByName: string;
+  reviewUrl: string;
+}
+
+export function buildApprovalRequestEmail(input: ApprovalRequestEmailInput): {
+  subject: string;
+  html: string;
+} {
+  const first = input.recipientName?.split(/\s+/)[0];
+  const rows = [
+    detailRow('Property', input.propertyName),
+    detailRow('Vendor', input.vendor || '—'),
+    detailRow('Amount', input.amountFormatted),
+    input.invoiceNumber ? detailRow('Invoice #', input.invoiceNumber) : '',
+    detailRow('Submitted by', input.uploadedByName),
+  ].join('');
+
+  const bodyHtml = `
+    <p style="margin:14px 0 0 0;">${first ? escapeHtml(first) + ',' : 'Hi,'}</p>
+    <p style="margin:12px 0 0 0;">An invoice was uploaded that needs your approval before it can be paid.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 4px 0;">${rows}</table>
+    <p style="margin:14px 0 0 0;font-size:13px;color:${BRAND.muted};">Open it in the portal to review the document and approve or deny it.</p>`;
+
+  return {
+    subject: `Approval needed — ${input.amountFormatted} invoice, ${input.propertyName}`,
+    html: transactionalShell({
+      preheader: `${input.amountFormatted} invoice from ${input.propertyName} awaiting your approval.`,
+      heading: 'An invoice needs your approval',
+      bodyHtml,
+      ctaLabel: 'Review & decide',
+      ctaUrl: input.reviewUrl,
+    }),
+  };
+}
+
+// --- Approval decision (to the GM) --------------------------------------
+export interface ApprovalDecisionEmailInput {
+  recipientName: string;
+  approved: boolean;
+  propertyName: string;
+  vendor: string | null;
+  amountFormatted: string;
+  reason?: string | null;
+  documentUrl: string;
+}
+
+export function buildApprovalDecisionEmail(input: ApprovalDecisionEmailInput): {
+  subject: string;
+  html: string;
+} {
+  const first = input.recipientName.split(/\s+/)[0] || input.recipientName;
+  const word = input.approved ? 'approved' : 'denied';
+  const rows = [
+    detailRow('Property', input.propertyName),
+    detailRow('Vendor', input.vendor || '—'),
+    detailRow('Amount', input.amountFormatted),
+  ].join('');
+
+  const bodyHtml = `
+    <p style="margin:14px 0 0 0;">${escapeHtml(first)},</p>
+    <p style="margin:12px 0 0 0;">The invoice you submitted has been <strong>${word}</strong>.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 4px 0;">${rows}</table>
+    ${
+      input.reason
+        ? `<p style="margin:14px 0 0 0;padding:12px 14px;background:${BRAND.cream};border-radius:8px;font-size:14px;">
+             <strong>Note:</strong> ${escapeHtml(input.reason)}
+           </p>`
+        : ''
+    }`;
+
+  return {
+    subject: input.approved
+      ? `Invoice approved — ${input.propertyName}`
+      : `Invoice denied — ${input.propertyName}`,
+    html: transactionalShell({
+      preheader: `Your ${input.amountFormatted} invoice was ${word}.`,
+      heading: input.approved ? 'Your invoice was approved' : 'Your invoice was denied',
+      bodyHtml,
+      ctaLabel: 'View the invoice',
+      ctaUrl: input.documentUrl,
+      accent: input.approved ? '#2C7A4B' : '#B4452C',
+    }),
+  };
+}
+

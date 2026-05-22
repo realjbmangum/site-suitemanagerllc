@@ -17,21 +17,17 @@ database_id = "a05dcf90-e157-4e4b-bfb1-b34e2e4737d8"
 binding = "FILES"
 bucket_name = "suitemanager-portal-files"
 
-# Plain vars (non-secret). Override per-environment in the Cloudflare dashboard.
+# Plain vars (non-secret).
 [vars]
 MAX_UPLOAD_BYTES = "26214400"          # 25 MB
-STRAND_ACCOUNTING_EMAIL = ""           # set in dashboard once Chris confirms
-ADMIN_EMAIL = ""                       # set in dashboard once Chris confirms
 APP_ORIGIN = "https://app.suitemanagerllc.com"
 
-# Email transport: Microsoft Graph (Suite Manager's M365 tenant).
-# Wired in a later session. App registration steps:
-#   1. Azure AD → App registrations → New registration
-#   2. Grant application permission: Mail.Send (admin consent required)
-#   3. Capture tenant id, client id, client secret, and the sender mailbox user id
-#   GRAPH_TENANT_ID, GRAPH_CLIENT_ID, GRAPH_SENDER_USER_ID  → plain vars
-#   GRAPH_CLIENT_SECRET                                     → secret
+# Microsoft Graph email (Suite Manager M365 tenant). IDs are not secrets —
+# they appear in every OAuth request. The client secret is set separately.
+GRAPH_TENANT_ID = "4a2d9fd6-fe9f-4c54-a75a-bb8f78106324"
+GRAPH_CLIENT_ID = "3a8c7ce5-59ca-4bed-92aa-c6ed7be6e0f3"
+GRAPH_SENDER_USER_ID = "portal@suitemanagerllc.com"
 
-# Secrets — set with `wrangler pages secret put <NAME>`:
+# Secrets — set in the Cloudflare Pages dashboard (Settings → Variables & secrets):
 #   SESSION_SECRET
-#   GRAPH_CLIENT_SECRET  (later, when Graph is wired)
+#   GRAPH_CLIENT_SECRET

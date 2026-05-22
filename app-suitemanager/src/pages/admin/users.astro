@@ -26,6 +26,7 @@ const users = await env.DB
 
 const origin = url.origin;
 const invitedLink = invited ? `${origin}/invite/${invited}` : null;
+const inviteEmailed = url.searchParams.get("emailed") === "1";
 ---
 
 <PortalLayout title="Users">
@@ -43,10 +44,12 @@ const invitedLink = invited ? `${origin}/invite/${invited}` : null;
   {invitedLink && (
     <div class="mb-6 rounded-xl border border-[var(--color-brass)] bg-[var(--color-brass-light)]/15 p-5">
       <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-brass-dark)]">
-        Invite link created
+        {inviteEmailed ? "Invite emailed" : "Invite link created"}
       </div>
       <p class="text-sm text-[var(--color-navy)] mt-1 mb-3">
-        Send this link to the new user. It expires in 7 days. They'll use it to set their own password.
+        {inviteEmailed
+          ? "We emailed the invite to the new user. Here's the link too, in case you need to resend it. It expires in 7 days."
+          : "Email isn't sending yet — copy this link and send it to the new user yourself. It expires in 7 days."}
       </p>
       <div class="flex items-center gap-2 flex-wrap">
         <input

@@ -8,6 +8,8 @@ import {
   sanitizeFilename,
 } from '../../lib/files';
 import { getApprovalThresholdCents } from '../../lib/settings';
+import { buildApprovalRequestEmail } from '../../lib/email/templates';
+import { trySend } from '../../lib/email/graph';
 
 export const prerender = false;
 
@@ -114,10 +116,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
       documentId,
       detail: amount != null ? `$${(amount / 100).toFixed(2)}` : '',
     });
-    // TODO(graph-mail): email an approval link to the admin/owner.
-  }
 
-  // TODO(graph-mail): notify Strand Accounting (invoice/statement) or SM admin (other).
+    // Email every admin an approval link (best-effort).
+    const admins = await env.DB
+      .prepare("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND password_hash IS NOT NULL")
+      .all<{ email: string }>();
+    const prop = await env.DB
+      .prepare('SELECT name FROM properties WHERE id = ?')
+      .bind(propertyId)
+      .first<{ name: string }>();
+    const adminEmails = admins.results.map((a) => a.email).filter(Boolean);
+    if (adminEmails.length > 0) {
+      const origin = new URL(request.url).origin;
+      const mail = buildApprovalRequestEmail({
+        propertyName: prop?.name || 'Unknown property',
+        vendor,
+        amountFormatted:
+          amount != null
+            ? `$${(amount / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+            : '—',
+        invoiceNumber,
+        uploadedByName: user.name,
+        reviewUrl: `${origin}/dashboard/${documentId}`,
+      });
+      await trySend(env, { to: adminEmails, subject: mail.subject, html: mail.html });
+    }
+  }
 
   const back = new URL('/upload', request.url);
   back.searchParams.set('uploaded', '1');
