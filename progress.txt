@@ -1,3 +1,76 @@
+## Session - 2026-05-22 (PM) — Meeting review + Phase 1 build complete
+
+10am call with Chris + Strand (Megan/accounting, Julie/HR) + Annette & Mike
+(prior mgmt co, now test users). Transcript reviewed end to end; working doc
+at `tasks/MEETING-REVIEW-2026-05-22.md`.
+
+**Systems clarified:** Acumatica = Strand's accounting/ERP (AP approvals
+live there). Jonas Quorum = the PMS (the `code` column is Quorum codes).
+Engage = HR system, owns all sensitive HR.
+
+**Decisions logged:**
+- Acumatica + Quorum integrations = Phase 2 (separate PRD + quote). Don't
+  build now; build standalone in-portal features that hand off later.
+- Approval threshold mocked at $500, configurable; Chris confirms real number.
+- Fact-sheet visibility: that property's GM + Strand + admins.
+- Annette/Mike added as admins. Lynn/Lisa (GMs) blocked — Chris's property
+  roster lists GMs wrong; he must correct it.
+
+**Phase 1 — built and shipped this session (no external integrations):**
+
+1. Quick wins (commit 3be3b80):
+   - "HR Templates" → "Resources" everywhere; one Resources nav item per
+     role (removed the duplicate Julie/Megan flagged)
+   - `invoice_number` column + field on the GM upload form + detail display
+   - CSV export — `GET /api/documents/export` honors dashboard filters;
+     "Export to Excel" button; UTF-8 BOM
+
+2. Approval workflow (commit 55b97c2):
+   - documents: approval_status/reason/decided_by/decided_at
+   - `settings` table (key-value); approval_threshold_cents = 50000
+   - Upload: invoices >= threshold land 'pending'
+   - `POST /api/documents/[id]/approval` — admin approve/deny, reason
+     required to deny, decisions final + audit-logged
+   - `/admin/approvals` queue (Awaiting / Decided tabs, inline approve/deny)
+   - `/admin/settings` + `POST /api/settings` — configurable threshold
+   - Nav: "Approvals" with live pending-count badge, "Settings"
+   - Approval card on doc detail; pills on dashboard list + my-property
+   - Graph email hook stubbed (TODO in /api/upload.ts) for Phase 2
+
+3. Property fact sheet + document library (commit 1bcbb22):
+   - `property_facts` table — labeled operational data (alarm codes,
+     utility accounts, access instructions)
+   - `property_files` table — categorized reference docs (inspection/qa/
+     license/permit/contract/other) with optional expiry; amber
+     "expires soon" / red "expired" flags
+   - APIs: /api/properties/[id]/facts, /api/property-facts/[id],
+     /api/properties/[id]/files, /api/property-files/[id] (+ /download)
+   - Reusable components `FactSheet.astro`, `PropertyFiles.astro` —
+     embedded on /admin/properties/[id] AND /my-property
+   - `lib/property-access.ts` canAccessProperty() — GM(own)+strand+admin
+   - Middleware: /admin/properties/[id] opened to Strand (list stays
+     admin-only per Chris); dashboard property names link to detail
+
+**Also:** drag-and-drop file upload fixed (was click-only — styled labels
+over hidden inputs); in-app PDF/image viewer modal added (View was
+downloading for templates / opening bare tabs for financials).
+
+**Client docs created in tasks/:**
+- `MEETING-REVIEW-2026-05-22.md` — Tuesday working doc
+- `EMAIL-test-user-invite.md` — reusable portal invite preface
+
+**Phase 2 backlog (separate PRD + pricing):**
+- Acumatica integration (invoice feed + approval hand-off)
+- Jonas Quorum integration (daily/month-end reporting)
+- Microsoft Graph email (invite emails, upload + approval notifications)
+- Owners as a real role (owner login scoped to their properties)
+- Bulk-invite GMs once Chris fixes the roster
+
+**Next checkpoint:** Tuesday May 27 — test group (Annette, Mike, + GMs)
+sends feedback.
+
+---
+
 ## Session - 2026-05-21/22 — CRM build-out: properties, payments, financials, viewer; Chris demo
 
 Chris saw the portal, loved it, Strand asking for their own accounts. Demo to

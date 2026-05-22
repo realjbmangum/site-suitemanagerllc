@@ -3,10 +3,14 @@ import PortalLayout from "../layouts/PortalLayout.astro";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
+const me = Astro.locals.user!;
 const url = new URL(Astro.request.url);
 
+// Primary view tab. Admins default to the approvals queue; others to Inbox.
+const defaultTab = me.role === "admin" ? "approvals" : "new";
+const tab = url.searchParams.get("tab") || defaultTab; // approvals | new | reviewed | all
+
 // Filters / view state via URL params.
-const status = url.searchParams.get("status") || "new";     // new (default) | reviewed | all
 const category = url.searchParams.get("category") || "all"; // all | invoice | statement | other
 const filter = url.searchParams.get("filter") || "";        // '' | pending | today | week
 const propertyId = url.searchParams.get("property") || "";  // '' = all properties
@@ -46,14 +50,9 @@ const fmtBytes = (b: number) => {
   return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 };
 
-// Status-aware category counts.
+// Category counts across all documents.
 const catCountRows = await env.DB
-  .prepare(
-    `SELECT category, COUNT(*) AS n FROM documents
-     ${status === "all" ? "" : "WHERE status = ?"}
-     GROUP BY category`
-  )
-  .bind(...(status === "all" ? [] : [status]))
+  .prepare("SELECT category, COUNT(*) AS n FROM documents GROUP BY category")
   .all<{ category: string; n: number }>();
 const countByCat: Record<string, number> = {};
 for (const r of catCountRows.results) countByCat[r.category] = r.n;
@@ -61,10 +60,14 @@ for (const r of catCountRows.results) countByCat[r.category] = r.n;
 // Build the doc-list query.
 const where: string[] = [];
 const args: unknown[] = [];
-if (status !== "all") {
-  where.push("d.status = ?");
-  args.push(status);
+if (tab === "approvals") {
+  where.push("d.approval_status = 'pending'");
+} else if (tab === "new") {
+  where.push("d.status = 'new'");
+} else if (tab === "reviewed") {
+  where.push("d.status = 'reviewed'");
 }
+// tab === "all" → no status/approval filter
 if (category !== "all") {
   where.push("d.category = ?");
   args.push(category);
@@ -155,8 +158,21 @@ const tileHref = (key: string, active: boolean) =>
 const catHref = (cat: string) =>
   buildHref({ category: cat === "all" ? null : cat });
 
-const statusHref = (s: string) =>
-  buildHref({ status: s === "new" ? null : s });
+const tabHref = (t: string) => buildHref({ tab: t });
+
+const tabOptions =
+  me.role === "admin"
+    ? [
+        { v: "approvals", label: "Awaiting approval" },
+        { v: "new", label: "Inbox" },
+        { v: "reviewed", label: "Reviewed" },
+        { v: "all", label: "All" },
+      ]
+    : [
+        { v: "new", label: "Inbox" },
+        { v: "reviewed", label: "Reviewed" },
+        { v: "all", label: "All" },
+      ];
 
 const sortHref = (col: string) => {
   const sameCol = sort === col;
@@ -215,24 +231,19 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
     </div>
   </div>
 
-  <!-- Status tabs -->
+  <!-- View tabs -->
   <div class="border-b border-[var(--color-hairline)] mb-4">
-    <nav class="flex gap-1">
-      {[
-        { v: "new", label: "Inbox", desc: "New uploads waiting for review" },
-        { v: "reviewed", label: "Reviewed", desc: "Already processed" },
-        { v: "all", label: "All", desc: "Everything" },
-      ].map((s) => (
+    <nav class="flex gap-1 flex-wrap">
+      {tabOptions.map((t) => (
         <a
-          href={statusHref(s.v)}
-          title={s.desc}
+          href={tabHref(t.v)}
           class={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
-            status === s.v
+            tab === t.v
               ? "border-[var(--color-brass)] text-[var(--color-navy)]"
               : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-navy)]"
           }`}
         >
-          {s.label}
+          {t.label}
         </a>
       ))}
     </nav>
@@ -259,7 +270,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
   </div>
 
   <form method="GET" class="mb-4 flex flex-wrap items-center gap-2">
-    {status !== "new" && <input type="hidden" name="status" value={status} />}
+    <input type="hidden" name="tab" value={tab} />
     {category !== "all" && <input type="hidden" name="category" value={category} />}
     {filter && <input type="hidden" name="filter" value={filter} />}
     {sort !== "date" && <input type="hidden" name="sort" value={sort} />}
@@ -343,7 +354,9 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
         {rows.results.length === 0 && (
           <tr>
             <td colspan="6" class="px-5 py-10 text-center text-[var(--color-muted)]">
-              {status === "new"
+              {tab === "approvals"
+                ? "Nothing awaiting approval — you're clear."
+                : tab === "new"
                 ? "Inbox is clear — no new documents."
                 : "No documents match this view."}
             </td>

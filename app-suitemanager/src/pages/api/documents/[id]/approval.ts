@@ -52,12 +52,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   // TODO(graph-mail): notify the GM + Strand of the decision.
 
-  const referer = request.headers.get('referer') || '/admin/approvals';
+  const referer = request.headers.get('referer') || '/dashboard?tab=approvals';
   return new Response(null, { status: 302, headers: { location: referer } });
 };
 
 function bounce(request: Request, msg: string): Response {
-  const url = new URL(request.headers.get('referer') || '/admin/approvals', request.url);
+  const url = new URL(request.headers.get('referer') || '/dashboard?tab=approvals', request.url);
   url.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: url.toString() } });
 }

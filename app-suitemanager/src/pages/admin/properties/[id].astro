@@ -40,14 +40,14 @@ const gms = await env.DB
 
 const recent = await env.DB
   .prepare(
-    `SELECT id, filename, category, vendor, amount_cents, status, created_at
-     FROM documents WHERE property_id = ? ORDER BY created_at DESC LIMIT 10`
+    `SELECT id, filename, category, vendor, amount_cents, status, payment_status, created_at
+     FROM documents WHERE property_id = ? ORDER BY created_at DESC`
   )
   .bind(id)
   .all<{
     id: string; filename: string; category: string;
     vendor: string | null; amount_cents: number | null;
-    status: string; created_at: string;
+    status: string; payment_status: string; created_at: string;
   }>();
 
 const stats = await env.DB
@@ -65,14 +65,10 @@ const financials = await env.DB
     `SELECT id, statement_type, period_year, period_month, title, filename, mime_type, created_at
      FROM financial_statements
      WHERE property_id = ? AND archived_at IS NULL
-     ORDER BY period_year DESC, period_month DESC, created_at DESC
-     LIMIT 6`
+     ORDER BY period_year DESC, period_month DESC, created_at DESC`
   )
   .bind(id)
   .all<{ id: string; statement_type: string; period_year: number; period_month: number | null; title: string; filename: string; mime_type: string; created_at: string }>();
-
-const viewerType = (mime: string) =>
-  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 
 const facts = await env.DB
   .prepare("SELECT id, label, value FROM property_facts WHERE property_id = ? ORDER BY sort_order, created_at")
@@ -88,6 +84,8 @@ const propertyFiles = await env.DB
   .bind(id)
   .all<{ id: string; category: string; title: string; description: string | null; expires_at: string | null; filename: string; mime_type: string; created_at: string }>();
 
+const viewerType = (mime: string) =>
+  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
 const fmtMoney = (cents: number | null) =>
   cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
 const fmtRel = (iso: string) => {
@@ -104,14 +102,20 @@ const brandLabel =
   p.brand === "asa" ? "Affordable Suites of America" :
   p.brand === "acs" ? "Affordable Corporate Suites" :
   "Unbranded";
-
 const fullAddress = [p.address_street, p.address_city, p.address_state, p.address_zip]
   .filter(Boolean)
   .join(", ");
-
 const pillClass = (cat: string) =>
   cat === "invoice" ? "pill-invoice" :
   cat === "statement" ? "pill-statement" : "pill-other";
+
+const tabs = [
+  { id: "overview", label: "Overview" },
+  { id: "documents", label: "Documents", count: recent.results.length },
+  { id: "financials", label: "Financials", count: financials.results.length },
+  { id: "factsheet", label: "Fact Sheet", count: facts.results.length },
+  { id: "files", label: "Files", count: propertyFiles.results.length },
+];
 ---
 
 <PortalLayout title={p.name}>
@@ -119,7 +123,8 @@ const pillClass = (cat: string) =>
     ← Back to properties
   </a>
 
-  <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+  <!-- Header (pinned above the tabs) -->
+  <div class="flex items-start justify-between gap-4 flex-wrap mb-5">
     <div>
       <div class="flex items-center gap-3 mb-2">
         {p.code && <span class="font-mono text-xs px-2 py-1 rounded bg-[var(--color-hairline)] text-[var(--color-muted)]">{p.code}</span>}
@@ -135,130 +140,53 @@ const pillClass = (cat: string) =>
     </div>
   </div>
 
-  <!-- Stats tiles -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
-      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Rooms</div>
-      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{p.room_count ?? "—"}</div>
-    </div>
-    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
-      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Documents</div>
-      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.total ?? 0}</div>
-    </div>
-    <div class={`rounded-xl border p-4 ${(stats?.new_count ?? 0) > 0 ? "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)]" : "bg-white border-[var(--color-hairline)]"}`}>
-      <div class={`text-xs font-semibold uppercase tracking-widest ${(stats?.new_count ?? 0) > 0 ? "text-[var(--color-brass-dark)]" : "text-[var(--color-muted)]"}`}>In Inbox</div>
-      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.new_count ?? 0}</div>
-    </div>
-    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
-      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Invoices 30d</div>
-      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtMoney(stats?.invoice_30d ?? 0)}</div>
-    </div>
+  <!-- Tab bar -->
+  <div class="border-b border-[var(--color-hairline)] mb-6">
+    <nav class="flex gap-1 flex-wrap" id="prop-tabs">
+      {tabs.map((t, i) => (
+        <button
+          type="button"
+          data-tab={t.id}
+          class={`tab-btn px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+            i === 0
+              ? "border-[var(--color-brass)] text-[var(--color-navy)]"
+              : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-navy)]"
+          }`}
+        >
+          {t.label}
+          {t.count !== undefined && (
+            <span class="ml-1.5 text-xs text-[var(--color-muted)]">{t.count}</span>
+          )}
+        </button>
+      ))}
+    </nav>
   </div>
 
-  <div class="grid lg:grid-cols-[1fr_320px] gap-6">
-    <!-- Left: documents + GMs -->
-    <div class="space-y-6">
-      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
-        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
-          <h2 class="font-semibold text-[var(--color-navy)]">Recent documents</h2>
-          <a href={`/dashboard?property=${p.id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">See all →</a>
-        </header>
-        {recent.results.length === 0 ? (
-          <div class="px-5 py-10 text-center text-[var(--color-muted)] text-sm">
-            No documents from this property yet.
-          </div>
-        ) : (
-          <ul class="divide-y divide-[var(--color-hairline)]">
-            {recent.results.map((d) => (
-              <li>
-                <a href={`/dashboard/${d.id}`} class="flex items-center justify-between gap-3 px-5 py-3 hover:bg-[var(--color-cream)]">
-                  <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class={`pill ${pillClass(d.category)} capitalize`}>{d.category}</span>
-                      <span class="text-sm text-[var(--color-navy)] truncate">{d.filename}</span>
-                    </div>
-                    <div class="text-xs text-[var(--color-muted)] mt-1">
-                      {d.vendor || "—"} · {fmtRel(d.created_at)}
-                    </div>
-                  </div>
-                  <div class="text-right shrink-0">
-                    <div class="text-sm font-semibold text-[var(--color-navy)] tabular-nums">{fmtMoney(d.amount_cents)}</div>
-                    <div class="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">{d.status}</div>
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
-        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
-          <h2 class="font-semibold text-[var(--color-navy)]">Financial statements</h2>
-          <a href={`/admin/financials?property=${id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">Upload / see all →</a>
-        </header>
-        {financials.results.length === 0 ? (
-          <div class="px-5 py-8 text-center text-[var(--color-muted)] text-sm">
-            No financial statements yet.
-            <a href={`/admin/financials?property=${id}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline ml-1">Upload one</a>.
-          </div>
-        ) : (
-          <ul class="divide-y divide-[var(--color-hairline)]">
-            {financials.results.map((f) => (
-              <li class="px-5 py-3 flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-0.5">
-                    <span class="pill pill-statement">{typeLabel(f.statement_type)}</span>
-                    <span class="text-xs text-[var(--color-muted)]">{periodLabel(f.period_year, f.period_month)}</span>
-                  </div>
-                  <div class="text-sm font-semibold text-[var(--color-navy)] truncate">{f.title}</div>
-                </div>
-                <a class="btn-ghost text-xs shrink-0"
-                  href={`/api/financials/${f.id}/download?inline=1`}
-                  target="_blank" rel="noopener"
-                  data-viewer-url={`/api/financials/${f.id}/download?inline=1`}
-                  data-viewer-download={`/api/financials/${f.id}/download`}
-                  data-viewer-name={f.filename}
-                  data-viewer-type={viewerType(f.mime_type)}>View</a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
-        <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
-          <h2 class="font-semibold text-[var(--color-navy)]">General managers</h2>
-          <span class="text-xs text-[var(--color-muted)]">{gms.results.length} {gms.results.length === 1 ? "user" : "users"}</span>
-        </header>
-        {gms.results.length === 0 ? (
-          <div class="px-5 py-8 text-center text-[var(--color-muted)] text-sm">
-            No GM assigned yet. <a href={`/admin/users`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline">Invite one</a>.
-          </div>
-        ) : (
-          <ul class="divide-y divide-[var(--color-hairline)]">
-            {gms.results.map((g) => (
-              <li class="flex items-center justify-between px-5 py-3">
-                <div>
-                  <div class="font-semibold text-[var(--color-navy)]">{g.name}</div>
-                  <div class="text-xs text-[var(--color-muted)]">{g.email}</div>
-                </div>
-                {g.activated ? (
-                  <span class="text-xs text-green-700 font-semibold">Active</span>
-                ) : (
-                  <span class="text-xs text-[var(--color-brass-dark)] font-semibold">Invite pending</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+  <!-- ─── Overview ─── -->
+  <section data-panel="overview">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+        <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Rooms</div>
+        <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{p.room_count ?? "—"}</div>
+      </div>
+      <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+        <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Documents</div>
+        <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.total ?? 0}</div>
+      </div>
+      <div class={`rounded-xl border p-4 ${(stats?.new_count ?? 0) > 0 ? "bg-[var(--color-brass-light)]/20 border-[var(--color-brass)]" : "bg-white border-[var(--color-hairline)]"}`}>
+        <div class={`text-xs font-semibold uppercase tracking-widest ${(stats?.new_count ?? 0) > 0 ? "text-[var(--color-brass-dark)]" : "text-[var(--color-muted)]"}`}>In Inbox</div>
+        <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{stats?.new_count ?? 0}</div>
+      </div>
+      <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+        <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Invoices 30d</div>
+        <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtMoney(stats?.invoice_30d ?? 0)}</div>
+      </div>
     </div>
 
-    <!-- Right: contact + meta -->
-    <aside class="space-y-4">
-      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Contact</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Contact -->
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Contact</h2>
         <dl class="space-y-3 text-sm">
           {p.phone && (
             <div>
@@ -284,15 +212,23 @@ const pillClass = (cat: string) =>
               <dd><a href={`mailto:${p.property_email}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] break-all">{p.property_email}</a></dd>
             </div>
           )}
+          {!p.phone && !p.emergency_phone && !p.fax && !p.property_email && (
+            <p class="text-sm text-[var(--color-muted)]">No contact info on file.</p>
+          )}
         </dl>
       </section>
 
-      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-3">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Details</h2>
+      <!-- Details -->
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Details</h2>
         <dl class="space-y-3 text-sm">
           <div>
             <dt class="text-xs text-[var(--color-muted)]">Owner group</dt>
             <dd class="text-[var(--color-navy)]">{p.owner_group || "—"}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-[var(--color-muted)]">Brand</dt>
+            <dd class="text-[var(--color-navy)]">{brandLabel}</dd>
           </div>
           <div>
             <dt class="text-xs text-[var(--color-muted)]">Added</dt>
@@ -300,20 +236,162 @@ const pillClass = (cat: string) =>
           </div>
         </dl>
       </section>
-    </aside>
-  </div>
 
-  <!-- Fact sheet + property document library -->
-  <div class="grid lg:grid-cols-2 gap-6 mt-6">
-    <FactSheet propertyId={id!} facts={facts.results} canEdit={true} />
-    <PropertyFiles propertyId={id!} files={propertyFiles.results} canEdit={true} />
-  </div>
+      <!-- General managers -->
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">General managers</h2>
+          <span class="text-xs text-[var(--color-muted)]">{gms.results.length}</span>
+        </div>
+        {gms.results.length === 0 ? (
+          <p class="text-sm text-[var(--color-muted)]">
+            No GM assigned. <a href={`/admin/users?property=${p.id}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline">Invite one</a>.
+          </p>
+        ) : (
+          <ul class="space-y-3">
+            {gms.results.map((g) => (
+              <li class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="font-semibold text-sm text-[var(--color-navy)] truncate">{g.name}</div>
+                  <div class="text-xs text-[var(--color-muted)] truncate">{g.email}</div>
+                </div>
+                {g.activated ? (
+                  <span class="text-xs text-green-700 font-semibold shrink-0">Active</span>
+                ) : (
+                  <span class="text-xs text-[var(--color-brass-dark)] font-semibold shrink-0">Pending</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  </section>
+
+  <!-- ─── Documents ─── -->
+  <section data-panel="documents" hidden>
+    <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+        <h2 class="font-semibold text-[var(--color-navy)]">Documents from this property</h2>
+        <a href={`/dashboard?property=${p.id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">Open in dashboard →</a>
+      </header>
+      {recent.results.length === 0 ? (
+        <div class="px-5 py-10 text-center text-[var(--color-muted)] text-sm">
+          No documents from this property yet.
+        </div>
+      ) : (
+        <ul class="divide-y divide-[var(--color-hairline)]">
+          {recent.results.map((d) => (
+            <li>
+              <a href={`/dashboard/${d.id}`} class="flex items-center justify-between gap-3 px-5 py-3 hover:bg-[var(--color-cream)]">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class={`pill ${pillClass(d.category)} capitalize`}>{d.category}</span>
+                    {d.category === "invoice" && d.payment_status === "paid" && (
+                      <span class="pill bg-green-100 text-green-800 border border-green-200">Paid</span>
+                    )}
+                    <span class="text-sm text-[var(--color-navy)] truncate">{d.filename}</span>
+                  </div>
+                  <div class="text-xs text-[var(--color-muted)] mt-1">
+                    {d.vendor || "—"} · {fmtRel(d.created_at)}
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-semibold text-[var(--color-navy)] tabular-nums">{fmtMoney(d.amount_cents)}</div>
+                  <div class="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">{d.status}</div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  <!-- ─── Financials ─── -->
+  <section data-panel="financials" hidden>
+    <div class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+        <h2 class="font-semibold text-[var(--color-navy)]">Financial statements</h2>
+        <a href={`/admin/financials?property=${id}`} class="text-xs text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] font-semibold">Upload / manage →</a>
+      </header>
+      {financials.results.length === 0 ? (
+        <div class="px-5 py-10 text-center text-[var(--color-muted)] text-sm">
+          No financial statements yet.
+          <a href={`/admin/financials?property=${id}`} class="text-[var(--color-brass-dark)] hover:text-[var(--color-brass)] underline ml-1">Upload one</a>.
+        </div>
+      ) : (
+        <ul class="divide-y divide-[var(--color-hairline)]">
+          {financials.results.map((f) => (
+            <li class="px-5 py-3 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="pill pill-statement">{typeLabel(f.statement_type)}</span>
+                  <span class="text-xs text-[var(--color-muted)]">{periodLabel(f.period_year, f.period_month)}</span>
+                </div>
+                <div class="text-sm font-semibold text-[var(--color-navy)] truncate">{f.title}</div>
+              </div>
+              <a class="btn-ghost text-xs shrink-0"
+                href={`/api/financials/${f.id}/download?inline=1`}
+                target="_blank" rel="noopener"
+                data-viewer-url={`/api/financials/${f.id}/download?inline=1`}
+                data-viewer-download={`/api/financials/${f.id}/download`}
+                data-viewer-name={f.filename}
+                data-viewer-type={viewerType(f.mime_type)}>View</a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  <!-- ─── Fact sheet ─── -->
+  <section data-panel="factsheet" hidden>
+    <div class="max-w-2xl">
+      <FactSheet propertyId={id!} facts={facts.results} canEdit={true} />
+    </div>
+  </section>
+
+  <!-- ─── Files ─── -->
+  <section data-panel="files" hidden>
+    <div class="max-w-2xl">
+      <PropertyFiles propertyId={id!} files={propertyFiles.results} canEdit={true} />
+    </div>
+  </section>
 
   <script is:inline>
-    document.querySelectorAll("form[data-confirm]").forEach((form) => {
-      form.addEventListener("submit", (e) => {
-        if (!confirm(form.dataset.confirm || "Are you sure?")) e.preventDefault();
+    (function () {
+      var tabs = document.querySelectorAll("#prop-tabs .tab-btn");
+      var panels = document.querySelectorAll("[data-panel]");
+      function activate(name) {
+        tabs.forEach(function (t) {
+          var on = t.getAttribute("data-tab") === name;
+          t.classList.toggle("border-[var(--color-brass)]", on);
+          t.classList.toggle("text-[var(--color-navy)]", on);
+          t.classList.toggle("border-transparent", !on);
+          t.classList.toggle("text-[var(--color-muted)]", !on);
+        });
+        panels.forEach(function (p) {
+          p.hidden = p.getAttribute("data-panel") !== name;
+        });
+      }
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () {
+          var name = t.getAttribute("data-tab");
+          activate(name);
+          history.replaceState(null, "", "#" + name);
+        });
       });
-    });
+      var initial = (location.hash || "").replace("#", "");
+      if (initial && document.querySelector('[data-panel="' + initial + '"]')) {
+        activate(initial);
+      }
+
+      document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+        form.addEventListener("submit", function (e) {
+          if (!confirm(form.dataset.confirm || "Are you sure?")) e.preventDefault();
+        });
+      });
+    })();
   </script>
 </PortalLayout>

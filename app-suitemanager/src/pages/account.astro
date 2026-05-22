@@ -1,0 +1,122 @@
+---
+import PortalLayout from "../layouts/PortalLayout.astro";
+import { getApprovalThresholdCents } from "../lib/settings";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const user = Astro.locals.user!;
+const url = new URL(Astro.request.url);
+const saved = url.searchParams.get("saved");
+const error = url.searchParams.get("error");
+
+const roleLabel: Record<string, string> = {
+  gm: "General Manager",
+  strand: "Strand",
+  admin: "Suite Manager Admin",
+};
+
+let thresholdDollars = "";
+if (user.role === "admin") {
+  thresholdDollars = ((await getApprovalThresholdCents(env.DB)) / 100).toFixed(2);
+}
+---
+
+<PortalLayout title="Account">
+  <div class="max-w-lg">
+    <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+      Account
+    </h1>
+    <p class="text-sm text-[var(--color-muted)] mt-1 mb-6">Manage your profile and password.</p>
+
+    {saved === "password" && (
+      <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-800">
+        Password updated.
+      </div>
+    )}
+    {saved === "1" && (
+      <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm text-green-800">
+        Settings saved.
+      </div>
+    )}
+    {error && (
+      <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+        {error}
+      </div>
+    )}
+
+    <!-- Profile -->
+    <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-6 mb-5">
+      <h2 class="font-semibold text-[var(--color-navy)] mb-3">Profile</h2>
+      <dl class="space-y-2.5 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-[var(--color-muted)]">Name</dt>
+          <dd class="text-[var(--color-navy)] font-medium">{user.name}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-[var(--color-muted)]">Email</dt>
+          <dd class="text-[var(--color-navy)] font-medium">{user.email}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-[var(--color-muted)]">Role</dt>
+          <dd class="text-[var(--color-navy)] font-medium">{roleLabel[user.role] || user.role}</dd>
+        </div>
+      </dl>
+      <p class="text-xs text-[var(--color-muted)] mt-3">
+        Name and email are managed by your Suite Manager admin.
+      </p>
+    </section>
+
+    <!-- Change password -->
+    <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-6 mb-5">
+      <h2 class="font-semibold text-[var(--color-navy)] mb-4">Change password</h2>
+      <form method="POST" action="/api/account/password" class="space-y-4">
+        <div>
+          <label for="current_password" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Current password
+          </label>
+          <input id="current_password" name="current_password" type="password" required autocomplete="current-password"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label for="new_password" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            New password
+          </label>
+          <input id="new_password" name="new_password" type="password" required minlength="8" autocomplete="new-password"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label for="confirm_password" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            Confirm new password
+          </label>
+          <input id="confirm_password" name="confirm_password" type="password" required minlength="8" autocomplete="new-password"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+        <button type="submit" class="btn-primary text-sm">Update password</button>
+      </form>
+    </section>
+
+    {user.role === "admin" && (
+      <section class="bg-white border border-[var(--color-hairline)] rounded-xl p-6">
+        <h2 class="font-semibold text-[var(--color-navy)]">Portal settings</h2>
+        <p class="text-sm text-[var(--color-muted)] mt-1 mb-4">
+          Invoices uploaded at or above this amount require admin approval before
+          payment. Set to 0 to require approval on every invoice.
+        </p>
+        <form method="POST" action="/api/settings" class="flex items-end gap-3">
+          <div>
+            <label for="approval_threshold" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              Approval threshold (USD)
+            </label>
+            <div class="flex items-center gap-2">
+              <span class="text-[var(--color-muted)]">$</span>
+              <input id="approval_threshold" name="approval_threshold" type="number"
+                step="0.01" min="0" value={thresholdDollars}
+                class="w-40 rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary text-sm">Save</button>
+        </form>
+      </section>
+    )}
+  </div>
+</PortalLayout>

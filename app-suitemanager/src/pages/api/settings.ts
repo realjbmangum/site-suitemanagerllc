@@ -24,13 +24,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const back = new URL('/admin/settings', request.url);
+  const back = new URL('/account', request.url);
   back.searchParams.set('saved', '1');
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 };
 
 function bounce(request: Request, msg: string): Response {
-  const back = new URL('/admin/settings', request.url);
+  const back = new URL('/account', request.url);
   back.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 }
