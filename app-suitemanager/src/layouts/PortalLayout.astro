@@ -37,7 +37,8 @@ if (role === "strand" || role === "admin") navItems.push({ href: "/admin/financi
 if (role === "strand" || role === "admin") navItems.push({ href: "/admin/templates", label: "HR Templates" });
 if (role === "admin") navItems.push({ href: "/admin/properties", label: "Properties" });
 if (role === "admin") navItems.push({ href: "/admin/users", label: "Users" });
-if (role === "admin") navItems.push({ href: "/admin/email-preview", label: "Emails" });
+// /admin/email-preview still exists (reachable by URL) but is unlinked —
+// it's a preview tool, not a feature, until Microsoft Graph mail is wired.
 
 const currentPath = new URL(Astro.request.url).pathname;
 const isActive = (href: string) =>

@@ -9,17 +9,19 @@ const uploaded = url.searchParams.get("uploaded") === "1";
 
 const folders = await env.DB
   .prepare(
-    `SELECT f.id, f.name,
+    `SELECT f.id, f.name, f.sort_order,
       (SELECT COUNT(*) FROM resources r WHERE r.folder_id = f.id AND r.archived_at IS NULL) AS n
      FROM resource_folders f ORDER BY f.sort_order, f.name`
   )
-  .all<{ id: string; name: string; n: number }>();
+  .all<{ id: string; name: string; sort_order: number; n: number }>();
 
 const requested = url.searchParams.get("folder") || "";
 const activeFolderId =
   requested && folders.results.find((f) => f.id === requested)
     ? requested
     : folders.results[0]?.id ?? "";
+const activeFolder = folders.results.find((f) => f.id === activeFolderId) ?? null;
+const activeIndex = folders.results.findIndex((f) => f.id === activeFolderId);
 
 let templates: { id: string; title: string; description: string | null; filename: string; mime_type: string; created_at: string; version: number }[] = [];
 if (activeFolderId) {
@@ -58,7 +60,7 @@ const fileTypeLabel = (mime: string) => {
 
   {uploaded && (
     <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800">
-      Uploaded. GMs can see it in the Resources tab.
+      Saved. GMs can see it in the Resources tab.
     </div>
   )}
   {error && (
@@ -77,19 +79,35 @@ const fileTypeLabel = (mime: string) => {
           </p>
         ) : (
           <ul class="space-y-1 mb-3">
-            {folders.results.map((f) => (
-              <li>
+            {folders.results.map((f, i) => (
+              <li class="flex items-center gap-1">
                 <a
                   href={`/admin/templates?folder=${f.id}`}
-                  class={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                  class={`flex-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
                     f.id === activeFolderId
                       ? "bg-[var(--color-navy)] text-white"
                       : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)] hover:border-[var(--color-navy)]"
                   }`}
                 >
-                  <span>{f.name}</span>
+                  <span class="truncate">{f.name}</span>
                   <span class={f.id === activeFolderId ? "text-[var(--color-brass-light)]" : "text-[var(--color-muted)]"}>{f.n}</span>
                 </a>
+                <div class="flex flex-col">
+                  <form method="POST" action={`/api/resources/folders/${f.id}`}>
+                    <input type="hidden" name="action" value="reorder" />
+                    <input type="hidden" name="dir" value="up" />
+                    <button type="submit" disabled={i === 0}
+                      class="block leading-none text-xs text-[var(--color-muted)] hover:text-[var(--color-navy)] disabled:opacity-25"
+                      title="Move up">▲</button>
+                  </form>
+                  <form method="POST" action={`/api/resources/folders/${f.id}`}>
+                    <input type="hidden" name="action" value="reorder" />
+                    <input type="hidden" name="dir" value="down" />
+                    <button type="submit" disabled={i === folders.results.length - 1}
+                      class="block leading-none text-xs text-[var(--color-muted)] hover:text-[var(--color-navy)] disabled:opacity-25"
+                      title="Move down">▼</button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
@@ -105,6 +123,30 @@ const fileTypeLabel = (mime: string) => {
     </aside>
 
     <div class="space-y-5">
+      {/* Folder action bar */}
+      {activeFolder && (
+        <div class="bg-white border border-[var(--color-hairline)] rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <h2 class="font-bold text-[var(--color-navy)]">{activeFolder.name}</h2>
+          <div class="flex items-center gap-3 text-sm">
+            <details class="relative">
+              <summary class="cursor-pointer text-[var(--color-navy)] font-semibold list-none hover:text-[var(--color-brass-dark)]">Rename</summary>
+              <form method="POST" action={`/api/resources/folders/${activeFolder.id}`}
+                class="absolute right-0 mt-2 z-10 bg-white border border-[var(--color-hairline)] rounded-lg p-3 shadow-lg flex gap-2 w-64">
+                <input type="hidden" name="action" value="rename" />
+                <input name="name" required value={activeFolder.name}
+                  class="flex-1 rounded-lg border border-[var(--color-hairline)] px-2 py-1.5 text-sm" />
+                <button type="submit" class="btn-primary text-xs">Save</button>
+              </form>
+            </details>
+            <form method="POST" action={`/api/resources/folders/${activeFolder.id}`}
+              data-confirm={`Delete the "${activeFolder.name}" folder? ${activeFolder.n > 0 ? `Its ${activeFolder.n} template(s) move to Unfiled — nothing is deleted.` : ""}`}>
+              <input type="hidden" name="action" value="delete" />
+              <button type="submit" class="font-semibold text-red-600 hover:text-red-700">Delete folder</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {activeFolderId && (
         <form
           method="POST"
@@ -154,18 +196,74 @@ const fileTypeLabel = (mime: string) => {
       ) : (
         <div class="space-y-3">
           {templates.map((t) => (
-            <article class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 flex flex-wrap items-start justify-between gap-4">
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="pill pill-resource">{fileTypeLabel(t.mime_type)}</span>
-                  <span class="text-xs text-[var(--color-muted)]">v{t.version} · {fmtDate(t.created_at)}</span>
+            <article class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
+              <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="pill pill-resource">{fileTypeLabel(t.mime_type)}</span>
+                    <span class="text-xs text-[var(--color-muted)]">v{t.version} · {fmtDate(t.created_at)}</span>
+                  </div>
+                  <h2 class="font-semibold text-[var(--color-navy)]">{t.title}</h2>
+                  {t.description && <p class="text-sm text-[var(--color-muted)] mt-1">{t.description}</p>}
+                  <p class="text-xs text-[var(--color-muted)] mt-1 font-mono">{t.filename}</p>
                 </div>
-                <h2 class="font-semibold text-[var(--color-navy)]">{t.title}</h2>
-                {t.description && <p class="text-sm text-[var(--color-muted)] mt-1">{t.description}</p>}
-                <p class="text-xs text-[var(--color-muted)] mt-1 font-mono">{t.filename}</p>
+                <div class="flex items-center gap-3 shrink-0 text-sm">
+                  <a class="btn-ghost text-xs" href={`/api/resources/${t.id}/download`} target="_blank" rel="noopener">View</a>
+                  <form method="POST" action={`/api/resources/${t.id}`}
+                    data-confirm={`Archive "${t.title}"? It will no longer show for GMs. It stays in the system, just hidden.`}>
+                    <input type="hidden" name="action" value="archive" />
+                    <button type="submit" class="font-semibold text-red-600 hover:text-red-700">Archive</button>
+                  </form>
+                </div>
               </div>
-              <div class="flex gap-2 shrink-0">
-                <a class="btn-ghost text-sm" href={`/api/resources/${t.id}/download`} target="_blank" rel="noopener">View</a>
+
+              <div class="flex gap-4 mt-3 pt-3 border-t border-[var(--color-hairline)]">
+                <details class="flex-1">
+                  <summary class="cursor-pointer text-sm font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
+                    Replace file
+                  </summary>
+                  <form method="POST" action={`/api/resources/${t.id}`} enctype="multipart/form-data"
+                    class="mt-3 rounded-lg bg-[var(--color-cream)] p-3 flex flex-wrap items-end gap-3">
+                    <input type="hidden" name="action" value="replace" />
+                    <div class="flex-1 min-w-[180px]">
+                      <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">
+                        New file (bumps to v{t.version + 1})
+                      </label>
+                      <input type="file" name="file" required class="w-full text-sm text-[var(--color-navy)]" />
+                    </div>
+                    <button type="submit" class="btn-primary text-xs">Upload new version</button>
+                  </form>
+                </details>
+
+                <details class="flex-1">
+                  <summary class="cursor-pointer text-sm font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
+                    Edit / move
+                  </summary>
+                  <form method="POST" action={`/api/resources/${t.id}`}
+                    class="mt-3 rounded-lg bg-[var(--color-cream)] p-3 space-y-3">
+                    <input type="hidden" name="action" value="update" />
+                    <div>
+                      <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">Title</label>
+                      <input name="title" required value={t.title}
+                        class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">Description</label>
+                      <textarea name="description" rows="2"
+                        class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm">{t.description || ""}</textarea>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">Folder</label>
+                      <select name="folder_id" class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm">
+                        {folders.results.map((f) => (
+                          <option value={f.id} selected={f.id === activeFolderId}>{f.name}</option>
+                        ))}
+                        <option value="">Unfiled</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn-primary text-xs">Save changes</button>
+                  </form>
+                </details>
               </div>
             </article>
           ))}
@@ -183,5 +281,10 @@ const fileTypeLabel = (mime: string) => {
         lab.textContent = f ? f.name : "Drag a file here, or click to browse";
       });
     }
+    document.querySelectorAll("form[data-confirm]").forEach((form) => {
+      form.addEventListener("submit", (e) => {
+        if (!confirm(form.dataset.confirm || "Are you sure?")) e.preventDefault();
+      });
+    });
   </script>
 </PortalLayout>
