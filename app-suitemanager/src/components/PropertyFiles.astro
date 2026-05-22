@@ -1,0 +1,133 @@
+---
+// Property document library — inspections, QAs, licenses, permits,
+// contracts. Embedded on the property pages.
+import { PROPERTY_FILE_CATEGORIES, fileCategoryLabel } from "../lib/property-access";
+
+interface PFile {
+  id: string;
+  category: string;
+  title: string;
+  description: string | null;
+  expires_at: string | null;
+  filename: string;
+  mime_type: string;
+  created_at: string;
+}
+interface Props {
+  propertyId: string;
+  files: PFile[];
+  canEdit: boolean;
+}
+const { propertyId, files, canEdit } = Astro.props;
+
+const viewerType = (mime: string) =>
+  mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
+
+const fmtDate = (iso: string) =>
+  new Date(iso + (iso.length <= 10 ? "T00:00:00Z" : "Z")).toLocaleDateString(
+    undefined,
+    { month: "short", day: "numeric", year: "numeric" }
+  );
+const isExpired = (iso: string | null) =>
+  !!iso && new Date(iso + "T00:00:00Z").getTime() < Date.now();
+const isExpiringSoon = (iso: string | null) => {
+  if (!iso) return false;
+  const t = new Date(iso + "T00:00:00Z").getTime();
+  return t >= Date.now() && t < Date.now() + 30 * 86400 * 1000;
+};
+---
+
+<section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+  <header class="px-5 py-3 border-b border-[var(--color-hairline)]">
+    <h2 class="font-semibold text-[var(--color-navy)]">Documents</h2>
+    <p class="text-xs text-[var(--color-muted)] mt-0.5">
+      Inspections, QA reports, licenses, permits, contracts.
+    </p>
+  </header>
+
+  {files.length === 0 ? (
+    <div class="px-5 py-8 text-center text-sm text-[var(--color-muted)]">
+      No documents filed for this property yet.
+    </div>
+  ) : (
+    <ul class="divide-y divide-[var(--color-hairline)]">
+      {files.map((f) => (
+        <li class="px-5 py-3 flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="pill pill-resource">{fileCategoryLabel(f.category)}</span>
+              {isExpired(f.expires_at) && (
+                <span class="pill bg-red-100 text-red-700 border border-red-200">Expired {fmtDate(f.expires_at!)}</span>
+              )}
+              {isExpiringSoon(f.expires_at) && (
+                <span class="pill bg-amber-100 text-amber-800 border border-amber-300">Expires {fmtDate(f.expires_at!)}</span>
+              )}
+              {f.expires_at && !isExpired(f.expires_at) && !isExpiringSoon(f.expires_at) && (
+                <span class="text-xs text-[var(--color-muted)]">Expires {fmtDate(f.expires_at)}</span>
+              )}
+            </div>
+            <div class="text-sm font-semibold text-[var(--color-navy)]">{f.title}</div>
+            {f.description && <p class="text-xs text-[var(--color-muted)] mt-0.5">{f.description}</p>}
+            <p class="text-xs text-[var(--color-muted)] mt-0.5 font-mono">{f.filename}</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <a class="btn-ghost text-xs"
+              href={`/api/property-files/${f.id}/download?inline=1`}
+              target="_blank" rel="noopener"
+              data-viewer-url={`/api/property-files/${f.id}/download?inline=1`}
+              data-viewer-download={`/api/property-files/${f.id}/download`}
+              data-viewer-name={f.filename}
+              data-viewer-type={viewerType(f.mime_type)}>View</a>
+            <a class="btn-ghost text-xs" href={`/api/property-files/${f.id}/download`} download>Download</a>
+            {canEdit && (
+              <form method="POST" action={`/api/property-files/${f.id}`}
+                data-confirm={`Remove "${f.title}" from this property?`}>
+                <button type="submit" class="text-xs font-semibold text-red-600 hover:text-red-700">Remove</button>
+              </form>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {canEdit && (
+    <form method="POST" action={`/api/properties/${propertyId}/files`} enctype="multipart/form-data"
+      class="px-5 py-4 border-t border-[var(--color-hairline)] bg-[var(--color-cream)] space-y-3">
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Add a document</div>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-[var(--color-muted)] mb-1">Category</label>
+          <select name="category" required class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+            {PROPERTY_FILE_CATEGORIES.map((c) => (
+              <option value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[var(--color-muted)] mb-1">Expires (optional)</label>
+          <input name="expires_at" type="date" class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-[var(--color-muted)] mb-1">Title</label>
+        <input name="title" required placeholder="e.g. 2026 Fire Inspection"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-[var(--color-muted)] mb-1">Notes (optional)</label>
+        <input name="description" type="text"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+      </div>
+      <label data-dropzone class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-4 py-5 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
+        <input type="file" name="file" required class="hidden"
+          accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+        <div data-dropzone-label class="text-sm font-semibold text-[var(--color-brass-dark)]">
+          Drag a file here, or click to browse
+        </div>
+        <div class="text-xs text-[var(--color-muted)] mt-1">PDF, image, or Excel · up to 25 MB</div>
+      </label>
+      <button type="submit" class="btn-primary text-sm w-full">Add document</button>
+    </form>
+  )}
+</section>

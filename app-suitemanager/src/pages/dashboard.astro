@@ -103,7 +103,7 @@ const rows = await env.DB
   .prepare(
     `SELECT d.id, d.filename, d.category, d.vendor, d.amount_cents, d.note,
             d.flagged, d.status, d.payment_status, d.check_number, d.check_date,
-            d.approval_status, d.created_at, d.reviewed_at,
+            d.approval_status, d.created_at, d.reviewed_at, d.property_id,
             p.name AS property_name, u.name AS gm_name
      FROM documents d
      LEFT JOIN properties p ON p.id = d.property_id
@@ -119,7 +119,7 @@ const rows = await env.DB
     flagged: number; status: string;
     payment_status: string; check_number: string | null; check_date: string | null;
     approval_status: string;
-    created_at: string; reviewed_at: string | null;
+    created_at: string; reviewed_at: string | null; property_id: string;
     property_name: string | null; gm_name: string | null;
   }>();
 
@@ -357,7 +357,10 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
             }`}
           >
             <td class="px-5 py-3">
-              <div class="font-semibold text-[var(--color-navy)]">{r.property_name || "—"}</div>
+              <a href={`/admin/properties/${r.property_id}`}
+                class="font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
+                {r.property_name || "—"}
+              </a>
               <div class="text-xs text-[var(--color-muted)]">{r.gm_name || ""}</div>
             </td>
             <td class="px-5 py-3 text-[var(--color-navy)]">

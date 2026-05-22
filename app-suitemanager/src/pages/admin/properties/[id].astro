@@ -1,6 +1,8 @@
 ---
 import PortalLayout from "../../../layouts/PortalLayout.astro";
 import { typeLabel, periodLabel } from "../../../lib/financials";
+import FactSheet from "../../../components/FactSheet.astro";
+import PropertyFiles from "../../../components/PropertyFiles.astro";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -71,6 +73,20 @@ const financials = await env.DB
 
 const viewerType = (mime: string) =>
   mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
+
+const facts = await env.DB
+  .prepare("SELECT id, label, value FROM property_facts WHERE property_id = ? ORDER BY sort_order, created_at")
+  .bind(id)
+  .all<{ id: string; label: string; value: string }>();
+
+const propertyFiles = await env.DB
+  .prepare(
+    `SELECT id, category, title, description, expires_at, filename, mime_type, created_at
+     FROM property_files WHERE property_id = ? AND archived_at IS NULL
+     ORDER BY created_at DESC`
+  )
+  .bind(id)
+  .all<{ id: string; category: string; title: string; description: string | null; expires_at: string | null; filename: string; mime_type: string; created_at: string }>();
 
 const fmtMoney = (cents: number | null) =>
   cents != null ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
@@ -286,4 +302,18 @@ const pillClass = (cat: string) =>
       </section>
     </aside>
   </div>
+
+  <!-- Fact sheet + property document library -->
+  <div class="grid lg:grid-cols-2 gap-6 mt-6">
+    <FactSheet propertyId={id!} facts={facts.results} canEdit={true} />
+    <PropertyFiles propertyId={id!} files={propertyFiles.results} canEdit={true} />
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll("form[data-confirm]").forEach((form) => {
+      form.addEventListener("submit", (e) => {
+        if (!confirm(form.dataset.confirm || "Are you sure?")) e.preventDefault();
+      });
+    });
+  </script>
 </PortalLayout>

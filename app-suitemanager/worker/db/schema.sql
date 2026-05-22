@@ -139,6 +139,39 @@ CREATE INDEX IF NOT EXISTS idx_financials_property_period
 CREATE INDEX IF NOT EXISTS idx_financials_type ON financial_statements(statement_type);
 CREATE INDEX IF NOT EXISTS idx_financials_active ON financial_statements(archived_at);
 
+-- Property fact sheet — labeled operational data (alarm codes, utility
+-- accounts, access instructions). Visible to that property's GM + Strand + admin.
+CREATE TABLE IF NOT EXISTS property_facts (
+  id          TEXT PRIMARY KEY,
+  property_id TEXT NOT NULL REFERENCES properties(id),
+  label       TEXT NOT NULL,
+  value       TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_by  TEXT NOT NULL REFERENCES users(id),
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_facts_property ON property_facts(property_id);
+
+-- Property document library — inspections, QAs, licenses, permits, contracts.
+CREATE TABLE IF NOT EXISTS property_files (
+  id          TEXT PRIMARY KEY,
+  property_id TEXT NOT NULL REFERENCES properties(id),
+  uploaded_by TEXT NOT NULL REFERENCES users(id),
+  category    TEXT NOT NULL CHECK (category IN ('inspection','qa','license','permit','contract','other')),
+  title       TEXT NOT NULL,
+  description TEXT,
+  expires_at  TEXT,
+  r2_key      TEXT NOT NULL,
+  filename    TEXT NOT NULL,
+  size_bytes  INTEGER NOT NULL,
+  mime_type   TEXT NOT NULL,
+  archived_at TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_files_property ON property_files(property_id);
+CREATE INDEX IF NOT EXISTS idx_property_files_active ON property_files(archived_at);
+
 -- Audit log
 CREATE TABLE IF NOT EXISTS audit_events (
   id          TEXT PRIMARY KEY,

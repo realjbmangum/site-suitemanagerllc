@@ -1,0 +1,76 @@
+---
+// Property fact sheet — labeled operational data (alarm codes, utility
+// accounts, access instructions). Embedded on the property pages.
+interface Fact {
+  id: string;
+  label: string;
+  value: string;
+}
+interface Props {
+  propertyId: string;
+  facts: Fact[];
+  canEdit: boolean;
+}
+const { propertyId, facts, canEdit } = Astro.props;
+---
+
+<section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+  <header class="px-5 py-3 border-b border-[var(--color-hairline)]">
+    <h2 class="font-semibold text-[var(--color-navy)]">Fact sheet</h2>
+    <p class="text-xs text-[var(--color-muted)] mt-0.5">
+      Alarm codes, utility accounts, access instructions — the things you scramble to find.
+    </p>
+  </header>
+
+  {facts.length === 0 ? (
+    <div class="px-5 py-8 text-center text-sm text-[var(--color-muted)]">
+      Nothing on the fact sheet yet.
+    </div>
+  ) : (
+    <ul class="divide-y divide-[var(--color-hairline)]">
+      {facts.map((f) => (
+        <li class="px-5 py-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">{f.label}</div>
+              <div class="text-sm text-[var(--color-navy)] mt-0.5 whitespace-pre-wrap">{f.value}</div>
+            </div>
+            {canEdit && (
+              <div class="flex items-center gap-3 shrink-0 text-xs">
+                <details>
+                  <summary class="cursor-pointer font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)] list-none">Edit</summary>
+                  <form method="POST" action={`/api/property-facts/${f.id}`}
+                    class="absolute right-6 mt-2 z-10 w-72 bg-white border border-[var(--color-hairline)] rounded-lg p-3 shadow-lg space-y-2">
+                    <input type="hidden" name="action" value="update" />
+                    <input name="label" required value={f.label}
+                      class="w-full rounded-lg border border-[var(--color-hairline)] px-2 py-1.5 text-sm" />
+                    <textarea name="value" required rows="3"
+                      class="w-full rounded-lg border border-[var(--color-hairline)] px-2 py-1.5 text-sm">{f.value}</textarea>
+                    <button type="submit" class="btn-primary text-xs w-full">Save</button>
+                  </form>
+                </details>
+                <form method="POST" action={`/api/property-facts/${f.id}`}
+                  data-confirm={`Delete "${f.label}" from the fact sheet?`}>
+                  <input type="hidden" name="action" value="delete" />
+                  <button type="submit" class="font-semibold text-red-600 hover:text-red-700">Delete</button>
+                </form>
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {canEdit && (
+    <form method="POST" action={`/api/properties/${propertyId}/facts`}
+      class="px-5 py-4 border-t border-[var(--color-hairline)] bg-[var(--color-cream)] space-y-2">
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Add a fact</div>
+      <input name="label" required placeholder="Label — e.g. Fire alarm code"
+        class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+      <textarea name="value" required rows="2" placeholder="Value — e.g. 1234, or how-to instructions"
+        class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"></textarea>
+      <button type="submit" class="btn-ghost text-sm w-full">Add to fact sheet</button>
+    </form>
+  )}
+</section>
