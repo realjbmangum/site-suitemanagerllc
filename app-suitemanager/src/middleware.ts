@@ -64,13 +64,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (path === '/dashboard' && role !== 'strand' && role !== 'admin') {
     return Response.redirect(new URL('/my-property', context.request.url), 302);
   }
-  // /admin/templates, /admin/financials, and a single property's detail page
-  // are open to strand + admin. The /admin/properties LIST stays admin-only
-  // (Chris's call), so Strand reaches a property by clicking through from the
+  // /admin/templates and a single property's detail page are open to
+  // strand + admin. The /admin/properties LIST stays admin-only (Chris's
+  // call), so Strand reaches a property by clicking through from the
   // dashboard. Everything else under /admin/ is admin-only.
   if (
     path.startsWith('/admin/templates') ||
-    path.startsWith('/admin/financials') ||
     path.startsWith('/admin/properties/')
   ) {
     if (role !== 'strand' && role !== 'admin') {

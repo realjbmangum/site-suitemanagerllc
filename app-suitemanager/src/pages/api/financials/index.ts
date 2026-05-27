@@ -112,14 +112,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     detail: `${statementType} · ${finalTitle}`,
   });
 
-  const back = new URL('/admin/financials', request.url);
-  back.searchParams.set('property', propertyId);
-  back.searchParams.set('uploaded', '1');
-  return new Response(null, { status: 302, headers: { location: back.toString() } });
+  // Land back on the property page (where the upload form now lives) with a
+  // hash that re-selects the Financials tab and a success flag.
+  const back = backUrl(request, propertyId, 'uploaded', '1');
+  return new Response(null, { status: 302, headers: { location: back } });
 };
 
+function backUrl(request: Request, propertyId: string, key: string, value: string): string {
+  const ref = request.headers.get('referer');
+  const fallback = `/admin/properties/${propertyId}`;
+  const u = new URL(ref || fallback, request.url);
+  u.searchParams.set(key, value);
+  if (!ref) u.hash = 'financials';
+  return u.toString();
+}
+
 function bounce(request: Request, msg: string): Response {
-  const back = new URL('/admin/financials', request.url);
-  back.searchParams.set('error', msg);
-  return new Response(null, { status: 302, headers: { location: back.toString() } });
+  const ref = request.headers.get('referer');
+  const u = new URL(ref || '/admin/properties', request.url);
+  u.searchParams.set('error', msg);
+  return new Response(null, { status: 302, headers: { location: u.toString() } });
 }

@@ -1,6 +1,6 @@
 ---
-// Property document library — inspections, QAs, licenses, permits,
-// contracts. Embedded on the property pages.
+// Property records — inspections, QAs, licenses, permits, contracts.
+// Embedded on the property pages under the "Records" tab.
 import { PROPERTY_FILE_CATEGORIES, fileCategoryLabel } from "../lib/property-access";
 
 interface PFile {
@@ -39,7 +39,7 @@ const isExpiringSoon = (iso: string | null) => {
 
 <section class="bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
   <header class="px-5 py-3 border-b border-[var(--color-hairline)]">
-    <h2 class="font-semibold text-[var(--color-navy)]">Documents</h2>
+    <h2 class="font-semibold text-[var(--color-navy)]">Records</h2>
     <p class="text-xs text-[var(--color-muted)] mt-0.5">
       Inspections, QA reports, licenses, permits, contracts.
     </p>
@@ -47,7 +47,7 @@ const isExpiringSoon = (iso: string | null) => {
 
   {files.length === 0 ? (
     <div class="px-5 py-8 text-center text-sm text-[var(--color-muted)]">
-      No documents filed for this property yet.
+      No records filed for this property yet.
     </div>
   ) : (
     <ul class="divide-y divide-[var(--color-hairline)]">
@@ -94,7 +94,7 @@ const isExpiringSoon = (iso: string | null) => {
   {canEdit && (
     <form method="POST" action={`/api/properties/${propertyId}/files`} enctype="multipart/form-data"
       class="px-5 py-4 border-t border-[var(--color-hairline)] bg-[var(--color-cream)] space-y-3">
-      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Add a document</div>
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Add a record</div>
       <div class="grid sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-[var(--color-muted)] mb-1">Category</label>
@@ -127,7 +127,7 @@ const isExpiringSoon = (iso: string | null) => {
         </div>
         <div class="text-xs text-[var(--color-muted)] mt-1">PDF, image, or Excel · up to 25 MB</div>
       </label>
-      <button type="submit" class="btn-primary text-sm w-full">Add document</button>
+      <button type="submit" class="btn-primary text-sm w-full">Add record</button>
     </form>
   )}
 </section>

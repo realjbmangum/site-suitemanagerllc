@@ -19,8 +19,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
   const user = locals.user;
   if (!user) return bounce(request, 'unauthorized');
-  if (user.role !== 'gm' && user.role !== 'admin') {
-    return bounce(request, 'Only GMs can upload documents.');
+  // GMs upload their own; admin + strand can upload on behalf of any property
+  // from the property page's Documents tab.
+  if (user.role !== 'gm' && user.role !== 'admin' && user.role !== 'strand') {
+    return bounce(request, 'Not allowed.');
   }
 
   const form = await request.formData();
@@ -40,17 +42,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const category = categoryFromForm(form.get('category'), PROPERTY_CATEGORIES);
   if (!category) return bounce(request, 'Pick a document category.');
 
-  // GMs upload to their own property. Admin testing uses a property_id field.
+  // GMs upload to their own property. Admin + strand pass property_id when
+  // uploading on behalf from the property page's Documents tab.
   const propertyId =
-    user.role === 'admin'
-      ? String(form.get('property_id') || '') || null
-      : user.propertyId;
+    user.role === 'gm'
+      ? user.propertyId
+      : String(form.get('property_id') || '') || null;
   if (!propertyId) {
     return bounce(
       request,
-      user.role === 'admin'
-        ? 'Admin uploads need a property_id field for testing.'
-        : 'Your account is not assigned to a property yet — ask your admin.'
+      user.role === 'gm'
+        ? 'Your account is not assigned to a property yet — ask your admin.'
+        : 'Pick a property to upload to.'
     );
   }
 
@@ -144,13 +147,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  const back = new URL('/upload', request.url);
-  back.searchParams.set('uploaded', '1');
-  return new Response(null, { status: 302, headers: { location: back.toString() } });
+  return redirectBack(request, user.role, 'uploaded', '1');
 };
 
+function redirectBack(
+  request: Request,
+  role: string,
+  key: string,
+  value: string,
+): Response {
+  // GM upload form lives on /my-property; admin/strand upload from the
+  // property page's Documents tab. Honor referer when present so the
+  // success/error message lands on the page the user submitted from.
+  const ref = request.headers.get('referer');
+  const fallback = role === 'gm' ? '/my-property' : '/dashboard';
+  const u = new URL(ref || fallback, request.url);
+  u.searchParams.set(key, value);
+  if (!ref && role !== 'gm') u.hash = 'documents';
+  return new Response(null, { status: 302, headers: { location: u.toString() } });
+}
+
 function bounce(request: Request, msg: string): Response {
-  const back = new URL('/upload', request.url);
-  back.searchParams.set('error', msg);
-  return new Response(null, { status: 302, headers: { location: back.toString() } });
+  // Use the same referer-honoring path as success so errors come back to the
+  // form. Role is irrelevant to the error path; default to the GM fallback.
+  return redirectBack(request, 'gm', 'error', msg);
 }
