@@ -4,8 +4,8 @@ import { logAudit } from '../../lib/audit';
 import {
   ALLOWED_MIME,
   categoryFromForm,
+  CORPORATE_CATEGORIES,
   fmtAmountCents,
-  PROPERTY_CATEGORIES,
   sanitizeFilename,
 } from '../../lib/files';
 import { getApprovalThresholdCents } from '../../lib/settings';
@@ -14,13 +14,16 @@ import { trySend } from '../../lib/email/graph';
 
 export const prerender = false;
 
-// POST /api/upload — GM uploads a document for their property.
+// POST /api/upload-corporate — admin/strand uploads a Corporate document.
+// Corporate docs are property_id = NULL: personal expense reports, mileage,
+// special invoices to be paid. They flow into Strand's same queue but are
+// never visible to a GM (whose queries always filter by their own property_id).
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = locals.runtime.env;
   const user = locals.user;
   if (!user) return bounce(request, 'unauthorized');
-  if (user.role !== 'gm' && user.role !== 'admin') {
-    return bounce(request, 'Only GMs can upload documents.');
+  if (user.role !== 'admin' && user.role !== 'strand') {
+    return bounce(request, 'Only Suite Manager admins and Strand can upload Corporate documents.');
   }
 
   const form = await request.formData();
@@ -37,22 +40,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return bounce(request, `File type not allowed: ${file.type || 'unknown'}.`);
   }
 
-  const category = categoryFromForm(form.get('category'), PROPERTY_CATEGORIES);
+  const category = categoryFromForm(form.get('category'), CORPORATE_CATEGORIES);
   if (!category) return bounce(request, 'Pick a document category.');
-
-  // GMs upload to their own property. Admin testing uses a property_id field.
-  const propertyId =
-    user.role === 'admin'
-      ? String(form.get('property_id') || '') || null
-      : user.propertyId;
-  if (!propertyId) {
-    return bounce(
-      request,
-      user.role === 'admin'
-        ? 'Admin uploads need a property_id field for testing.'
-        : 'Your account is not assigned to a property yet — ask your admin.'
-    );
-  }
 
   const vendor = String(form.get('vendor') || '').trim() || null;
   const amount = fmtAmountCents(form.get('amount'));
@@ -61,20 +50,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const documentId = generateId();
   const cleanName = sanitizeFilename(file.name);
-  // Property-scoped layout — keeps R2 permissions / browsing clean.
-  // properties/{propertyId}/gm-uploads/{category}/...
-  // Other doc kinds (financials, etc.) sit alongside gm-uploads under the property.
-  const r2Key = `properties/${propertyId}/gm-uploads/${category}/${documentId}-${cleanName}`;
+  // Corporate R2 layout — no property prefix. Mirrors GM layout otherwise.
+  const r2Key = `corporate/${category}/${documentId}-${cleanName}`;
 
-  // Stream to R2.
   await env.FILES.put(r2Key, file.stream(), {
     httpMetadata: { contentType: file.type },
   });
 
-  // Flag heuristic: very large file or `other` category with no vendor.
+  // Flag heuristic: very large file or `other` with no vendor — same as GM path.
   const flagged = file.size > 10 * 1024 * 1024 || (category === 'other' && !vendor) ? 1 : 0;
 
-  // Approval gate: invoices at/above the threshold need sign-off.
+  // Approval gate applies to invoices at/above the threshold, same as GM uploads.
   const threshold = await getApprovalThresholdCents(env.DB);
   const approvalStatus =
     category === 'invoice' && amount != null && amount >= threshold
@@ -87,11 +73,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
          (id, property_id, uploaded_by, category, vendor, invoice_number,
           amount_cents, note, r2_key, filename, size_bytes, mime_type,
           status, flagged, approval_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`
+       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`
     )
     .bind(
       documentId,
-      propertyId,
       user.id,
       category,
       vendor,
@@ -109,7 +94,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   await logAudit(env.DB, user.id, 'upload', {
     documentId,
-    detail: `${category} · ${cleanName}`,
+    detail: `corporate · ${category} · ${cleanName}`,
   });
 
   if (approvalStatus === 'pending') {
@@ -118,19 +103,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       detail: amount != null ? `$${(amount / 100).toFixed(2)}` : '',
     });
 
-    // Email every admin an approval link (best-effort).
     const admins = await env.DB
       .prepare("SELECT email FROM users WHERE role = 'admin' AND active = 1 AND password_hash IS NOT NULL")
       .all<{ email: string }>();
-    const prop = await env.DB
-      .prepare('SELECT name FROM properties WHERE id = ?')
-      .bind(propertyId)
-      .first<{ name: string }>();
     const adminEmails = admins.results.map((a) => a.email).filter(Boolean);
     if (adminEmails.length > 0) {
       const origin = new URL(request.url).origin;
       const mail = buildApprovalRequestEmail({
-        propertyName: prop?.name || 'Unknown property',
+        propertyName: 'Corporate',
         vendor,
         amountFormatted:
           amount != null
@@ -144,13 +124,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  const back = new URL('/upload', request.url);
+  const back = new URL('/corporate', request.url);
   back.searchParams.set('uploaded', '1');
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 };
 
 function bounce(request: Request, msg: string): Response {
-  const back = new URL('/upload', request.url);
+  const back = new URL('/corporate', request.url);
   back.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 }

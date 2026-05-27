@@ -49,17 +49,21 @@ if (!doc) {
   return Astro.redirect("/dashboard?error=Document+not+found");
 }
 
-// GM can only see their own property's docs.
+// GM can only see their own property's docs. Corporate docs (property_id = NULL)
+// are off-limits to GMs entirely — the comparison below catches both cases.
 if (me.role === "gm" && doc.property_id !== me.propertyId) {
   return Astro.redirect("/my-property?error=Document+not+available");
 }
+const isCorporate = !doc.property_id;
 
 const canEdit = me.role === "strand" || me.role === "admin";
 const canApprove = me.role === "admin";
 const isInvoice = doc.category === "invoice";
 const needsApproval = doc.approval_status && doc.approval_status !== "not_required";
-const backHref = me.role === "gm" ? "/my-property" : "/dashboard";
-const backLabel = me.role === "gm" ? "Back to my property" : "Back to dashboard";
+const backHref = me.role === "gm" ? "/my-property" : isCorporate ? "/corporate" : "/dashboard";
+const backLabel =
+  me.role === "gm" ? "Back to my property" :
+  isCorporate ? "Back to Corporate" : "Back to dashboard";
 
 // Audit timeline for this doc.
 const audit = await env.DB
@@ -95,6 +99,9 @@ const fmtRel = (iso: string) => {
 const pillClass =
   doc.category === "invoice" ? "pill-invoice" :
   doc.category === "statement" ? "pill-statement" : "pill-other";
+
+const sourceLabel = isCorporate ? "Corporate" : (doc.property_name || "—");
+const uploaderRoleLabel = isCorporate ? "Uploaded by" : "Submitted by";
 
 const previewable =
   doc.mime_type === "application/pdf" ||
@@ -165,10 +172,10 @@ const actionLabel: Record<string, string> = {
         )}
       </div>
       <h1 class="text-2xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-        {doc.property_name || "—"}
+        {sourceLabel}
       </h1>
       <p class="text-sm text-[var(--color-muted)] mt-1">
-        Submitted by <strong class="text-[var(--color-navy)]">{doc.gm_name}</strong>
+        {uploaderRoleLabel} <strong class="text-[var(--color-navy)]">{doc.gm_name}</strong>
         {doc.gm_email && <span class="text-[var(--color-muted)]"> · {doc.gm_email}</span>}
         · {fmtRel(doc.created_at)}
       </p>

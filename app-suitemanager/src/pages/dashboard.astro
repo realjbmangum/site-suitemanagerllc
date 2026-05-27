@@ -11,9 +11,9 @@ const defaultTab = me.role === "admin" ? "approvals" : "new";
 const tab = url.searchParams.get("tab") || defaultTab; // approvals | new | reviewed | all
 
 // Filters / view state via URL params.
-const category = url.searchParams.get("category") || "all"; // all | invoice | statement | other
+const category = url.searchParams.get("category") || "all"; // all | invoice | statement | other | expense | mileage
 const filter = url.searchParams.get("filter") || "";        // '' | pending | today | week
-const propertyId = url.searchParams.get("property") || "";  // '' = all properties
+const propertyId = url.searchParams.get("property") || "";  // '' = all, 'corporate' = Corporate only, else a property id
 const q = (url.searchParams.get("q") || "").trim();
 const payment = url.searchParams.get("payment") || "";     // '' | unpaid | paid
 const sort = url.searchParams.get("sort") || "date";        // date | property | vendor | amount
@@ -23,9 +23,10 @@ const dir = (url.searchParams.get("dir") || "desc") === "asc" ? "asc" : "desc";
 const propertyOptions = await env.DB
   .prepare("SELECT id, name, address_state FROM properties WHERE active = 1 ORDER BY name")
   .all<{ id: string; name: string; address_state: string | null }>();
-const selectedProperty = propertyId
+const selectedProperty = propertyId && propertyId !== "corporate"
   ? propertyOptions.results.find((p) => p.id === propertyId) || null
   : null;
+const corporateSelected = propertyId === "corporate";
 
 // Tile aggregates — always over ALL documents, not the filtered view.
 const tiles = await env.DB.batch([
@@ -72,7 +73,9 @@ if (category !== "all") {
   where.push("d.category = ?");
   args.push(category);
 }
-if (propertyId) {
+if (propertyId === "corporate") {
+  where.push("d.property_id IS NULL");
+} else if (propertyId) {
   where.push("d.property_id = ?");
   args.push(propertyId);
 }
@@ -140,7 +143,10 @@ const fmtMoney = (cents: number | null) =>
 
 const pillClass = (cat: string) =>
   cat === "invoice" ? "pill-invoice" :
-  cat === "statement" ? "pill-statement" : "pill-other";
+  cat === "statement" ? "pill-statement" :
+  cat === "expense" ? "pill-other" :
+  cat === "mileage" ? "pill-other" :
+  "pill-other";
 
 // URL builders.
 const buildHref = (overrides: Record<string, string | null>) => {
@@ -190,7 +196,9 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
         Incoming documents
       </h1>
       <p class="text-sm text-[var(--color-muted)] mt-1">
-        {selectedProperty
+        {corporateSelected
+          ? "Corporate — expense reports, mileage, special invoices"
+          : selectedProperty
           ? `${selectedProperty.name}${selectedProperty.address_state ? ", " + selectedProperty.address_state : ""}`
           : "Strand Hospitality back-office inbox"} · {rows.results.length} {rows.results.length === 1 ? "match" : "matches"}
       </p>
@@ -254,14 +262,15 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       { v: "all", label: "All categories", count: null },
       { v: "invoice", label: "Invoices", count: countByCat.invoice ?? 0 },
       { v: "statement", label: "Statements", count: countByCat.statement ?? 0 },
+      { v: "expense", label: "Expenses", count: countByCat.expense ?? 0 },
+      { v: "mileage", label: "Mileage", count: countByCat.mileage ?? 0 },
       { v: "other", label: "Other", count: countByCat.other ?? 0 },
     ].map((f) => (
       <a href={catHref(f.v)} class={`pill ${
         category === f.v
           ? f.v === "invoice" ? "pill-invoice"
           : f.v === "statement" ? "pill-statement"
-          : f.v === "other" ? "pill-other"
-          : "pill-statement"
+          : "pill-other"
           : "bg-white border border-[var(--color-hairline)] text-[var(--color-navy)] hover:bg-[var(--color-cream)]"
       }`}>
         {f.label}{f.count !== null ? ` · ${f.count}` : ""}
@@ -287,7 +296,8 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)] min-w-[200px]"
       onchange="this.form.submit()"
     >
-      <option value="">All properties</option>
+      <option value="">All properties + Corporate</option>
+      <option value="corporate" selected={corporateSelected}>Corporate</option>
       {propertyOptions.results.map((p) => (
         <option value={p.id} selected={propertyId === p.id}>
           {p.name}{p.address_state ? `, ${p.address_state}` : ""}
@@ -295,7 +305,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       ))}
     </select>
     <button type="submit" class="btn-ghost text-sm">Apply</button>
-    {selectedProperty && (
+    {(selectedProperty || corporateSelected) && (
       <a
         href={buildHref({ property: null })}
         class="text-xs text-[var(--color-muted)] hover:text-[var(--color-navy)]"
@@ -370,10 +380,16 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
             }`}
           >
             <td class="px-5 py-3">
-              <a href={`/admin/properties/${r.property_id}`}
-                class="font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
-                {r.property_name || "—"}
-              </a>
+              {r.property_id ? (
+                <a href={`/admin/properties/${r.property_id}`}
+                  class="font-semibold text-[var(--color-navy)] hover:text-[var(--color-brass-dark)]">
+                  {r.property_name || "—"}
+                </a>
+              ) : (
+                <span class="inline-flex items-center gap-1 font-semibold text-[var(--color-brass-dark)]">
+                  <span class="pill bg-[var(--color-brass-light)]/30 text-[var(--color-brass-dark)] border border-[var(--color-brass)] text-xs">Corporate</span>
+                </span>
+              )}
               <div class="text-xs text-[var(--color-muted)]">{r.gm_name || ""}</div>
             </td>
             <td class="px-5 py-3 text-[var(--color-navy)]">

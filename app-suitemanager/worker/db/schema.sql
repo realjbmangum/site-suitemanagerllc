@@ -50,12 +50,15 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Documents — GM-uploaded operational docs
+-- Documents — operational docs in Strand's payment queue.
+-- property_id is NULL for Corporate uploads (personal expense reports, mileage,
+-- special invoices) submitted by admin or strand. Property-scoped uploads
+-- (GMs + admin-on-behalf) keep property_id set so a GM only sees their own.
 CREATE TABLE IF NOT EXISTS documents (
   id            TEXT PRIMARY KEY,
-  property_id   TEXT NOT NULL REFERENCES properties(id),
+  property_id   TEXT REFERENCES properties(id),   -- NULL = Corporate
   uploaded_by   TEXT NOT NULL REFERENCES users(id),
-  category      TEXT NOT NULL CHECK (category IN ('invoice','statement','other')),
+  category      TEXT NOT NULL CHECK (category IN ('invoice','statement','other','expense','mileage')),
   vendor        TEXT,
   amount_cents  INTEGER,
   note          TEXT,

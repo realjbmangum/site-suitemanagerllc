@@ -30,7 +30,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } else if (filter === 'week') {
     where.push("d.created_at >= datetime('now','-7 day')");
   }
-  if (propertyId) { where.push('d.property_id = ?'); args.push(propertyId); }
+  if (propertyId === 'corporate') {
+    where.push('d.property_id IS NULL');
+  } else if (propertyId) {
+    where.push('d.property_id = ?');
+    args.push(propertyId);
+  }
   if (payment === 'unpaid' || payment === 'paid') {
     where.push('d.payment_status = ?');
     args.push(payment);
@@ -79,7 +84,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     lines.push(
       [
         r.created_at,
-        r.property_name || '',
+        r.property_name || 'Corporate',
         r.gm_name || '',
         r.category,
         r.filename,

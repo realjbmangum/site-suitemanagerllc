@@ -14,10 +14,25 @@ export function sanitizeFilename(name: string): string {
   return base.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120) || 'file';
 }
 
-export function categoryFromForm(value: unknown): 'invoice' | 'statement' | 'other' | null {
-  const v = String(value || '').toLowerCase();
-  if (v === 'invoice' || v === 'statement' || v === 'other') return v;
-  return null;
+export type DocumentCategory = 'invoice' | 'statement' | 'other' | 'expense' | 'mileage';
+
+const ALL_CATEGORIES: ReadonlyArray<DocumentCategory> =
+  ['invoice', 'statement', 'other', 'expense', 'mileage'];
+
+// Property uploads (GMs + admin-on-behalf) keep the original three.
+export const PROPERTY_CATEGORIES: ReadonlyArray<DocumentCategory> =
+  ['invoice', 'statement', 'other'];
+
+// Corporate uploads (admin/strand) — no statement (those belong in Financials).
+export const CORPORATE_CATEGORIES: ReadonlyArray<DocumentCategory> =
+  ['invoice', 'expense', 'mileage', 'other'];
+
+export function categoryFromForm(
+  value: unknown,
+  allowed: ReadonlyArray<DocumentCategory> = ALL_CATEGORIES,
+): DocumentCategory | null {
+  const v = String(value || '').toLowerCase() as DocumentCategory;
+  return (allowed as ReadonlyArray<string>).includes(v) ? v : null;
 }
 
 export function fmtAmountCents(input: unknown): number | null {
