@@ -44,9 +44,38 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!category) return bounce(request, 'Pick a document category.');
 
   const vendor = String(form.get('vendor') || '').trim() || null;
-  const amount = fmtAmountCents(form.get('amount'));
+  let amount = fmtAmountCents(form.get('amount'));
   const note = String(form.get('note') || '').trim() || null;
   const invoiceNumber = String(form.get('invoice_number') || '').trim() || null;
+  // Per-category fields. Date is YYYY-MM-DD from <input type="date">.
+  const transactionDate = parseDateField(form.get('transaction_date'));
+  const tripRoute = String(form.get('trip_route') || '').trim();
+  let miles: number | null = null;
+
+  // Per-category validation + derived fields.
+  if (category === 'mileage') {
+    const m = parseFloat(String(form.get('miles') || ''));
+    const r = parseFloat(String(form.get('rate') || ''));
+    if (!Number.isFinite(m) || m <= 0) return bounce(request, 'Miles driven is required for mileage.');
+    if (!transactionDate) return bounce(request, 'Trip date is required for mileage.');
+    if (!vendor) return bounce(request, 'Payee (driver name) is required for mileage.');
+    miles = m;
+    // Always recompute amount from miles × rate so it can't drift from the inputs.
+    const rate = Number.isFinite(r) && r >= 0 ? r : 0.70;
+    amount = Math.round(m * rate * 100);
+  } else if (category === 'expense') {
+    if (amount == null) return bounce(request, 'Total amount is required for expense reports.');
+    if (!transactionDate) return bounce(request, 'Expense date is required.');
+    if (!vendor) return bounce(request, 'Payee (employee name) is required for expense reports.');
+  } else if (category === 'invoice') {
+    if (amount == null) return bounce(request, 'Invoice amount is required.');
+    if (!vendor) return bounce(request, 'Vendor is required for invoices.');
+  }
+
+  // Stash the mileage route in the note so we don't need yet another column.
+  const finalNote = tripRoute && category === 'mileage'
+    ? (note ? `${tripRoute} — ${note}` : tripRoute)
+    : note;
 
   const documentId = generateId();
   const cleanName = sanitizeFilename(file.name);
@@ -71,9 +100,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .prepare(
       `INSERT INTO documents
          (id, property_id, uploaded_by, category, vendor, invoice_number,
-          amount_cents, note, r2_key, filename, size_bytes, mime_type,
+          amount_cents, note, miles, transaction_date,
+          r2_key, filename, size_bytes, mime_type,
           status, flagged, approval_status)
-       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`
+       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`
     )
     .bind(
       documentId,
@@ -82,7 +112,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       vendor,
       invoiceNumber,
       amount,
-      note,
+      finalNote,
+      miles,
+      transactionDate,
       r2Key,
       cleanName,
       file.size,
@@ -133,4 +165,11 @@ function bounce(request: Request, msg: string): Response {
   const back = new URL('/corporate', request.url);
   back.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: back.toString() } });
+}
+
+// <input type="date"> emits "YYYY-MM-DD". Reject anything else so we never
+// store garbage. Returns null on missing/invalid.
+function parseDateField(v: FormDataEntryValue | null): string | null {
+  const s = String(v || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }

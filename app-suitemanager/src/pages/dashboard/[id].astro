@@ -11,6 +11,7 @@ const error = url.searchParams.get("error");
 const doc = await env.DB
   .prepare(
     `SELECT d.id, d.filename, d.category, d.vendor, d.invoice_number, d.amount_cents, d.note,
+            d.miles, d.transaction_date,
             d.size_bytes, d.mime_type, d.status, d.flagged, d.created_at, d.reviewed_at,
             d.payment_status, d.check_number, d.check_date, d.paid_at, d.paid_by,
             d.approval_status, d.approval_reason, d.approval_decided_at, d.approval_decided_by,
@@ -29,6 +30,7 @@ const doc = await env.DB
     id: string; filename: string; category: string; vendor: string | null;
     invoice_number: string | null;
     amount_cents: number | null; note: string | null;
+    miles: number | null; transaction_date: string | null;
     size_bytes: number; mime_type: string;
     status: string; flagged: number;
     created_at: string; reviewed_at: string | null;
@@ -102,6 +104,23 @@ const pillClass =
 
 const sourceLabel = isCorporate ? "Corporate" : (doc.property_name || "—");
 const uploaderRoleLabel = isCorporate ? "Uploaded by" : "Submitted by";
+
+// Vendor label flips per category so "vendor" doesn't read wrong for reimbursements.
+const vendorLabel =
+  doc.category === "expense" || doc.category === "mileage" ? "Payee" : "Vendor";
+
+// transaction_date means different things per category — label accordingly.
+const dateLabel =
+  doc.category === "invoice" ? "Due date" :
+  doc.category === "expense" ? "Expense date" :
+  doc.category === "mileage" ? "Trip date" : "Date";
+
+const fmtPlainDate = (iso: string) => {
+  if (!iso) return "—";
+  // YYYY-MM-DD without timezone shenanigans.
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1).toLocaleDateString();
+};
 
 const previewable =
   doc.mime_type === "application/pdf" ||
@@ -367,7 +386,7 @@ const actionLabel: Record<string, string> = {
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1">Details</h2>
         <dl class="space-y-2.5">
           <div>
-            <dt class="text-xs text-[var(--color-muted)]">Vendor</dt>
+            <dt class="text-xs text-[var(--color-muted)]">{vendorLabel}</dt>
             <dd class="text-[var(--color-navy)] font-medium">{doc.vendor || "—"}</dd>
           </div>
           {doc.invoice_number && (
@@ -376,10 +395,22 @@ const actionLabel: Record<string, string> = {
               <dd class="text-[var(--color-navy)] font-medium font-mono">{doc.invoice_number}</dd>
             </div>
           )}
+          {doc.miles != null && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">Miles</dt>
+              <dd class="text-[var(--color-navy)] font-medium tabular-nums">{doc.miles.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi</dd>
+            </div>
+          )}
           <div>
             <dt class="text-xs text-[var(--color-muted)]">Amount</dt>
             <dd class="text-[var(--color-navy)] font-medium tabular-nums">{fmtMoney(doc.amount_cents)}</dd>
           </div>
+          {doc.transaction_date && (
+            <div>
+              <dt class="text-xs text-[var(--color-muted)]">{dateLabel}</dt>
+              <dd class="text-[var(--color-navy)]">{fmtPlainDate(doc.transaction_date)}</dd>
+            </div>
+          )}
           <div>
             <dt class="text-xs text-[var(--color-muted)]">Received</dt>
             <dd class="text-[var(--color-navy)]">{fmtTime(doc.created_at)}</dd>
