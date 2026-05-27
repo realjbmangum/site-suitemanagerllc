@@ -24,7 +24,7 @@ const args = process.argv.slice(2);
 const local = args.includes('--local');
 const filePath =
   args.find((a) => !a.startsWith('--')) ||
-  'data/ASA Location Phone List 2026.xlsx';
+  'data/ASA Location Phone List 2026-updated.xlsx';
 
 // --- ID generation matching scripts/create-user.mjs alphabet ---
 const ALPHABET =
@@ -37,33 +37,46 @@ function genId(len = 16) {
   return s;
 }
 
-// --- Address parser: "street, city, ST zip" with fallbacks ---
+// --- Address parser ---
+// Handles the four shapes that actually appear in Chris's roster:
+//   A. "street, city, ST zip"                       (well-formed)
+//   B. "street, city ST zip"                        (missing comma before state)
+//   C. "street, city, ST, zip"                      (extra comma between state+zip)
+//   D. "street, city, zip"                          (state omitted — fixed in cleanRow)
 function parseAddress(addr) {
   if (!addr) return {};
-  let parts = String(addr)
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  let parts = String(addr).split(',').map((s) => s.trim()).filter(Boolean);
 
-  let state = null,
-    zip = null;
+  let street = null, city = null, state = null, zip = null;
   const last = parts[parts.length - 1] || '';
-  const m1 = last.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)/);
-  if (m1) {
-    state = m1[1];
-    zip = m1[2];
-    parts.pop();
-  } else if (/^\d{5}(-\d{4})?$/.test(last)) {
-    zip = last;
-    parts.pop();
-    const prev = parts[parts.length - 1] || '';
-    if (/^[A-Z]{2}$/.test(prev)) {
-      state = prev;
-      parts.pop();
+
+  // A: last fragment is "ST zip" e.g. "NC 28546-6943"
+  let m = last.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+  if (m) {
+    state = m[1]; zip = m[2]; parts.pop();
+  } else {
+    // B: last fragment is "City ST zip" e.g. "Tulsa OK 74133"
+    m = last.match(/^(.+?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+    if (m) {
+      city = m[1].trim(); state = m[2]; zip = m[3]; parts.pop();
+    } else if (/^\d{5}(-\d{4})?$/.test(last)) {
+      // C or D: last fragment is bare zip.
+      zip = last; parts.pop();
+      const prev = parts[parts.length - 1] || '';
+      if (/^[A-Z]{2}$/.test(prev)) {
+        // C: previous fragment is just the state ("AR")
+        state = prev; parts.pop();
+      } else {
+        // City ST in one fragment e.g. "Waynesboro VA"
+        const m2 = prev.match(/^(.+?)\s+([A-Z]{2})$/);
+        if (m2) { city = m2[1].trim(); state = m2[2]; parts.pop(); }
+        // else: state genuinely missing (D) — cleanRow will fill it.
+      }
     }
   }
-  const city = parts.length ? parts.pop() : null;
-  const street = parts.length ? parts.join(', ') : null;
+
+  if (!city && parts.length) city = parts.pop();
+  if (parts.length) street = parts.join(', ');
   return { street, city, state, zip };
 }
 
@@ -78,10 +91,10 @@ function brandFromEmail(email) {
 
 // --- Manual cleanup of known issues ---
 function cleanRow(raw) {
-  // Name "Salibury" → "Salisbury"
+  // Name "Salibury" → "Salisbury" (typo in original sheet, kept in case it returns)
   if (raw.name && raw.name.toLowerCase() === 'salibury') raw.name = 'Salisbury';
-  // Harrisonburg CHORUM collides with Greenville's AFFGRE — drop it.
-  if (raw.name === 'Harrisonburg' && raw.code === 'AFFGRE') raw.code = null;
+  // Rocky Mount, NC — Chris's sheet has no state for this row.
+  if (raw.name === 'Rocky Mount' && !raw.address_state) raw.address_state = 'NC';
   return raw;
 }
 
@@ -210,6 +223,14 @@ for (const p of dataRows) {
   // Two paths: with code → UPSERT on idx_properties_code.
   // Without code → INSERT only if not already present by name (manual check).
   if (p.code) {
+    // Claim a code for any pre-existing nameless-code row first, so the UPSERT
+    // below updates that row rather than inserting a duplicate. (Without this,
+    // an earlier seed that lacked the code creates an orphan when the code
+    // arrives — ON CONFLICT(code) doesn't match because NULL never collides.)
+    sqlStatements.push(
+      `UPDATE properties SET code = ${escape(p.code)}
+       WHERE name = ${escape(p.name)} AND code IS NULL;`
+    );
     sqlStatements.push(
       `INSERT INTO properties (${cols}) VALUES (${vals})
        ON CONFLICT(code) DO UPDATE SET ${updateAssignments};`
