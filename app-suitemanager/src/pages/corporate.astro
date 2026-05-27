@@ -118,6 +118,7 @@ const pillClass = (cat: string) =>
         method="POST"
         action="/api/upload-corporate"
         enctype="multipart/form-data"
+        id="corp-upload"
         class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 space-y-5"
       >
         <label data-dropzone class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-6 py-8 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
@@ -148,29 +149,70 @@ const pillClass = (cat: string) =>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        {/* Helper banner — copy switches per category */}
+        <div data-help class="hidden text-xs text-[var(--color-muted)] bg-[var(--color-cream)] border border-[var(--color-hairline)] rounded-lg px-3 py-2"></div>
+
+        {/* Mileage block — comes first when selected because it drives the amount */}
+        <div data-cat="mileage" hidden class="grid grid-cols-2 gap-3">
           <div>
-            <label for="amount" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Amount</label>
-            <input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="$ 0.00"
-              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+            <label for="miles" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Miles driven</label>
+            <input id="miles" name="miles" type="number" step="0.1" min="0" placeholder="e.g. 142.5"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"
+              data-required-for="mileage" />
           </div>
           <div>
-            <label for="vendor" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Vendor / Payee</label>
-            <input id="vendor" name="vendor" type="text" placeholder="Vendor or person to reimburse"
+            <label for="rate" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+              Rate / mile
+            </label>
+            <input id="rate" name="rate" type="number" step="0.001" min="0" value="0.70" placeholder="0.70"
               class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
           </div>
         </div>
 
-        <div>
+        {/* Amount + Payee — payee always shown, amount label flips */}
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="amount" data-label-amount class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Amount</label>
+            <input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="$ 0.00"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"
+              data-required-for="invoice expense" />
+          </div>
+          <div>
+            <label for="vendor" data-label-vendor class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Vendor / Payee</label>
+            <input id="vendor" name="vendor" type="text" placeholder="Vendor or person to reimburse"
+              class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"
+              data-required-for="invoice expense mileage" />
+          </div>
+        </div>
+
+        {/* Date — label flips per category; hidden for 'other' */}
+        <div data-cat="invoice expense mileage" hidden>
+          <label for="transaction_date" data-label-date class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Date</label>
+          <input id="transaction_date" name="transaction_date" type="date"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"
+            data-required-for="expense mileage" />
+        </div>
+
+        {/* Invoice # — invoice only */}
+        <div data-cat="invoice" hidden>
           <label for="invoice_number" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
-            Invoice / reference number <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
+            Invoice # <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
           </label>
-          <input id="invoice_number" name="invoice_number" type="text" placeholder="e.g. INV-10472 or trip-1234"
+          <input id="invoice_number" name="invoice_number" type="text" placeholder="e.g. INV-10472"
+            class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
+        </div>
+
+        {/* Mileage from→to — mileage only */}
+        <div data-cat="mileage" hidden>
+          <label for="trip_route" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+            From → To <span class="text-[var(--color-muted)] font-normal normal-case tracking-normal">(optional)</span>
+          </label>
+          <input id="trip_route" name="trip_route" type="text" placeholder="e.g. Lexington office → Wilson property"
             class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm" />
         </div>
 
         <div>
-          <label for="note" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Note (optional)</label>
+          <label for="note" data-label-note class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Note (optional)</label>
           <textarea id="note" name="note" rows="2" placeholder="Context for Strand"
             class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm"></textarea>
         </div>
@@ -239,6 +281,76 @@ const pillClass = (cat: string) =>
       </div>
     </section>
   </div>
+
+  <!-- Category-aware form behavior. -->
+  <script is:inline>
+    (function () {
+      var form = document.getElementById("corp-upload");
+      if (!form) return;
+
+      var radios = form.querySelectorAll('input[name="category"]');
+      var groups = form.querySelectorAll("[data-cat]");
+      var help = form.querySelector("[data-help]");
+      var amountLabel = form.querySelector("[data-label-amount]");
+      var vendorLabel = form.querySelector("[data-label-vendor]");
+      var dateLabel = form.querySelector("[data-label-date]");
+      var noteLabel = form.querySelector("[data-label-note]");
+      var miles = form.querySelector("#miles");
+      var rate = form.querySelector("#rate");
+      var amount = form.querySelector("#amount");
+
+      // Copy that flexes by category.
+      var COPY = {
+        invoice:  { help: "Invoice to be paid by Strand. Amount + vendor required; due date optional.",
+                    amount: "Amount", vendor: "Vendor", date: "Due date (optional)", note: "Note (optional)" },
+        expense:  { help: "Reimburse an employee for personal out-of-pocket. Amount, payee, and date required.",
+                    amount: "Total amount", vendor: "Payee (employee)", date: "Expense date", note: "What was purchased" },
+        mileage:  { help: "Reimburse miles driven. Amount auto-calculates from miles × rate (defaults to 2026 IRS $0.70/mi).",
+                    amount: "Amount (auto)", vendor: "Payee (driver)", date: "Trip date", note: "Purpose (optional)" },
+        other:    { help: "Anything else. Amount and payee optional — use the note to explain.",
+                    amount: "Amount (optional)", vendor: "Vendor / Payee (optional)", date: "Date", note: "Note" },
+      };
+
+      function recalcMileage() {
+        if (!miles || !rate || !amount) return;
+        var m = parseFloat(miles.value);
+        var r = parseFloat(rate.value);
+        if (isFinite(m) && isFinite(r) && m >= 0 && r >= 0) {
+          amount.value = (m * r).toFixed(2);
+        }
+      }
+
+      function activate(cat) {
+        // Show/hide groups whose data-cat includes this category.
+        groups.forEach(function (g) {
+          var allowed = (g.getAttribute("data-cat") || "").split(/\s+/);
+          g.hidden = allowed.indexOf(cat) === -1;
+        });
+        // Flip required attribute based on data-required-for.
+        form.querySelectorAll("[data-required-for]").forEach(function (el) {
+          var req = (el.getAttribute("data-required-for") || "").split(/\s+/);
+          el.required = req.indexOf(cat) !== -1;
+        });
+        // Update copy.
+        var c = COPY[cat];
+        if (!c) return;
+        if (help) { help.textContent = c.help; help.classList.remove("hidden"); }
+        if (amountLabel) amountLabel.textContent = c.amount;
+        if (vendorLabel) vendorLabel.textContent = c.vendor;
+        if (dateLabel) dateLabel.textContent = c.date;
+        if (noteLabel) noteLabel.textContent = c.note;
+        // Amount is computed for mileage — make it readonly to avoid confusion.
+        if (amount) amount.readOnly = (cat === "mileage");
+        if (cat === "mileage") recalcMileage();
+      }
+
+      radios.forEach(function (r) {
+        r.addEventListener("change", function () { if (r.checked) activate(r.value); });
+      });
+      if (miles) miles.addEventListener("input", recalcMileage);
+      if (rate) rate.addEventListener("input", recalcMileage);
+    })();
+  </script>
 
   <!-- Dropzone interactivity — mirrors the GM upload form. -->
   <script is:inline>

@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS documents (
   approval_decided_by  TEXT REFERENCES users(id),
   approval_decided_at  TEXT,
   invoice_number TEXT,
+  -- Per-category Corporate fields. NULL for property uploads + older rows.
+  miles            REAL,                              -- mileage category only
+  transaction_date TEXT,                              -- due/expense/trip date (YYYY-MM-DD)
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   reviewed_at   TEXT
 );
