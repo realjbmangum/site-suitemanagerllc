@@ -1,0 +1,399 @@
+---
+import PortalLayout from "../layouts/PortalLayout.astro";
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const me = Astro.locals.user!;
+const url = new URL(Astro.request.url);
+const errorMsg = url.searchParams.get("error");
+const created = url.searchParams.get("created") === "1";
+const decided = url.searchParams.get("decided") === "1";
+
+// Month being viewed (defaults to current). Format: YYYY-MM.
+const todayLocal = new Date();
+const todayY = todayLocal.getFullYear();
+const todayM = todayLocal.getMonth() + 1;
+const todayD = todayLocal.getDate();
+const todayIso = `${todayY}-${String(todayM).padStart(2, "0")}-${String(todayD).padStart(2, "0")}`;
+
+const monthParam = url.searchParams.get("m") || `${todayY}-${String(todayM).padStart(2, "0")}`;
+const [viewY, viewM] = monthParam.split("-").map(Number);
+const viewYear = Number.isFinite(viewY) ? viewY : todayY;
+const viewMonth = Number.isFinite(viewM) && viewM >= 1 && viewM <= 12 ? viewM : todayM;
+
+const showPto = url.searchParams.get("pto") !== "off"; // default ON
+
+// First day of the visible grid (Sunday on or before the 1st), and last day
+// (Saturday on or after the last). That gives us 5–6 weeks of cells.
+const monthFirst = new Date(viewYear, viewMonth - 1, 1);
+const monthLast = new Date(viewYear, viewMonth, 0); // 0th of next = last of current
+const monthLastDay = monthLast.getDate();
+const gridStartOffset = monthFirst.getDay(); // 0=Sun
+const gridEndOffset = 6 - monthLast.getDay();
+const gridStart = new Date(viewYear, viewMonth - 1, 1 - gridStartOffset);
+const gridEnd = new Date(viewYear, viewMonth - 1, monthLastDay + gridEndOffset);
+
+const toIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const gridStartIso = toIso(gridStart);
+const gridEndIso = toIso(gridEnd);
+
+// Pull events that overlap the visible window. Show all regional events to
+// admin + strand; show GM PTO based on the toggle (admins always see them
+// in the pending inbox, but they only render on the grid when toggle is on).
+const events = await env.DB
+  .prepare(
+    `SELECT e.id, e.owner_user_id, e.source, e.title, e.kind,
+            e.starts_at, e.ends_at, e.notes,
+            e.approval_status, e.approval_reason,
+            e.decided_by, e.decided_at, e.property_id,
+            u.name AS owner_name, u.role AS owner_role,
+            p.name AS property_name
+     FROM calendar_events e
+     LEFT JOIN users u ON u.id = e.owner_user_id
+     LEFT JOIN properties p ON p.id = e.property_id
+     WHERE e.ends_at >= ? AND e.starts_at <= ?
+       AND (e.source = 'regional' OR (e.source = 'gm_pto' AND e.approval_status = 'approved'))
+     ORDER BY e.starts_at, e.title`
+  )
+  .bind(gridStartIso, gridEndIso)
+  .all<{
+    id: string; owner_user_id: string; source: string; title: string; kind: string;
+    starts_at: string; ends_at: string; notes: string | null;
+    approval_status: string; approval_reason: string | null;
+    decided_by: string | null; decided_at: string | null; property_id: string | null;
+    owner_name: string | null; owner_role: string | null;
+    property_name: string | null;
+  }>();
+
+// Pending PTO inbox — always visible regardless of grid window.
+const pending = await env.DB
+  .prepare(
+    `SELECT e.id, e.owner_user_id, e.kind, e.starts_at, e.ends_at, e.notes,
+            e.created_at, e.property_id,
+            u.name AS owner_name, u.email AS owner_email,
+            p.name AS property_name
+     FROM calendar_events e
+     LEFT JOIN users u ON u.id = e.owner_user_id
+     LEFT JOIN properties p ON p.id = e.property_id
+     WHERE e.source = 'gm_pto' AND e.approval_status = 'pending'
+     ORDER BY e.starts_at`
+  )
+  .all<{
+    id: string; owner_user_id: string; kind: string;
+    starts_at: string; ends_at: string; notes: string | null;
+    created_at: string; property_id: string | null;
+    owner_name: string | null; owner_email: string | null;
+    property_name: string | null;
+  }>();
+
+// Build a "day → events that touch this day" index.
+function isoAdd(iso: string, days: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + days);
+  return toIso(dt);
+}
+function dateRange(startIso: string, endIso: string): string[] {
+  const out: string[] = [];
+  let cur = startIso;
+  while (cur <= endIso) {
+    out.push(cur);
+    cur = isoAdd(cur, 1);
+  }
+  return out;
+}
+
+const eventsByDay: Record<string, typeof events.results> = {};
+for (const e of events.results) {
+  // Clamp the span to the grid window for layout purposes.
+  const a = e.starts_at < gridStartIso ? gridStartIso : e.starts_at;
+  const b = e.ends_at > gridEndIso ? gridEndIso : e.ends_at;
+  for (const d of dateRange(a, b)) {
+    if (e.source === "gm_pto" && !showPto) continue;
+    (eventsByDay[d] ||= []).push(e);
+  }
+}
+
+// Build the 7-col grid of cells.
+const cells: { iso: string; day: number; inMonth: boolean; isToday: boolean }[] = [];
+for (
+  let d = new Date(gridStart);
+  d <= gridEnd;
+  d.setDate(d.getDate() + 1)
+) {
+  const iso = toIso(d);
+  cells.push({
+    iso,
+    day: d.getDate(),
+    inMonth: d.getMonth() + 1 === viewMonth,
+    isToday: iso === todayIso,
+  });
+}
+
+// Month nav.
+const prevMonth = viewMonth === 1 ? `${viewYear - 1}-12` : `${viewYear}-${String(viewMonth - 1).padStart(2, "0")}`;
+const nextMonth = viewMonth === 12 ? `${viewYear + 1}-01` : `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
+
+const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleDateString(undefined, {
+  month: "long",
+  year: "numeric",
+});
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function kindLabel(k: string): string {
+  switch (k) {
+    case "travel": return "Travel";
+    case "ooo": return "OOO";
+    case "other": return "Schedule";
+    case "vacation": return "Vacation";
+    case "sick": return "Sick";
+    case "personal": return "Personal";
+    default: return k;
+  }
+}
+function eventPillClass(source: string, kind: string): string {
+  if (source === "gm_pto") {
+    if (kind === "sick") return "bg-amber-100 text-amber-900 border border-amber-300";
+    if (kind === "personal") return "bg-violet-100 text-violet-900 border border-violet-300";
+    return "bg-green-100 text-green-900 border border-green-300"; // vacation
+  }
+  // regional
+  if (kind === "travel") return "bg-sky-100 text-sky-900 border border-sky-300";
+  if (kind === "ooo") return "bg-rose-100 text-rose-900 border border-rose-300";
+  return "bg-slate-100 text-slate-800 border border-slate-300";
+}
+
+const buildHref = (overrides: Record<string, string | null>) => {
+  const u = new URL(url);
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + (u.search || "");
+};
+
+const isAdmin = me.role === "admin";
+---
+
+<PortalLayout title="Calendar" context="Suite Manager">
+  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Calendar
+      </h1>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Regional schedules and approved GM time off. {isAdmin ? "You can approve PTO requests below." : "Strand-only view."}
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Month nav -->
+      <div class="flex items-center bg-white border border-[var(--color-hairline)] rounded-lg overflow-hidden">
+        <a href={buildHref({ m: prevMonth })} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Previous month">←</a>
+        <span class="px-4 py-2 text-sm font-semibold text-[var(--color-navy)] border-x border-[var(--color-hairline)]">{monthLabel}</span>
+        <a href={buildHref({ m: nextMonth })} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Next month">→</a>
+      </div>
+      <a href={buildHref({ m: null })} class="btn-ghost text-sm">Today</a>
+
+      <!-- PTO layer toggle -->
+      <a
+        href={buildHref({ pto: showPto ? "off" : null })}
+        class={`text-sm font-semibold px-3 py-2 rounded-lg border transition-colors ${
+          showPto
+            ? "bg-[var(--color-navy)] text-white border-[var(--color-navy)]"
+            : "bg-white text-[var(--color-navy)] border-[var(--color-hairline)] hover:bg-[var(--color-cream)]"
+        }`}
+        title="Show or hide approved GM PTO on the grid"
+      >
+        {showPto ? "✓ " : ""}GM PTO layer
+      </a>
+    </div>
+  </div>
+
+  {created && (
+    <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
+      Saved.
+    </div>
+  )}
+  {decided && (
+    <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
+      Decision recorded — the GM has been notified by email.
+    </div>
+  )}
+  {errorMsg && (
+    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+      {errorMsg}
+    </div>
+  )}
+
+  <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+
+    <!-- ── Month grid ────────────────────────────────────── -->
+    <section class="bg-white border border-[var(--color-hairline)] rounded-2xl overflow-hidden">
+      <div class="grid grid-cols-7 bg-[var(--color-cream)] border-b border-[var(--color-hairline)]">
+        {WEEKDAYS.map((d) => (
+          <div class="px-2 py-2 text-[10px] uppercase tracking-widest font-semibold text-[var(--color-muted)] text-center">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div class="grid grid-cols-7">
+        {cells.map((cell) => {
+          const dayEvents = eventsByDay[cell.iso] || [];
+          return (
+            <div class={`min-h-[110px] border-r border-b border-[var(--color-hairline)] last:border-r-0 px-2 py-1.5 ${
+              !cell.inMonth ? "bg-[var(--color-cream)]/40" : ""
+            }`}>
+              <div class="flex items-center justify-between">
+                <span class={`text-xs font-semibold ${cell.isToday ? "bg-[var(--color-brass)] text-white rounded-full w-6 h-6 inline-flex items-center justify-center" : "text-[var(--color-muted)] px-1"}`}>
+                  {cell.day}
+                </span>
+              </div>
+              <ul class="mt-1 space-y-1">
+                {dayEvents.slice(0, 4).map((e) => (
+                  <li>
+                    <span class={`block truncate text-[10.5px] leading-tight rounded px-1.5 py-0.5 ${eventPillClass(e.source, e.kind)}`} title={`${e.title}${e.notes ? "\n\n" + e.notes : ""}`}>
+                      <span class="font-semibold">{kindLabel(e.kind)}</span>
+                      <span class="opacity-75"> · {e.owner_name?.split(" ")[0] || "?"}</span>
+                      {e.property_name && <span class="opacity-60"> · {e.property_name}</span>}
+                    </span>
+                  </li>
+                ))}
+                {dayEvents.length > 4 && (
+                  <li class="text-[10px] text-[var(--color-muted)] px-1">+{dayEvents.length - 4} more</li>
+                )}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- ── Sidebar: pending PTO + add schedule ─────────── -->
+    <aside class="space-y-6">
+
+      {isAdmin && (
+        <section class="bg-white border border-[var(--color-hairline)] rounded-2xl overflow-hidden">
+          <header class="px-5 py-3 border-b border-[var(--color-hairline)] flex items-center justify-between">
+            <h2 class="font-semibold text-[var(--color-navy)]">Pending PTO requests</h2>
+            <span class="text-xs text-[var(--color-muted)] tabular-nums">{pending.results.length}</span>
+          </header>
+          {pending.results.length === 0 ? (
+            <div class="px-5 py-6 text-center text-sm text-[var(--color-muted)]">
+              No requests waiting.
+            </div>
+          ) : (
+            <ul class="divide-y divide-[var(--color-hairline)]">
+              {pending.results.map((r) => (
+                <li class="px-5 py-4 space-y-2">
+                  <div>
+                    <div class="text-sm font-semibold text-[var(--color-navy)]">{r.owner_name}</div>
+                    {r.property_name && (
+                      <div class="text-xs text-[var(--color-muted)]">{r.property_name}</div>
+                    )}
+                  </div>
+                  <div class="flex items-center gap-2 flex-wrap text-xs">
+                    <span class={`pill ${eventPillClass("gm_pto", r.kind)} capitalize`}>{kindLabel(r.kind)}</span>
+                    <span class="text-[var(--color-navy)] font-medium">{r.starts_at}{r.starts_at !== r.ends_at && <> → {r.ends_at}</>}</span>
+                  </div>
+                  {r.notes && (
+                    <p class="text-xs italic text-[var(--color-muted)] bg-[var(--color-cream)] rounded-md px-2 py-1.5">
+                      "{r.notes}"
+                    </p>
+                  )}
+                  <form method="POST" action={`/api/calendar/events/${r.id}`} class="grid grid-cols-[1fr_auto_auto] gap-2 items-center pt-1">
+                    <input type="text" name="reason" placeholder="Reason (required to deny)"
+                      class="text-xs rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-[var(--color-navy)]" />
+                    <button type="submit" name="action" value="deny"
+                      class="text-xs font-semibold px-2.5 py-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50">
+                      Deny
+                    </button>
+                    <button type="submit" name="action" value="approve"
+                      class="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy-700)]">
+                      Approve
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {isAdmin && (
+        <section class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 space-y-4">
+          <h2 class="font-semibold text-[var(--color-navy)]">Add to my schedule</h2>
+          <p class="text-xs text-[var(--color-muted)]">
+            Post your own travel or out-of-office. Visible to other admins and Strand — never GMs.
+          </p>
+          <form method="POST" action="/api/calendar/events" class="space-y-3">
+            <input type="hidden" name="source" value="regional" />
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Type</label>
+              <div class="grid grid-cols-3 gap-2">
+                {[
+                  { value: "travel", label: "Travel" },
+                  { value: "ooo", label: "OOO" },
+                  { value: "other", label: "Other" },
+                ].map((opt, i) => (
+                  <label class="flex items-center justify-center cursor-pointer rounded-lg border border-[var(--color-hairline)] bg-white px-2 py-2 has-[:checked]:bg-[var(--color-navy)] has-[:checked]:text-white has-[:checked]:border-[var(--color-navy)] transition-colors text-xs">
+                    <input type="radio" name="kind" value={opt.value} class="hidden" required checked={i === 0} />
+                    <span class="font-semibold">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="reg_start" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Start</label>
+                <input id="reg_start" name="starts_at" type="date" required value={todayIso}
+                  class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="reg_end" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">End</label>
+                <input id="reg_end" name="ends_at" type="date" required value={todayIso}
+                  class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <label for="reg_title" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+                Title <span class="font-normal normal-case tracking-normal text-[var(--color-muted)]">(optional)</span>
+              </label>
+              <input id="reg_title" name="title" type="text" placeholder="e.g. Charlotte conference"
+                class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+            </div>
+
+            <div>
+              <label for="reg_notes" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+                Notes <span class="font-normal normal-case tracking-normal text-[var(--color-muted)]">(optional)</span>
+              </label>
+              <textarea id="reg_notes" name="notes" rows="2"
+                class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary w-full text-sm">Add to calendar</button>
+          </form>
+        </section>
+      )}
+
+      <!-- Legend -->
+      <section class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 text-xs">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Legend</h2>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("regional", "travel")}`}></span> Regional · Travel</li>
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("regional", "ooo")}`}></span> Regional · OOO</li>
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("regional", "other")}`}></span> Regional · Other</li>
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("gm_pto", "vacation")}`}></span> GM PTO · Vacation</li>
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("gm_pto", "sick")}`}></span> GM PTO · Sick</li>
+          <li class="flex items-center gap-2"><span class={`w-3 h-3 rounded ${eventPillClass("gm_pto", "personal")}`}></span> GM PTO · Personal</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</PortalLayout>

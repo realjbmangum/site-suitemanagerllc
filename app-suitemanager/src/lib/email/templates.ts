@@ -341,3 +341,76 @@ export function buildApprovalDecisionEmail(input: ApprovalDecisionEmailInput): {
   };
 }
 
+
+// --- PTO decision (to the GM) -------------------------------------------
+export interface PtoDecisionEmailInput {
+  recipientName: string;
+  approved: boolean;
+  kind: string;           // vacation | sick | personal
+  startsAt: string;       // YYYY-MM-DD
+  endsAt: string;         // YYYY-MM-DD
+  reason?: string | null;
+  decidedByName: string;
+  propertyName?: string;
+}
+
+const PTO_KIND_LABEL: Record<string, string> = {
+  vacation: 'Vacation',
+  sick: 'Sick',
+  personal: 'Personal',
+};
+
+function fmtPtoDate(iso: string): string {
+  // YYYY-MM-DD → "Wed, Jun 18". Avoid timezone shenanigans by parsing as local.
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function fmtPtoRange(startIso: string, endIso: string): string {
+  if (startIso === endIso) return fmtPtoDate(startIso);
+  return `${fmtPtoDate(startIso)} → ${fmtPtoDate(endIso)}`;
+}
+
+export function buildPtoDecisionEmail(input: PtoDecisionEmailInput): {
+  subject: string;
+  html: string;
+} {
+  const first = input.recipientName.split(/\s+/)[0] || input.recipientName;
+  const word = input.approved ? 'approved' : 'denied';
+  const kindLabel = PTO_KIND_LABEL[input.kind] || input.kind;
+  const range = fmtPtoRange(input.startsAt, input.endsAt);
+
+  const rows = [
+    detailRow('Type', kindLabel),
+    detailRow('Dates', range),
+    input.propertyName ? detailRow('Property', input.propertyName) : '',
+    detailRow('Decided by', input.decidedByName),
+  ].join('');
+
+  const bodyHtml = `
+    <p style="margin:14px 0 0 0;">${escapeHtml(first)},</p>
+    <p style="margin:12px 0 0 0;">Your time-off request has been <strong>${word}</strong>.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 4px 0;">${rows}</table>
+    ${
+      input.reason
+        ? `<p style="margin:14px 0 0 0;padding:12px 14px;background:${BRAND.cream};border-radius:8px;font-size:14px;">
+             <strong>Note:</strong> ${escapeHtml(input.reason)}
+           </p>`
+        : ''
+    }
+    <p style="margin:14px 0 0 0;font-size:13px;color:${BRAND.muted};">If anything looks off, reply to this email and we'll sort it out.</p>`;
+
+  return {
+    subject: input.approved
+      ? `PTO approved — ${range}`
+      : `PTO denied — ${range}`,
+    html: transactionalShell({
+      preheader: `Your ${kindLabel.toLowerCase()} request for ${range} was ${word}.`,
+      heading: input.approved ? 'Your time off was approved' : 'Your time off was denied',
+      bodyHtml,
+      accent: input.approved ? '#2C7A4B' : '#B4452C',
+    }),
+  };
+}

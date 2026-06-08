@@ -175,6 +175,34 @@ CREATE TABLE IF NOT EXISTS property_files (
 CREATE INDEX IF NOT EXISTS idx_property_files_property ON property_files(property_id);
 CREATE INDEX IF NOT EXISTS idx_property_files_active ON property_files(archived_at);
 
+-- Calendar — shared schedule + GM PTO workflow (added 2026-06-08).
+-- regional = admin-owned schedules (visible to admin + strand, never GMs).
+-- gm_pto   = GM-requested time off → admin approves/denies → decision
+--             email goes to the GM; approved PTO renders on the calendar.
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id              TEXT PRIMARY KEY,
+  owner_user_id   TEXT NOT NULL REFERENCES users(id),
+  source          TEXT NOT NULL CHECK (source IN ('regional','gm_pto')),
+  title           TEXT NOT NULL,
+  kind            TEXT NOT NULL,
+  starts_at       TEXT NOT NULL,
+  ends_at         TEXT NOT NULL,
+  all_day         INTEGER NOT NULL DEFAULT 1,
+  notes           TEXT,
+  approval_status TEXT NOT NULL DEFAULT 'not_required'
+                  CHECK (approval_status IN ('not_required','pending','approved','denied')),
+  approval_reason TEXT,
+  decided_by      TEXT REFERENCES users(id),
+  decided_at      TEXT,
+  property_id     TEXT REFERENCES properties(id),
+  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_calendar_owner    ON calendar_events(owner_user_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_dates    ON calendar_events(starts_at, ends_at);
+CREATE INDEX IF NOT EXISTS idx_calendar_approval ON calendar_events(approval_status);
+CREATE INDEX IF NOT EXISTS idx_calendar_source   ON calendar_events(source);
+
 -- Audit log
 CREATE TABLE IF NOT EXISTS audit_events (
   id          TEXT PRIMARY KEY,

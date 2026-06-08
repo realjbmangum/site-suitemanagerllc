@@ -59,6 +59,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return Response.redirect(new URL('/my-property', context.request.url), 302);
     }
   }
+  // /calendar — admin + strand only. GMs request PTO from /my-property.
+  if (path === '/calendar') {
+    if (role !== 'admin' && role !== 'strand') {
+      return Response.redirect(new URL('/my-property', context.request.url), 302);
+    }
+  }
   // GMs can OPEN a document detail page for their own property (the page
   // enforces the property-match check). They cannot see the dashboard list.
   if (path === '/dashboard' && role !== 'strand' && role !== 'admin') {
