@@ -1,5 +1,6 @@
 ---
-import PortalLayout from "../layouts/PortalLayout.astro";
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import CorporateNav from "../../components/CorporateNav.astro";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -57,22 +58,16 @@ const pillClass = (cat: string) =>
   "pill-other";
 ---
 
-<PortalLayout title="Corporate" context="Suite Manager">
-  <!-- Header -->
-  <div class="bg-white border border-[var(--color-hairline)] rounded-2xl p-6 mb-6">
-    <div class="flex items-start justify-between gap-4 flex-wrap">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-          Corporate
-        </h1>
-        <p class="text-sm text-[var(--color-muted)] mt-1 max-w-2xl">
-          Personal expense reports, mileage, and special invoices to be paid.
-          Goes to Strand's queue. Not visible to property GMs.
-        </p>
-      </div>
-    </div>
+<PortalLayout title="Corporate · Documents" context="Suite Manager">
+  <CorporateNav
+    active="documents"
+    documentsCount={stats?.total ?? 0}
+    description="Personal expense reports, mileage, and special invoices to be paid. Goes to Strand's queue. Not visible to property GMs."
+  />
 
-    <div class="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-[var(--color-hairline)]">
+  <!-- Stats strip -->
+  <div class="bg-white border border-[var(--color-hairline)] rounded-2xl p-6 mb-6">
+    <div class="grid grid-cols-3 gap-3">
       <div>
         <div class="text-xs text-[var(--color-muted)] uppercase tracking-widest font-semibold">Documents</div>
         <div class="text-xl font-bold text-[var(--color-navy)] mt-0.5">{stats?.total ?? 0}</div>

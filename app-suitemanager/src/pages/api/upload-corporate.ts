@@ -124,13 +124,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  const back = new URL('/corporate', request.url);
+  const back = new URL('/corporate/documents', request.url);
   back.searchParams.set('uploaded', '1');
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 };
 
 function bounce(request: Request, msg: string): Response {
-  const back = new URL('/corporate', request.url);
+  const back = new URL('/corporate/documents', request.url);
   back.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: back.toString() } });
 }

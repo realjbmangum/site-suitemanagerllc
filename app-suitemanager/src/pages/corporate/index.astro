@@ -1,0 +1,6 @@
+---
+// /corporate → land on the Documents tab by default. Other Corporate
+// surfaces (calendar, future builds) are siblings under /corporate/.
+export const prerender = false;
+return Astro.redirect("/corporate/documents");
+---

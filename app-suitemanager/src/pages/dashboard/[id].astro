@@ -60,7 +60,7 @@ const canEdit = me.role === "strand" || me.role === "admin";
 const canApprove = me.role === "admin";
 const isInvoice = doc.category === "invoice";
 const needsApproval = doc.approval_status && doc.approval_status !== "not_required";
-const backHref = me.role === "gm" ? "/my-property" : isCorporate ? "/corporate" : "/dashboard";
+const backHref = me.role === "gm" ? "/my-property" : isCorporate ? "/corporate/documents" : "/dashboard";
 const backLabel =
   me.role === "gm" ? "Back to my property" :
   isCorporate ? "Back to Corporate" : "Back to dashboard";

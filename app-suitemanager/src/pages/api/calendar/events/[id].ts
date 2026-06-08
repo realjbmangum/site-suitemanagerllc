@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     await logAudit(env.DB, user.id, 'calendar.delete', {
       detail: `${event.source} · ${event.title}`,
     });
-    return redirect(request, event.source === 'gm_pto' && user.role === 'gm' ? '/my-property' : '/calendar');
+    return redirect(request, event.source === 'gm_pto' && user.role === 'gm' ? '/my-property' : '/corporate/calendar?deleted=1');
   }
 
   // ── APPROVE / DENY ────────────────────────────────────
@@ -120,7 +120,7 @@ function redirect(request: Request, path: string): Response {
 
 function bounce(request: Request, msg: string): Response {
   const ref = request.headers.get('referer');
-  const u = new URL(ref || '/calendar', request.url);
+  const u = new URL(ref || '/corporate/calendar', request.url);
   u.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: u.toString() } });
 }

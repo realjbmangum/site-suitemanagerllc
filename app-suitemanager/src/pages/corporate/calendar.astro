@@ -1,5 +1,6 @@
 ---
-import PortalLayout from "../layouts/PortalLayout.astro";
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import CorporateNav from "../../components/CorporateNav.astro";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -177,17 +178,14 @@ const buildHref = (overrides: Record<string, string | null>) => {
 const isAdmin = me.role === "admin";
 ---
 
-<PortalLayout title="Calendar" context="Suite Manager">
-  <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
-    <div>
-      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-        Calendar
-      </h1>
-      <p class="text-sm text-[var(--color-muted)] mt-1">
-        Regional schedules and approved GM time off. {isAdmin ? "You can approve PTO requests below." : "Strand-only view."}
-      </p>
-    </div>
+<PortalLayout title="Corporate · Calendar" context="Suite Manager">
+  <CorporateNav
+    active="calendar"
+    calendarCount={pending.results.length}
+    description={`Regional schedules and approved GM time off. ${isAdmin ? "You can approve PTO requests below." : "Strand-only view."}`}
+  />
 
+  <div class="flex items-end justify-end mb-6 flex-wrap gap-4">
     <div class="flex items-center gap-2 flex-wrap">
       <!-- Month nav -->
       <div class="flex items-center bg-white border border-[var(--color-hairline)] rounded-lg overflow-hidden">

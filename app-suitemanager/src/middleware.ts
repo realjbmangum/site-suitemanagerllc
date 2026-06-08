@@ -52,15 +52,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (path === '/my-property' && role !== 'gm' && role !== 'admin') {
     return Response.redirect(new URL('/dashboard', context.request.url), 302);
   }
-  // /corporate (and the matching upload endpoint) — admin + strand only.
-  // GMs never see Corporate docs.
-  if (path === '/corporate' || path === '/api/upload-corporate') {
-    if (role !== 'admin' && role !== 'strand') {
-      return Response.redirect(new URL('/my-property', context.request.url), 302);
-    }
-  }
-  // /calendar — admin + strand only. GMs request PTO from /my-property.
-  if (path === '/calendar') {
+  // Corporate section (documents, calendar, future sub-pages) plus the
+  // matching upload + calendar endpoints — admin + strand only. GMs never
+  // see Corporate; they request PTO from /my-property which posts to
+  // /api/calendar/events with source=gm_pto.
+  if (
+    path === '/corporate' ||
+    path.startsWith('/corporate/') ||
+    path === '/api/upload-corporate'
+  ) {
     if (role !== 'admin' && role !== 'strand') {
       return Response.redirect(new URL('/my-property', context.request.url), 302);
     }

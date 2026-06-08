@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     await logAudit(env.DB, user.id, 'calendar.create', {
       detail: `regional · ${kind} · ${startsAt}→${endsAt}`,
     });
-    return redirect(request, '/calendar?created=1');
+    return redirect(request, '/corporate/calendar?created=1');
   }
 
   if (source === 'gm_pto') {
@@ -102,7 +102,7 @@ function redirect(request: Request, path: string): Response {
 
 function bounce(request: Request, msg: string): Response {
   const ref = request.headers.get('referer');
-  const u = new URL(ref || '/calendar', request.url);
+  const u = new URL(ref || '/corporate/calendar', request.url);
   u.searchParams.set('error', msg);
   return new Response(null, { status: 302, headers: { location: u.toString() } });
 }

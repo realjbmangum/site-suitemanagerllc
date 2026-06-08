@@ -1,0 +1,61 @@
+---
+// Corporate section tab bar — rendered at the top of every /corporate/*
+// page. Adding a new tab means dropping in another { id, label, href }
+// row here and a sibling .astro file under src/pages/corporate/.
+interface Props {
+  active: "documents" | "calendar";
+  documentsCount?: number;
+  calendarCount?: number;   // pending PTO requests, for an admin badge
+  description?: string;
+}
+const { active, documentsCount, calendarCount, description } = Astro.props;
+
+const tabs = [
+  { id: "documents", label: "Documents", href: "/corporate/documents", count: documentsCount },
+  { id: "calendar",  label: "Calendar",  href: "/corporate/calendar",  count: calendarCount  },
+];
+---
+
+<header class="mb-6">
+  <div class="flex items-end justify-between gap-4 flex-wrap mb-4">
+    <div>
+      <h1 class="text-3xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Corporate
+      </h1>
+      {description && (
+        <p class="text-sm text-[var(--color-muted)] mt-1 max-w-2xl">{description}</p>
+      )}
+    </div>
+  </div>
+
+  <nav class="border-b border-[var(--color-hairline)]">
+    <ul class="flex gap-1 flex-wrap">
+      {tabs.map((t) => {
+        const isActive = t.id === active;
+        return (
+          <li>
+            <a
+              href={t.href}
+              class={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+                isActive
+                  ? "border-[var(--color-brass)] text-[var(--color-navy)]"
+                  : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-navy)]"
+              }`}
+            >
+              {t.label}
+              {t.count !== undefined && t.count > 0 && (
+                <span class={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-full ${
+                  isActive
+                    ? "bg-[var(--color-brass)] text-white"
+                    : "bg-[var(--color-hairline)] text-[var(--color-muted)]"
+                }`}>
+                  {t.count}
+                </span>
+              )}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+</header>
