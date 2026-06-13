@@ -10,71 +10,161 @@ const errorMsg = url.searchParams.get("error");
 const created = url.searchParams.get("created") === "1";
 const decided = url.searchParams.get("decided") === "1";
 
-// Month being viewed (defaults to current). Format: YYYY-MM.
+// ── Today ──────────────────────────────────────────────
 const todayLocal = new Date();
 const todayY = todayLocal.getFullYear();
 const todayM = todayLocal.getMonth() + 1;
 const todayD = todayLocal.getDate();
 const todayIso = `${todayY}-${String(todayM).padStart(2, "0")}-${String(todayD).padStart(2, "0")}`;
 
-const monthParam = url.searchParams.get("m") || `${todayY}-${String(todayM).padStart(2, "0")}`;
-const [viewY, viewM] = monthParam.split("-").map(Number);
-const viewYear = Number.isFinite(viewY) ? viewY : todayY;
-const viewMonth = Number.isFinite(viewM) && viewM >= 1 && viewM <= 12 ? viewM : todayM;
-
-const showPto = url.searchParams.get("pto") !== "off"; // default ON
-
-// First day of the visible grid (Sunday on or before the 1st), and last day
-// (Saturday on or after the last). That gives us 5–6 weeks of cells.
-const monthFirst = new Date(viewYear, viewMonth - 1, 1);
-const monthLast = new Date(viewYear, viewMonth, 0); // 0th of next = last of current
-const monthLastDay = monthLast.getDate();
-const gridStartOffset = monthFirst.getDay(); // 0=Sun
-const gridEndOffset = 6 - monthLast.getDay();
-const gridStart = new Date(viewYear, viewMonth - 1, 1 - gridStartOffset);
-const gridEnd = new Date(viewYear, viewMonth - 1, monthLastDay + gridEndOffset);
-
 const toIso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function isoAdd(iso: string, days: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return toIso(new Date(y, m - 1, d + days));
+}
+function dateRange(startIso: string, endIso: string): string[] {
+  const out: string[] = [];
+  let cur = startIso;
+  while (cur <= endIso) { out.push(cur); cur = isoAdd(cur, 1); }
+  return out;
+}
+function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const gridStartIso = toIso(gridStart);
-const gridEndIso = toIso(gridEnd);
+// ── View + anchor + filters ────────────────────────────
+const viewParam = url.searchParams.get("view") || "month";
+const view = ["day", "week", "month"].includes(viewParam) ? viewParam : "month";
 
-// Pull events that overlap the visible window. Show all regional events to
-// admin + strand; show GM PTO based on the toggle (admins always see them
-// in the pending inbox, but they only render on the grid when toggle is on).
+const dParam = url.searchParams.get("d");
+const anchorIso = dParam && ISO_DATE.test(dParam) ? dParam : todayIso;
+const monthParam = url.searchParams.get("m") || anchorIso.slice(0, 7);
+const [mY, mM] = monthParam.split("-").map(Number);
+const viewYear = Number.isFinite(mY) ? mY : todayY;
+const viewMonth = Number.isFinite(mM) && mM >= 1 && mM <= 12 ? mM : todayM;
+
+const personFilter = url.searchParams.get("person") || "";
+const propertyFilter = url.searchParams.get("property") || "";
+const showPto = url.searchParams.get("pto") !== "off"; // default ON
+
+// ── Compute the visible window + grid cells per view ────
+type Cell = { iso: string; day: number; inMonth: boolean; isToday: boolean };
+let windowStartIso = "";
+let windowEndIso = "";
+let cells: Cell[] = [];
+let label = "";
+let prevHref = "";
+let nextHref = "";
+
+const buildHref = (overrides: Record<string, string | null>) => {
+  const u = new URL(url);
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + (u.search || "");
+};
+
+function weekStart(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - dt.getDay()); // back to Sunday
+  return toIso(dt);
+}
+
+if (view === "month") {
+  const monthFirst = new Date(viewYear, viewMonth - 1, 1);
+  const monthLast = new Date(viewYear, viewMonth, 0);
+  const monthLastDay = monthLast.getDate();
+  const gridStart = new Date(viewYear, viewMonth - 1, 1 - monthFirst.getDay());
+  const gridEnd = new Date(viewYear, viewMonth - 1, monthLastDay + (6 - monthLast.getDay()));
+  windowStartIso = toIso(gridStart);
+  windowEndIso = toIso(gridEnd);
+  for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+    const iso = toIso(d);
+    cells.push({ iso, day: d.getDate(), inMonth: d.getMonth() + 1 === viewMonth, isToday: iso === todayIso });
+  }
+  label = new Date(viewYear, viewMonth - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const prevM = viewMonth === 1 ? `${viewYear - 1}-12` : `${viewYear}-${String(viewMonth - 1).padStart(2, "0")}`;
+  const nextM = viewMonth === 12 ? `${viewYear + 1}-01` : `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
+  prevHref = buildHref({ m: prevM, d: null });
+  nextHref = buildHref({ m: nextM, d: null });
+} else if (view === "week") {
+  const ws = weekStart(anchorIso);
+  windowStartIso = ws;
+  windowEndIso = isoAdd(ws, 6);
+  for (const iso of dateRange(ws, windowEndIso)) {
+    const [, , dd] = iso.split("-").map(Number);
+    cells.push({ iso, day: dd, inMonth: true, isToday: iso === todayIso });
+  }
+  const a = isoToDate(ws);
+  const b = isoToDate(windowEndIso);
+  label = `${a.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${b.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+  prevHref = buildHref({ d: isoAdd(ws, -7), m: null });
+  nextHref = buildHref({ d: isoAdd(ws, 7), m: null });
+} else {
+  // day
+  windowStartIso = anchorIso;
+  windowEndIso = anchorIso;
+  const [ay, am, ad] = anchorIso.split("-").map(Number);
+  label = new Date(ay, am - 1, ad).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  prevHref = buildHref({ d: isoAdd(anchorIso, -1), m: null });
+  nextHref = buildHref({ d: isoAdd(anchorIso, 1), m: null });
+}
+
+// ── Reference data: properties + people for the filters ─
+const propertiesRes = await env.DB
+  .prepare("SELECT id, name FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string }>();
+const properties = propertiesRes.results;
+
+const peopleRes = await env.DB
+  .prepare(
+    `SELECT DISTINCT u.id, u.name
+     FROM calendar_events e JOIN users u ON u.id = e.owner_user_id
+     WHERE e.source = 'regional' AND u.name IS NOT NULL
+     ORDER BY u.name`
+  )
+  .all<{ id: string; name: string }>();
+const people = peopleRes.results;
+
+// ── Events in window (with person/property filters) ────
+let where =
+  "e.ends_at >= ? AND e.starts_at <= ? AND (e.source = 'regional' OR (e.source = 'gm_pto' AND e.approval_status = 'approved'))";
+const binds: (string)[] = [windowStartIso, windowEndIso];
+if (personFilter) { where += " AND e.owner_user_id = ?"; binds.push(personFilter); }
+if (propertyFilter) { where += " AND e.property_id = ?"; binds.push(propertyFilter); }
+
 const events = await env.DB
   .prepare(
     `SELECT e.id, e.owner_user_id, e.source, e.title, e.kind,
             e.starts_at, e.ends_at, e.notes,
-            e.approval_status, e.approval_reason,
-            e.decided_by, e.decided_at, e.property_id,
+            e.approval_status, e.property_id,
             u.name AS owner_name, u.role AS owner_role,
             p.name AS property_name
      FROM calendar_events e
      LEFT JOIN users u ON u.id = e.owner_user_id
      LEFT JOIN properties p ON p.id = e.property_id
-     WHERE e.ends_at >= ? AND e.starts_at <= ?
-       AND (e.source = 'regional' OR (e.source = 'gm_pto' AND e.approval_status = 'approved'))
+     WHERE ${where}
      ORDER BY e.starts_at, e.title`
   )
-  .bind(gridStartIso, gridEndIso)
+  .bind(...binds)
   .all<{
     id: string; owner_user_id: string; source: string; title: string; kind: string;
     starts_at: string; ends_at: string; notes: string | null;
-    approval_status: string; approval_reason: string | null;
-    decided_by: string | null; decided_at: string | null; property_id: string | null;
-    owner_name: string | null; owner_role: string | null;
-    property_name: string | null;
+    approval_status: string; property_id: string | null;
+    owner_name: string | null; owner_role: string | null; property_name: string | null;
   }>();
 
-// Pending PTO inbox — always visible regardless of grid window.
+// Pending PTO inbox — always visible regardless of window.
 const pending = await env.DB
   .prepare(
     `SELECT e.id, e.owner_user_id, e.kind, e.starts_at, e.ends_at, e.notes,
             e.created_at, e.property_id,
-            u.name AS owner_name, u.email AS owner_email,
-            p.name AS property_name
+            u.name AS owner_name, u.email AS owner_email, p.name AS property_name
      FROM calendar_events e
      LEFT JOIN users u ON u.id = e.owner_user_id
      LEFT JOIN properties p ON p.id = e.property_id
@@ -85,61 +175,19 @@ const pending = await env.DB
     id: string; owner_user_id: string; kind: string;
     starts_at: string; ends_at: string; notes: string | null;
     created_at: string; property_id: string | null;
-    owner_name: string | null; owner_email: string | null;
-    property_name: string | null;
+    owner_name: string | null; owner_email: string | null; property_name: string | null;
   }>();
 
-// Build a "day → events that touch this day" index.
-function isoAdd(iso: string, days: number) {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(y, m - 1, d + days);
-  return toIso(dt);
-}
-function dateRange(startIso: string, endIso: string): string[] {
-  const out: string[] = [];
-  let cur = startIso;
-  while (cur <= endIso) {
-    out.push(cur);
-    cur = isoAdd(cur, 1);
-  }
-  return out;
-}
-
+// Index events by day for grid rendering.
 const eventsByDay: Record<string, typeof events.results> = {};
 for (const e of events.results) {
-  // Clamp the span to the grid window for layout purposes.
-  const a = e.starts_at < gridStartIso ? gridStartIso : e.starts_at;
-  const b = e.ends_at > gridEndIso ? gridEndIso : e.ends_at;
-  for (const d of dateRange(a, b)) {
-    if (e.source === "gm_pto" && !showPto) continue;
-    (eventsByDay[d] ||= []).push(e);
-  }
+  if (e.source === "gm_pto" && !showPto) continue;
+  const a = e.starts_at < windowStartIso ? windowStartIso : e.starts_at;
+  const b = e.ends_at > windowEndIso ? windowEndIso : e.ends_at;
+  for (const d of dateRange(a, b)) (eventsByDay[d] ||= []).push(e);
 }
-
-// Build the 7-col grid of cells.
-const cells: { iso: string; day: number; inMonth: boolean; isToday: boolean }[] = [];
-for (
-  let d = new Date(gridStart);
-  d <= gridEnd;
-  d.setDate(d.getDate() + 1)
-) {
-  const iso = toIso(d);
-  cells.push({
-    iso,
-    day: d.getDate(),
-    inMonth: d.getMonth() + 1 === viewMonth,
-    isToday: iso === todayIso,
-  });
-}
-
-// Month nav.
-const prevMonth = viewMonth === 1 ? `${viewYear - 1}-12` : `${viewYear}-${String(viewMonth - 1).padStart(2, "0")}`;
-const nextMonth = viewMonth === 12 ? `${viewYear + 1}-01` : `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
-
-const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleDateString(undefined, {
-  month: "long",
-  year: "numeric",
-});
+// Day-view list (events overlapping the anchor day, sorted).
+const dayEventsList = view === "day" ? (eventsByDay[anchorIso] || []) : [];
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -158,24 +206,17 @@ function eventPillClass(source: string, kind: string): string {
   if (source === "gm_pto") {
     if (kind === "sick") return "bg-amber-100 text-amber-900 border border-amber-300";
     if (kind === "personal") return "bg-violet-100 text-violet-900 border border-violet-300";
-    return "bg-green-100 text-green-900 border border-green-300"; // vacation
+    return "bg-green-100 text-green-900 border border-green-300";
   }
-  // regional
   if (kind === "travel") return "bg-sky-100 text-sky-900 border border-sky-300";
   if (kind === "ooo") return "bg-rose-100 text-rose-900 border border-rose-300";
   return "bg-slate-100 text-slate-800 border border-slate-300";
 }
 
-const buildHref = (overrides: Record<string, string | null>) => {
-  const u = new URL(url);
-  for (const [k, v] of Object.entries(overrides)) {
-    if (v === null || v === "") u.searchParams.delete(k);
-    else u.searchParams.set(k, v);
-  }
-  return u.pathname + (u.search || "");
-};
-
 const isAdmin = me.role === "admin";
+const filtersActive = personFilter || propertyFilter;
+const personName = personFilter ? people.find((p) => p.id === personFilter)?.name : "";
+const cellMin = view === "week" ? "min-h-[420px]" : "min-h-[110px]";
 ---
 
 <PortalLayout title="Corporate · Calendar" context="Suite Manager">
@@ -185,17 +226,49 @@ const isAdmin = me.role === "admin";
     description={`Regional schedules and approved GM time off. ${isAdmin ? "You can approve PTO requests below." : "Strand-only view."}`}
   />
 
-  <div class="flex items-end justify-end mb-6 flex-wrap gap-4">
+  <!-- ── Controls bar ─────────────────────────────────── -->
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <!-- Left: view toggle + nav -->
     <div class="flex items-center gap-2 flex-wrap">
-      <!-- Month nav -->
       <div class="flex items-center bg-white border border-[var(--color-hairline)] rounded-lg overflow-hidden">
-        <a href={buildHref({ m: prevMonth })} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Previous month">←</a>
-        <span class="px-4 py-2 text-sm font-semibold text-[var(--color-navy)] border-x border-[var(--color-hairline)]">{monthLabel}</span>
-        <a href={buildHref({ m: nextMonth })} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Next month">→</a>
+        {["day", "week", "month"].map((v) => (
+          <a
+            href={buildHref({ view: v })}
+            class={`px-3 py-2 text-sm font-semibold capitalize transition-colors ${
+              view === v
+                ? "bg-[var(--color-navy)] text-white"
+                : "text-[var(--color-navy)] hover:bg-[var(--color-cream)]"
+            }`}
+          >{v}</a>
+        ))}
       </div>
-      <a href={buildHref({ m: null })} class="btn-ghost text-sm">Today</a>
 
-      <!-- PTO layer toggle -->
+      <div class="flex items-center bg-white border border-[var(--color-hairline)] rounded-lg overflow-hidden">
+        <a href={prevHref} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Previous">←</a>
+        <span class="px-4 py-2 text-sm font-semibold text-[var(--color-navy)] border-x border-[var(--color-hairline)] whitespace-nowrap">{label}</span>
+        <a href={nextHref} class="px-3 py-2 text-sm text-[var(--color-navy)] hover:bg-[var(--color-cream)]" aria-label="Next">→</a>
+      </div>
+      <a href={buildHref({ m: null, d: null })} class="btn-ghost text-sm">Today</a>
+    </div>
+
+    <!-- Right: filters -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <select data-filter="person" aria-label="Filter by person"
+        class="text-sm rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-[var(--color-navy)]">
+        <option value="">All people</option>
+        {people.map((p) => (
+          <option value={p.id} selected={p.id === personFilter}>{p.name}</option>
+        ))}
+      </select>
+
+      <select data-filter="property" aria-label="Filter by property"
+        class="text-sm rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-[var(--color-navy)]">
+        <option value="">All properties</option>
+        {properties.map((p) => (
+          <option value={p.id} selected={p.id === propertyFilter}>{p.name}</option>
+        ))}
+      </select>
+
       <a
         href={buildHref({ pto: showPto ? "off" : null })}
         class={`text-sm font-semibold px-3 py-2 rounded-lg border transition-colors ${
@@ -203,74 +276,98 @@ const isAdmin = me.role === "admin";
             ? "bg-[var(--color-navy)] text-white border-[var(--color-navy)]"
             : "bg-white text-[var(--color-navy)] border-[var(--color-hairline)] hover:bg-[var(--color-cream)]"
         }`}
-        title="Show or hide approved GM PTO on the grid"
-      >
-        {showPto ? "✓ " : ""}GM PTO layer
-      </a>
+        title="Show or hide approved GM PTO"
+      >{showPto ? "✓ " : ""}PTO</a>
+
+      {filtersActive && (
+        <a href={buildHref({ person: null, property: null })} class="text-sm text-[var(--color-muted)] underline hover:text-[var(--color-navy)]">Clear filters</a>
+      )}
     </div>
   </div>
 
-  {created && (
-    <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
-      Saved.
+  {filtersActive && (
+    <div class="mb-4 text-sm text-[var(--color-navy)] bg-[var(--color-cream)] border border-[var(--color-hairline)] rounded-lg px-4 py-2">
+      Showing{personName && <> <strong>{personName}</strong></>}{propertyFilter && <> at <strong>{properties.find((p) => p.id === propertyFilter)?.name}</strong></>}.
     </div>
   )}
-  {decided && (
-    <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
-      Decision recorded — the GM has been notified by email.
-    </div>
-  )}
-  {errorMsg && (
-    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
-      {errorMsg}
-    </div>
-  )}
+
+  {created && (<div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">Saved.</div>)}
+  {decided && (<div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">Decision recorded — the GM has been notified by email.</div>)}
+  {errorMsg && (<div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">{errorMsg}</div>)}
 
   <div class="grid lg:grid-cols-[1fr_320px] gap-6">
 
-    <!-- ── Month grid ────────────────────────────────────── -->
+    <!-- ── Calendar surface ─────────────────────────────── -->
     <section class="bg-white border border-[var(--color-hairline)] rounded-2xl overflow-hidden">
-      <div class="grid grid-cols-7 bg-[var(--color-cream)] border-b border-[var(--color-hairline)]">
-        {WEEKDAYS.map((d) => (
-          <div class="px-2 py-2 text-[10px] uppercase tracking-widest font-semibold text-[var(--color-muted)] text-center">
-            {d}
-          </div>
-        ))}
-      </div>
 
-      <div class="grid grid-cols-7">
-        {cells.map((cell) => {
-          const dayEvents = eventsByDay[cell.iso] || [];
-          return (
-            <div class={`min-h-[110px] border-r border-b border-[var(--color-hairline)] last:border-r-0 px-2 py-1.5 ${
-              !cell.inMonth ? "bg-[var(--color-cream)]/40" : ""
-            }`}>
-              <div class="flex items-center justify-between">
-                <span class={`text-xs font-semibold ${cell.isToday ? "bg-[var(--color-brass)] text-white rounded-full w-6 h-6 inline-flex items-center justify-center" : "text-[var(--color-muted)] px-1"}`}>
-                  {cell.day}
-                </span>
+      {view === "day" ? (
+        <!-- Day view: vertical list -->
+        <div>
+          <div class="px-5 py-3 bg-[var(--color-cream)] border-b border-[var(--color-hairline)] text-sm font-semibold text-[var(--color-navy)]">{label}</div>
+          {dayEventsList.length === 0 ? (
+            <div class="px-5 py-12 text-center text-sm text-[var(--color-muted)]">Nothing scheduled.</div>
+          ) : (
+            <ul class="divide-y divide-[var(--color-hairline)]">
+              {dayEventsList.map((e) => (
+                <li class="px-5 py-3 flex items-start gap-3">
+                  <span class={`mt-0.5 inline-block w-2.5 h-2.5 rounded-full ${eventPillClass(e.source, e.kind)}`}></span>
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-[var(--color-navy)]">
+                      {kindLabel(e.kind)} · {e.owner_name?.split(" ")[0] || "?"}
+                      {e.property_name && <span class="text-[var(--color-brass)]"> · {e.property_name}</span>}
+                    </div>
+                    <div class="text-xs text-[var(--color-muted)]">
+                      {e.starts_at}{e.starts_at !== e.ends_at && <> → {e.ends_at}</>}{e.title && <> — {e.title}</>}
+                    </div>
+                    {e.notes && <p class="text-xs italic text-[var(--color-muted)] mt-0.5">"{e.notes}"</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <!-- Month / Week grid -->
+        <div>
+          <div class="grid grid-cols-7 bg-[var(--color-cream)] border-b border-[var(--color-hairline)]">
+            {(view === "week" ? cells : WEEKDAYS.map((d) => ({ label: d }))).map((c: any) => (
+              <div class="px-2 py-2 text-[10px] uppercase tracking-widest font-semibold text-[var(--color-muted)] text-center">
+                {view === "week" ? `${WEEKDAYS[isoToDate(c.iso).getDay()]} ${c.day}` : c.label}
               </div>
-              <ul class="mt-1 space-y-1">
-                {dayEvents.slice(0, 4).map((e) => (
-                  <li>
-                    <span class={`block truncate text-[10.5px] leading-tight rounded px-1.5 py-0.5 ${eventPillClass(e.source, e.kind)}`} title={`${e.title}${e.notes ? "\n\n" + e.notes : ""}`}>
-                      <span class="font-semibold">{kindLabel(e.kind)}</span>
-                      <span class="opacity-75"> · {e.owner_name?.split(" ")[0] || "?"}</span>
-                      {e.property_name && <span class="opacity-60"> · {e.property_name}</span>}
-                    </span>
-                  </li>
-                ))}
-                {dayEvents.length > 4 && (
-                  <li class="text-[10px] text-[var(--color-muted)] px-1">+{dayEvents.length - 4} more</li>
-                )}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+          <div class="grid grid-cols-7">
+            {cells.map((cell) => {
+              const dayEvents = eventsByDay[cell.iso] || [];
+              const cap = view === "week" ? 12 : 4;
+              return (
+                <div class={`${cellMin} border-r border-b border-[var(--color-hairline)] last:border-r-0 px-2 py-1.5 ${!cell.inMonth ? "bg-[var(--color-cream)]/40" : ""}`}>
+                  {view === "month" && (
+                    <div class="flex items-center justify-between">
+                      <span class={`text-xs font-semibold ${cell.isToday ? "bg-[var(--color-brass)] text-white rounded-full w-6 h-6 inline-flex items-center justify-center" : "text-[var(--color-muted)] px-1"}`}>{cell.day}</span>
+                    </div>
+                  )}
+                  <ul class="mt-1 space-y-1">
+                    {dayEvents.slice(0, cap).map((e) => (
+                      <li>
+                        <span class={`block truncate text-[10.5px] leading-tight rounded px-1.5 py-0.5 ${eventPillClass(e.source, e.kind)}`} title={`${e.title}${e.property_name ? "\n@ " + e.property_name : ""}${e.notes ? "\n\n" + e.notes : ""}`}>
+                          <span class="font-semibold">{kindLabel(e.kind)}</span>
+                          <span class="opacity-75"> · {e.owner_name?.split(" ")[0] || "?"}</span>
+                          {e.property_name && <span class="font-semibold"> · {e.property_name}</span>}
+                        </span>
+                      </li>
+                    ))}
+                    {dayEvents.length > cap && (<li class="text-[10px] text-[var(--color-muted)] px-1">+{dayEvents.length - cap} more</li>)}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
 
-    <!-- ── Sidebar: pending PTO + add schedule ─────────── -->
+    <!-- ── Sidebar ──────────────────────────────────────── -->
     <aside class="space-y-6">
 
       {isAdmin && (
@@ -280,39 +377,24 @@ const isAdmin = me.role === "admin";
             <span class="text-xs text-[var(--color-muted)] tabular-nums">{pending.results.length}</span>
           </header>
           {pending.results.length === 0 ? (
-            <div class="px-5 py-6 text-center text-sm text-[var(--color-muted)]">
-              No requests waiting.
-            </div>
+            <div class="px-5 py-6 text-center text-sm text-[var(--color-muted)]">No requests waiting.</div>
           ) : (
             <ul class="divide-y divide-[var(--color-hairline)]">
               {pending.results.map((r) => (
                 <li class="px-5 py-4 space-y-2">
                   <div>
                     <div class="text-sm font-semibold text-[var(--color-navy)]">{r.owner_name}</div>
-                    {r.property_name && (
-                      <div class="text-xs text-[var(--color-muted)]">{r.property_name}</div>
-                    )}
+                    {r.property_name && (<div class="text-xs text-[var(--color-muted)]">{r.property_name}</div>)}
                   </div>
                   <div class="flex items-center gap-2 flex-wrap text-xs">
                     <span class={`pill ${eventPillClass("gm_pto", r.kind)} capitalize`}>{kindLabel(r.kind)}</span>
                     <span class="text-[var(--color-navy)] font-medium">{r.starts_at}{r.starts_at !== r.ends_at && <> → {r.ends_at}</>}</span>
                   </div>
-                  {r.notes && (
-                    <p class="text-xs italic text-[var(--color-muted)] bg-[var(--color-cream)] rounded-md px-2 py-1.5">
-                      "{r.notes}"
-                    </p>
-                  )}
+                  {r.notes && (<p class="text-xs italic text-[var(--color-muted)] bg-[var(--color-cream)] rounded-md px-2 py-1.5">"{r.notes}"</p>)}
                   <form method="POST" action={`/api/calendar/events/${r.id}`} class="grid grid-cols-[1fr_auto_auto] gap-2 items-center pt-1">
-                    <input type="text" name="reason" placeholder="Reason (required to deny)"
-                      class="text-xs rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-[var(--color-navy)]" />
-                    <button type="submit" name="action" value="deny"
-                      class="text-xs font-semibold px-2.5 py-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50">
-                      Deny
-                    </button>
-                    <button type="submit" name="action" value="approve"
-                      class="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy-700)]">
-                      Approve
-                    </button>
+                    <input type="text" name="reason" placeholder="Reason (required to deny)" class="text-xs rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-[var(--color-navy)]" />
+                    <button type="submit" name="action" value="deny" class="text-xs font-semibold px-2.5 py-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50">Deny</button>
+                    <button type="submit" name="action" value="approve" class="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy-700)]">Approve</button>
                   </form>
                 </li>
               ))}
@@ -324,20 +406,14 @@ const isAdmin = me.role === "admin";
       {isAdmin && (
         <section class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 space-y-4">
           <h2 class="font-semibold text-[var(--color-navy)]">Add to my schedule</h2>
-          <p class="text-xs text-[var(--color-muted)]">
-            Post your own travel or out-of-office. Visible to other admins and Strand — never GMs.
-          </p>
+          <p class="text-xs text-[var(--color-muted)]">Post your own travel or out-of-office. Visible to other admins and Strand — never GMs.</p>
           <form method="POST" action="/api/calendar/events" class="space-y-3">
             <input type="hidden" name="source" value="regional" />
 
             <div>
               <label class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Type</label>
               <div class="grid grid-cols-3 gap-2">
-                {[
-                  { value: "travel", label: "Travel" },
-                  { value: "ooo", label: "OOO" },
-                  { value: "other", label: "Other" },
-                ].map((opt, i) => (
+                {[{ value: "travel", label: "Travel" }, { value: "ooo", label: "OOO" }, { value: "other", label: "Other" }].map((opt, i) => (
                   <label class="flex items-center justify-center cursor-pointer rounded-lg border border-[var(--color-hairline)] bg-white px-2 py-2 has-[:checked]:bg-[var(--color-navy)] has-[:checked]:text-white has-[:checked]:border-[var(--color-navy)] transition-colors text-xs">
                     <input type="radio" name="kind" value={opt.value} class="hidden" required checked={i === 0} />
                     <span class="font-semibold">{opt.label}</span>
@@ -346,16 +422,24 @@ const isAdmin = me.role === "admin";
               </div>
             </div>
 
+            <div>
+              <label for="reg_property" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
+                Property <span class="font-normal normal-case tracking-normal text-[var(--color-muted)]">(optional — which hotel)</span>
+              </label>
+              <select id="reg_property" name="property_id" class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm">
+                <option value="">— none —</option>
+                {properties.map((p) => (<option value={p.id}>{p.name}</option>))}
+              </select>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label for="reg_start" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">Start</label>
-                <input id="reg_start" name="starts_at" type="date" required value={todayIso}
-                  class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+                <input id="reg_start" name="starts_at" type="date" required value={todayIso} class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
               </div>
               <div>
                 <label for="reg_end" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">End</label>
-                <input id="reg_end" name="ends_at" type="date" required value={todayIso}
-                  class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+                <input id="reg_end" name="ends_at" type="date" required value={todayIso} class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
               </div>
             </div>
 
@@ -363,16 +447,14 @@ const isAdmin = me.role === "admin";
               <label for="reg_title" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
                 Title <span class="font-normal normal-case tracking-normal text-[var(--color-muted)]">(optional)</span>
               </label>
-              <input id="reg_title" name="title" type="text" placeholder="e.g. Charlotte conference"
-                class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
+              <input id="reg_title" name="title" type="text" placeholder="e.g. Charlotte conference" class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm" />
             </div>
 
             <div>
               <label for="reg_notes" class="block text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-1.5">
                 Notes <span class="font-normal normal-case tracking-normal text-[var(--color-muted)]">(optional)</span>
               </label>
-              <textarea id="reg_notes" name="notes" rows="2"
-                class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm"></textarea>
+              <textarea id="reg_notes" name="notes" rows="2" class="w-full rounded-md border border-[var(--color-hairline)] bg-white px-2 py-1.5 text-sm"></textarea>
             </div>
 
             <button type="submit" class="btn-primary w-full text-sm">Add to calendar</button>
@@ -380,7 +462,6 @@ const isAdmin = me.role === "admin";
         </section>
       )}
 
-      <!-- Legend -->
       <section class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 text-xs">
         <h2 class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-3">Legend</h2>
         <ul class="space-y-2">
@@ -394,4 +475,16 @@ const isAdmin = me.role === "admin";
       </section>
     </aside>
   </div>
+
+  <script is:inline>
+    document.querySelectorAll("select[data-filter]").forEach((sel) => {
+      sel.addEventListener("change", () => {
+        const u = new URL(location.href);
+        const key = sel.getAttribute("data-filter");
+        if (sel.value) u.searchParams.set(key, sel.value);
+        else u.searchParams.delete(key);
+        location.href = u.pathname + u.search;
+      });
+    });
+  </script>
 </PortalLayout>
