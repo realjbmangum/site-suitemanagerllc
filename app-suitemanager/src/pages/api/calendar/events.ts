@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const startsAt = String(form.get('starts_at') || '').trim();
   const endsAt = String(form.get('ends_at') || '').trim();
   const notes = String(form.get('notes') || '').trim() || null;
+  const propertyId = String(form.get('property_id') || '').trim() || null;
 
   if (!ISO_DATE.test(startsAt) || !ISO_DATE.test(endsAt)) {
     return bounce(request, 'Start and end dates are required (YYYY-MM-DD).');
@@ -38,15 +39,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!REGIONAL_KINDS.has(kind)) {
       return bounce(request, 'Pick a schedule type.');
     }
+    // Optional property the entry is tied to (e.g. the hotel being visited).
+    let regionalPropertyId: string | null = null;
+    if (propertyId) {
+      const prop = await env.DB
+        .prepare('SELECT id FROM properties WHERE id = ? AND active = 1')
+        .bind(propertyId)
+        .first<{ id: string }>();
+      if (!prop) return bounce(request, 'Pick a valid property.');
+      regionalPropertyId = prop.id;
+    }
     const id = generateId();
     const finalTitle = title || `${user.name} — ${kindLabel(kind)}`;
     await env.DB
       .prepare(
         `INSERT INTO calendar_events
-           (id, owner_user_id, source, title, kind, starts_at, ends_at, all_day, notes, approval_status)
-         VALUES (?, ?, 'regional', ?, ?, ?, ?, 1, ?, 'not_required')`
+           (id, owner_user_id, source, title, kind, starts_at, ends_at, all_day, notes, property_id, approval_status)
+         VALUES (?, ?, 'regional', ?, ?, ?, ?, 1, ?, ?, 'not_required')`
       )
-      .bind(id, user.id, finalTitle, kind, startsAt, endsAt, notes)
+      .bind(id, user.id, finalTitle, kind, startsAt, endsAt, notes, regionalPropertyId)
       .run();
     await logAudit(env.DB, user.id, 'calendar.create', {
       detail: `regional · ${kind} · ${startsAt}→${endsAt}`,
