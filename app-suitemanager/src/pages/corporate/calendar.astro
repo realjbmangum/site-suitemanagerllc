@@ -189,6 +189,100 @@ for (const e of events.results) {
 // Day-view list (events overlapping the anchor day, sorted).
 const dayEventsList = view === "day" ? (eventsByDay[anchorIso] || []) : [];
 
+// ── Spanning-bar layout for month / week grids ──────────
+// Split the visible cells into week rows (7 columns each). For each week,
+// clip every event to that week, then greedily assign lanes so overlapping
+// events stack vertically without colliding. Each segment carries the grid
+// column it starts at (1–7) and how many days it spans within the week.
+type EventRow = (typeof events.results)[number];
+type Segment = {
+  ev: EventRow;
+  colStart: number;   // 1-based column within the week (Sunday = 1)
+  span: number;       // number of day columns covered in this week
+  lane: number;       // 0-based stacked row
+  clipLeft: boolean;  // event began before this week (continues from left)
+  clipRight: boolean; // event continues past this week (to the right)
+};
+type WeekRow = {
+  cells: Cell[];
+  segments: Segment[];
+  laneCount: number;
+};
+
+// Per-cell overflow tracking: how many segments in a cell got dropped past the cap.
+const maxLanes = view === "week" ? 12 : 3; // month cells are short; week cells are tall
+const overflowByDay: Record<string, number> = {};
+
+const weeks: WeekRow[] = [];
+if (view === "month" || view === "week") {
+  // Chunk cells into rows of 7 (month grid is already aligned to Sunday;
+  // week view is a single 7-cell row).
+  for (let i = 0; i < cells.length; i += 7) {
+    const weekCells = cells.slice(i, i + 7);
+    if (weekCells.length === 0) continue;
+    const wStartIso = weekCells[0].iso;
+    const wEndIso = weekCells[weekCells.length - 1].iso;
+
+    // Collect this week's clipped segments. Use the already day-indexed,
+    // filtered event list so PTO toggle + person/property filters apply.
+    // Dedupe by event id (an event spanning the week appears in many days).
+    const seen = new Set<string>();
+    const raw: { ev: EventRow; colStart: number; span: number; clipLeft: boolean; clipRight: boolean }[] = [];
+    for (const cell of weekCells) {
+      for (const e of eventsByDay[cell.iso] || []) {
+        if (seen.has(e.id)) continue;
+        seen.add(e.id);
+        const segStart = e.starts_at < wStartIso ? wStartIso : e.starts_at;
+        const segEnd = e.ends_at > wEndIso ? wEndIso : e.ends_at;
+        const colStart = weekCells.findIndex((c) => c.iso === segStart) + 1;
+        const colEnd = weekCells.findIndex((c) => c.iso === segEnd) + 1;
+        if (colStart < 1 || colEnd < 1) continue; // shouldn't happen, defensive
+        raw.push({
+          ev: e,
+          colStart,
+          span: colEnd - colStart + 1,
+          clipLeft: e.starts_at < wStartIso,
+          clipRight: e.ends_at > wEndIso,
+        });
+      }
+    }
+
+    // Lane assignment: longest-running first, then earliest start, so wide
+    // multi-day bars settle into the top lanes (Google-Calendar style).
+    raw.sort((a, b) => {
+      if (b.span !== a.span) return b.span - a.span;
+      if (a.colStart !== b.colStart) return a.colStart - b.colStart;
+      return a.ev.starts_at < b.ev.starts_at ? -1 : a.ev.starts_at > b.ev.starts_at ? 1 : 0;
+    });
+
+    const laneEnds: number[] = []; // laneEnds[lane] = last occupied column in that lane
+    const segments: Segment[] = [];
+    for (const r of raw) {
+      const segEndCol = r.colStart + r.span - 1;
+      // Find the first lane whose last occupied column is before this segment.
+      let lane = laneEnds.findIndex((end) => end < r.colStart);
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(segEndCol); }
+      else laneEnds[lane] = segEndCol;
+
+      if (lane >= maxLanes) {
+        // Overflow: count it against every day this segment would have covered.
+        for (let c = r.colStart; c <= segEndCol; c++) {
+          overflowByDay[weekCells[c - 1].iso] = (overflowByDay[weekCells[c - 1].iso] || 0) + 1;
+        }
+        continue;
+      }
+      segments.push({ ev: r.ev, colStart: r.colStart, span: r.span, lane, clipLeft: r.clipLeft, clipRight: r.clipRight });
+    }
+
+    weeks.push({
+      cells: weekCells,
+      segments,
+      laneCount: Math.min(laneEnds.length, maxLanes),
+    });
+  }
+}
+const LANE_PX = 20; // height reserved per lane (bar height + gap)
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function kindLabel(k: string): string {
@@ -327,7 +421,7 @@ const cellMin = view === "week" ? "min-h-[420px]" : "min-h-[110px]";
           )}
         </div>
       ) : (
-        <!-- Month / Week grid -->
+        <!-- Month / Week grid: spanning bars (Google-Calendar style) -->
         <div>
           <div class="grid grid-cols-7 bg-[var(--color-cream)] border-b border-[var(--color-hairline)]">
             {(view === "week" ? cells : WEEKDAYS.map((d) => ({ label: d }))).map((c: any) => (
@@ -336,33 +430,62 @@ const cellMin = view === "week" ? "min-h-[420px]" : "min-h-[110px]";
               </div>
             ))}
           </div>
-          <div class="grid grid-cols-7">
-            {cells.map((cell) => {
-              const dayEvents = eventsByDay[cell.iso] || [];
-              const cap = view === "week" ? 12 : 4;
-              return (
-                <div class={`${cellMin} border-r border-b border-[var(--color-hairline)] last:border-r-0 px-2 py-1.5 ${!cell.inMonth ? "bg-[var(--color-cream)]/40" : ""}`}>
-                  {view === "month" && (
-                    <div class="flex items-center justify-between">
-                      <span class={`text-xs font-semibold ${cell.isToday ? "bg-[var(--color-brass)] text-white rounded-full w-6 h-6 inline-flex items-center justify-center" : "text-[var(--color-muted)] px-1"}`}>{cell.day}</span>
+
+          {weeks.map((wk) => {
+            // Vertical room the bars need: lanes stacked + a little breathing room.
+            const lanesPx = wk.laneCount * LANE_PX;
+            // Day-number row height (month only) the bars must sit below.
+            const headerPx = view === "month" ? 24 : 8;
+            return (
+              <div class="relative">
+                <!-- Background day cells: borders, shading, day numbers -->
+                <div class="grid grid-cols-7">
+                  {wk.cells.map((cell) => (
+                    <div
+                      class={`relative ${cellMin} border-r border-b border-[var(--color-hairline)] last:border-r-0 px-2 py-1.5 ${!cell.inMonth ? "bg-[var(--color-cream)]/40" : ""}`}
+                      style={`padding-bottom: ${lanesPx + 4}px`}
+                    >
+                      {view === "month" && (
+                        <div class="flex items-center justify-between">
+                          <span class={`text-xs font-semibold ${cell.isToday ? "bg-[var(--color-brass)] text-white rounded-full w-6 h-6 inline-flex items-center justify-center" : "text-[var(--color-muted)] px-1"}`}>{cell.day}</span>
+                        </div>
+                      )}
+                      {(overflowByDay[cell.iso] || 0) > 0 && (
+                        <div
+                          class="absolute left-2 text-[10px] text-[var(--color-muted)]"
+                          style={`top: ${headerPx + lanesPx + 2}px`}
+                        >+{overflowByDay[cell.iso]} more</div>
+                      )}
                     </div>
-                  )}
-                  <ul class="mt-1 space-y-1">
-                    {dayEvents.slice(0, cap).map((e) => (
-                      <li>
-                        <span class={`block truncate text-[10.5px] leading-tight rounded px-1.5 py-0.5 ${eventPillClass(e.source, e.kind)}`} title={`${e.title}${e.property_name ? "\n@ " + e.property_name : ""}${e.notes ? "\n\n" + e.notes : ""}`}>
-                          <span class="font-semibold">{kindLabel(e.kind)}</span>
-                          <span class="opacity-75"> · {e.owner_name?.split(" ")[0] || "?"}</span>
-                          {e.property_name && <span class="font-semibold"> · {e.property_name}</span>}
-                        </span>
-                      </li>
-                    ))}
-                    {dayEvents.length > cap && (<li class="text-[10px] text-[var(--color-muted)] px-1">+{dayEvents.length - cap} more</li>)}
-                  </ul>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+
+                <!-- Overlay: spanning event bars positioned by column + lane -->
+                <div
+                  class="absolute inset-x-0 grid grid-cols-7 gap-x-1 pointer-events-none px-1"
+                  style={`top: ${headerPx}px`}
+                >
+                  {wk.segments.map((s) => (
+                    <div
+                      class="pointer-events-auto"
+                      style={`grid-column: ${s.colStart} / span ${s.span}; transform: translateY(${s.lane * LANE_PX}px);`}
+                    >
+                      <span
+                        class={`block truncate text-[10.5px] leading-tight px-1.5 py-0.5 ${eventPillClass(s.ev.source, s.ev.kind)} ${s.clipLeft ? "rounded-l-none" : "rounded-l"} ${s.clipRight ? "rounded-r-none" : "rounded-r"}`}
+                        title={`${kindLabel(s.ev.kind)} · ${s.ev.owner_name || "?"}${s.ev.property_name ? " · " + s.ev.property_name : ""}\n${s.ev.starts_at}${s.ev.starts_at !== s.ev.ends_at ? " → " + s.ev.ends_at : ""}${s.ev.title ? "\n" + s.ev.title : ""}${s.ev.notes ? "\n\n" + s.ev.notes : ""}`}
+                      >
+                        {s.clipLeft && <span class="opacity-60">‹ </span>}
+                        <span class="font-semibold">{kindLabel(s.ev.kind)}</span>
+                        <span class="opacity-75"> · {s.ev.owner_name?.split(" ")[0] || "?"}</span>
+                        {s.ev.property_name && <span class="font-semibold"> · {s.ev.property_name}</span>}
+                        {s.clipRight && <span class="opacity-60"> ›</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>
