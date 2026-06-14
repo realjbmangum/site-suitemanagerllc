@@ -110,7 +110,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     await trySend(env, { to: [event.owner_email], subject: mail.subject, html: mail.html });
   }
 
-  return redirect(request, '/calendar?decided=1');
+  return redirect(request, '/corporate/calendar?decided=1');
 };
 
 function redirect(request: Request, path: string): Response {
