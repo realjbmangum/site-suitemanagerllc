@@ -239,7 +239,7 @@ const viewerType = (mime: string) =>
         )}
 
         <label data-dropzone class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-6 py-8 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
-          <input type="file" name="file" class="hidden" required
+          <input type="file" name="file" class="sr-only" required
             accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
           <div data-dropzone-label class="text-[var(--color-brass-dark)] font-semibold text-sm">
             Drag a file here, or click to browse
@@ -252,9 +252,9 @@ const viewerType = (mime: string) =>
         <div>
           <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-2">Category</div>
           <div class="grid grid-cols-2 gap-2">
-            {PROPERTY_CATEGORIES.map((value) => (
+            {PROPERTY_CATEGORIES.map((value, i) => (
               <label class="flex items-center justify-center cursor-pointer rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2.5 has-[:checked]:bg-[var(--color-navy)] has-[:checked]:text-white has-[:checked]:border-[var(--color-navy)] transition-colors">
-                <input type="radio" name="category" value={value} class="hidden" required />
+                <input type="radio" name="category" value={value} class="sr-only" required checked={i === 0} />
                 <span class="font-semibold text-sm">{categoryLabel(value)}</span>
               </label>
             ))}

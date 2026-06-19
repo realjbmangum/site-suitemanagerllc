@@ -116,7 +116,7 @@ const pillClass = (cat: string) =>
         class="bg-white border border-[var(--color-hairline)] rounded-2xl p-5 space-y-5"
       >
         <label data-dropzone class="block border-2 border-dashed border-[var(--color-brass)] rounded-xl bg-[var(--color-brass-light)]/15 px-6 py-8 text-center cursor-pointer hover:bg-[var(--color-brass-light)]/25 transition-colors">
-          <input type="file" name="file" class="hidden" required
+          <input type="file" name="file" class="sr-only" required
             accept="application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
           <div data-dropzone-label class="text-[var(--color-brass-dark)] font-semibold text-sm">
             Drag a file here, or click to browse
@@ -134,9 +134,9 @@ const pillClass = (cat: string) =>
               { value: "expense", label: "Expense report" },
               { value: "mileage", label: "Mileage" },
               { value: "other", label: "Other" },
-            ].map((opt) => (
+            ].map((opt, i) => (
               <label class="flex items-center justify-center cursor-pointer rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-2.5 has-[:checked]:bg-[var(--color-navy)] has-[:checked]:text-white has-[:checked]:border-[var(--color-navy)] transition-colors">
-                <input type="radio" name="category" value={opt.value} class="hidden" required />
+                <input type="radio" name="category" value={opt.value} class="sr-only" required checked={i === 0} />
                 <span class="font-semibold text-sm">{opt.label}</span>
               </label>
             ))}
