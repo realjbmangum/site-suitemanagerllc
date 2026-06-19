@@ -313,7 +313,7 @@ const viewerType = (mime: string) =>
                   <div class="flex items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span class={`pill ${pillClass(d.category)} capitalize`}>{d.category}</span>
+                        <span class={`pill ${pillClass(d.category)}`}>{categoryLabel(d.category)}</span>
                         {d.approval_status === "pending" && (
                           <span class="pill bg-amber-100 text-amber-800 border border-amber-300">Awaiting approval</span>
                         )}

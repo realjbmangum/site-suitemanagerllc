@@ -1,5 +1,6 @@
 ---
 import PortalLayout from "../layouts/PortalLayout.astro";
+import { categoryLabel } from "../lib/files";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -411,7 +412,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
             </td>
             <td class="px-5 py-3">
               <div class="flex flex-col gap-1 items-start">
-                <span class={`pill ${pillClass(r.category)} capitalize`}>{r.category}</span>
+                <span class={`pill ${pillClass(r.category)}`}>{categoryLabel(r.category)}</span>
                 {r.approval_status === "pending" && (
                   <span class="pill bg-amber-100 text-amber-800 border border-amber-300">Awaiting approval</span>
                 )}
