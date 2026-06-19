@@ -264,6 +264,7 @@ const sortIndicator = (col: string) => (sort === col ? (dir === "asc" ? "↑" : 
       { v: "statement", label: "Statements", count: countByCat.statement ?? 0 },
       { v: "expense", label: "Expenses", count: countByCat.expense ?? 0 },
       { v: "mileage", label: "Mileage", count: countByCat.mileage ?? 0 },
+      { v: "deposit_slip", label: "Deposit Slips", count: countByCat.deposit_slip ?? 0 },
       { v: "other", label: "Other", count: countByCat.other ?? 0 },
     ].map((f) => (
       <a href={catHref(f.v)} class={`pill ${

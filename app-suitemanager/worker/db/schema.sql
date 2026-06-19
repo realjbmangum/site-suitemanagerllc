@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS documents (
   id            TEXT PRIMARY KEY,
   property_id   TEXT REFERENCES properties(id),   -- NULL = Corporate
   uploaded_by   TEXT NOT NULL REFERENCES users(id),
-  category      TEXT NOT NULL CHECK (category IN ('invoice','statement','other','expense','mileage')),
+  category      TEXT NOT NULL,   -- validated in app (lib/files.ts); no DB CHECK so categories can change freely (invoice/statement/expense/mileage/deposit_slip/other)
   vendor        TEXT,
   amount_cents  INTEGER,
   note          TEXT,
@@ -82,7 +82,9 @@ CREATE TABLE IF NOT EXISTS documents (
   approval_decided_at  TEXT,
   invoice_number TEXT,
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  reviewed_at   TEXT
+  reviewed_at   TEXT,
+  miles         REAL,
+  transaction_date TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_documents_approval ON documents(approval_status);
 

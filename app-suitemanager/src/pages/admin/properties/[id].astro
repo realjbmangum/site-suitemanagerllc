@@ -3,6 +3,7 @@ import PortalLayout from "../../../layouts/PortalLayout.astro";
 import { STATEMENT_TYPES, typeLabel, periodLabel, MONTH_LABELS } from "../../../lib/financials";
 import FactSheet from "../../../components/FactSheet.astro";
 import PropertyFiles from "../../../components/PropertyFiles.astro";
+import { PROPERTY_CATEGORIES, categoryLabel } from "../../../lib/files";
 export const prerender = false;
 
 const env = Astro.locals.runtime.env;
@@ -333,20 +334,16 @@ const tabs = [
           class="bg-white border border-[var(--color-hairline)] rounded-xl p-5 space-y-4 sticky top-4"
         >
           <h2 class="font-semibold text-[var(--color-navy)]">Upload a document</h2>
-          <p class="text-xs text-[var(--color-muted)]">Invoice, statement, or other operating doc for {p.name}.</p>
+          <p class="text-xs text-[var(--color-muted)]">Deposit slip or other doc for {p.name} (manager queue).</p>
           <input type="hidden" name="property_id" value={p.id} />
 
           <div>
             <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)] mb-2">Category</div>
-            <div class="grid grid-cols-3 gap-2">
-              {[
-                { value: "invoice", label: "Invoice" },
-                { value: "statement", label: "Statement" },
-                { value: "other", label: "Other" },
-              ].map((opt) => (
+            <div class="grid grid-cols-2 gap-2">
+              {PROPERTY_CATEGORIES.map((value) => (
                 <label class="flex items-center justify-center cursor-pointer rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 has-[:checked]:bg-[var(--color-navy)] has-[:checked]:text-white has-[:checked]:border-[var(--color-navy)] transition-colors">
-                  <input type="radio" name="category" value={opt.value} class="hidden" required />
-                  <span class="font-semibold text-sm">{opt.label}</span>
+                  <input type="radio" name="category" value={value} class="hidden" required />
+                  <span class="font-semibold text-sm">{categoryLabel(value)}</span>
                 </label>
               ))}
             </div>
