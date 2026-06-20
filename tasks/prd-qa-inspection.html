@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRD — QA Inspection App ("Walk & Tap")</title>
+<style>
+  :root{
+    --navy:#1D1D33; --cream:#F5F4F1; --brass:#BB945C; --brass-dark:#9C7A48;
+    --brass-light:#D7B687; --hairline:#E5E3DE; --muted:#6B6B78; --card:#FFFFFF;
+    --green:#2E7D52; --red:#C0392B; --rose:#B91C4B; --slate:#1f2937;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--cream);color:var(--navy);line-height:1.6;padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto}
+  .header{background:linear-gradient(135deg,var(--navy) 0%,#2A2A48 100%);color:#fff;border-radius:18px;padding:36px 40px;position:relative;overflow:hidden}
+  .header::after{content:"";position:absolute;top:-50px;right:-50px;width:190px;height:190px;background:radial-gradient(circle,rgba(187,148,92,.4) 0%,transparent 70%)}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-light);margin-bottom:10px}
+  .header h1{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  .header .meta{margin-top:12px;color:#c9c9d6;font-size:13px}
+  .header p.lede{margin-top:16px;color:#e7e7ee;font-size:15px;max-width:94%}
+  h2{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-dark);margin:34px 0 14px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:22px;height:2px;background:var(--brass);border-radius:2px}
+  .card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:20px 24px;box-shadow:0 1px 3px rgba(29,29,51,.04)}
+  p.body{font-size:15px;margin-bottom:8px}
+  ul.clean{list-style:none}
+  ul.clean li{padding:6px 0 6px 22px;position:relative;font-size:14.5px}
+  ul.clean li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:7px;border-radius:50%;background:var(--brass)}
+  ul.no li{padding:6px 0 6px 22px;position:relative;font-size:14.5px;list-style:none}
+  ul.no li::before{content:"\00d7";position:absolute;left:2px;top:5px;color:var(--red);font-weight:700}
+  .decisions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .chip{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px}
+  .chip .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .chip .v{font-size:14px;font-weight:600;margin-top:3px}
+  .phase{margin-top:22px}
+  .phase-band{display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff;border-radius:10px 10px 0 0;padding:10px 16px;font-weight:700;font-size:14px}
+  .phase-band .pn{background:var(--brass);color:#fff;width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+  .phase-band .tag{margin-left:auto;font-size:11px;font-weight:600;color:var(--brass-light);text-transform:uppercase;letter-spacing:.08em}
+  .stories{border:1px solid var(--hairline);border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+  .story{padding:16px 18px;border-top:1px solid var(--hairline);background:var(--card)}
+  .story:first-child{border-top:none}
+  .story h3{font-size:15px;font-weight:700;margin-bottom:5px}
+  .story h3 .sid{color:var(--brass-dark);font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;margin-right:6px}
+  .story p{font-size:13.5px;color:#33333f;margin-bottom:7px}
+  .ac{background:var(--cream);border:1px solid var(--hairline);border-radius:8px;padding:8px 12px;font-size:12.5px}
+  .ac b{color:var(--brass-dark);text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
+  code{background:rgba(187,148,92,.14);color:var(--brass-dark);padding:1px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px}
+  .callout{background:rgba(187,148,92,.08);border:1px solid rgba(187,148,92,.3);border-radius:12px;padding:14px 16px;font-size:14px;display:flex;gap:10px;margin-top:10px}
+  .foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--hairline);font-size:12.5px;color:var(--muted);text-align:center}
+  @media(max-width:620px){.decisions{grid-template-columns:1fr}.header{padding:26px 22px}}
+  @media print{body{background:#fff;padding:0}.header,.phase-band{-webkit-print-color-adjust:exact;print-color-adjust:exact}.story,.phase{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="eyebrow">Suite Manager · Product Requirements</div>
+    <h1>QA Inspection App — "Walk &amp; Tap"</h1>
+    <div class="meta">Module in the Document Portal · replaces "ASA Quality Assurance.xlsx" · Draft for build · Jun 20, 2026</div>
+    <p class="lede">Walk a property on your phone, tap only what fails (everything starts as a pass), photo the deficiencies, submit — the app scores the property, writes it to the portal, builds a punch-list, and spins up follow-up work orders. Works offline.</p>
+  </div>
+
+  <h2>Decisions locked</h2>
+  <div class="decisions">
+    <div class="chip"><div class="k">Home</div><div class="v">Module inside the Suite Manager portal (reuses auth, properties, D1, R2)</div></div>
+    <div class="chip"><div class="k">Scoring</div><div class="v">Assume-pass, tap fails · % of applicable passed (N/A excluded) · equal weight</div></div>
+    <div class="chip"><div class="k">Offline</div><div class="v">Offline-capable PWA — autosave on device, sync on reconnect</div></div>
+    <div class="chip"><div class="k">Outputs</div><div class="v">Score→property + trends · punch-list · follow-up work orders · photos on fails</div></div>
+  </div>
+
+  <h2>Overview</h2>
+  <div class="card">
+    <p class="body">Replace the ASA Quality Assurance spreadsheet with a mobile-first inspection app inside the portal. An ops leader walks a property with a phone and only taps deficiencies; the app computes a <b>score</b>, writes it to the property (feeding history/trends), generates a <b>deficiency punch-list</b>, and creates <b>follow-up work orders</b>. It works <b>offline</b> because the walk hits stairwells and back-of-house dead zones. The QA score gates GM bonus eligibility (90+ eligible, 80+ "safe zone"), so accuracy, history, and an auditable record matter.</p>
+    <div class="callout"><span>📋</span><span>Source: <code>ASA Quality Assurance (1).xlsx</code> — Exterior &amp; Admin checklist (Curb Appeal, Laundry/Gym, Courtyard, Storage/Housekeeping, Office-Lobby, Manager &amp; Staff, Maintenance) + per-room inspections (Living Room / Kitchen / Bath / Bedroom).</span></div>
+  </div>
+
+  <h2>Goals</h2>
+  <div class="card"><ul class="clean">
+    <li><b>Fast mobile "walk &amp; tap"</b> — assume-pass; tap only fails/N-A; big targets, one section at a time, minimal typing.</li>
+    <li><b>Digitize the full checklist</b> — every Exterior &amp; Admin section + per-room item across a room sample.</li>
+    <li><b>Scoring</b> — applicable passed ÷ applicable (N/A excluded) × 100; per-section subtotals + overall; snapshotted at submit.</li>
+    <li><b>Offline-capable PWA</b> — full inspection with no signal; autosave locally; sync (submit + photos) when back online.</li>
+    <li><b>Outputs</b> — score→property (history/trends/rollups), auto punch-list, assignable work orders, photos on fails.</li>
+    <li><b>Data-driven, versioned template</b> — admin-editable checklist; past inspections keep their version + score.</li>
+  </ul></div>
+
+  <h2>Non-Goals (v1)</h2>
+  <div class="card"><ul class="no">
+    <li>Native iOS/Android apps (PWA only).</li>
+    <li>Per-item weighting (equal weight v1; schema reserves <code>weight</code>).</li>
+    <li>Real-time multi-inspector collaboration on one inspection.</li>
+    <li>Auto-scheduling QA visits (separate effort — CRM #223).</li>
+    <li>GMs self-inspecting (ops/admin run it; GM gets a read-only result).</li>
+  </ul></div>
+
+  <h2>Build plan · 15 stories / 5 phases</h2>
+
+  <div class="phase">
+    <div class="phase-band"><span class="pn">1</span> Data model &amp; template <span class="tag">foundation</span></div>
+    <div class="stories">
+      <div class="story"><h3><span class="sid">S1</span>Schema + migration</h3><p>qa_templates / template_sections / template_items (scope: property | room; weight default 1) · qa_inspections (template_version, status, score snapshot) · inspection_rooms · qa_responses (result pass|fail|na, comment, photo) · qa_followups.</p><div class="ac"><b>Done when</b> migration applies to D1; all tables present; schema.sql updated.</div></div>
+      <div class="story"><h3><span class="sid">S2</span>Seed template from the spreadsheet</h3><p>Parse the xlsx into sections + items (Exterior &amp; Admin + room sub-areas), scoped property vs room, as template v1.</p><div class="ac"><b>Done when</b> the full checklist exists as template rows; one active version.</div></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-band"><span class="pn">2</span> Inspection flow (mobile, online first) <span class="tag">usable inspector</span></div>
+    <div class="stories">
+      <div class="story"><h3><span class="sid">S3</span>Start an inspection</h3><p>Pick a property (or deep-link from its page), confirm rooms to inspect, create an in-progress inspection (client-generated id for offline).</p><div class="ac"><b>Done when</b> a new inspection + rooms are created; resumes an existing in-progress one.</div></div>
+      <div class="story"><h3><span class="sid">S4</span>Exterior &amp; Admin checklist UI</h3><p>Section-by-section; each item defaults to pass; tap → fail (reveals comment/photo) or N/A; sticky progress + running subtotal; large tap targets; autosave per change.</p><div class="ac"><b>Done when</b> default-pass works with no taps; progress/subtotal live; each change saves.</div></div>
+      <div class="story"><h3><span class="sid">S5</span>Per-room inspection UI</h3><p>Room item-set per sampled room (Living Room/Kitchen/Bath/Bedroom); swipe/next between rooms; per-room completion.</p><div class="ac"><b>Done when</b> each room has its own responses; movement + progress work.</div></div>
+      <div class="story"><h3><span class="sid">S6</span>Scoring + submit</h3><p>Equal-weight score (applicable = pass+fail) per section + overall; submit snapshots score and writes the property's current score.</p><div class="ac"><b>Done when</b> score matches a hand calc; N/A excluded; submit locks the inspection + updates the property.</div></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-band"><span class="pn">3</span> Outputs <span class="tag">the payoff</span></div>
+    <div class="stories">
+      <div class="story"><h3><span class="sid">S7</span>Photos on fails</h3><p>Capture/select a photo on a fail; compress client-side; upload to R2 (<code>qa/{inspectionId}/{responseId}</code>); thumbnail in the punch-list.</p><div class="ac"><b>Done when</b> a fail can carry a photo that uploads (or queues offline) + renders.</div></div>
+      <div class="story"><h3><span class="sid">S8</span>Punch-list + PDF</h3><p>Compile all fails (item, section/room, comment, photo) into a clean list; export/save a PDF to the property's records.</p><div class="ac"><b>Done when</b> the list = exactly the fails; PDF saves to records + downloads.</div></div>
+      <div class="story"><h3><span class="sid">S9</span>Follow-up work orders</h3><p>Turn fails into assignable qa_followups (open→done, due date); list + resolve; open-count on the property.</p><div class="ac"><b>Done when</b> fails become tracked tasks; assignee/status persist; resolving updates the count.</div></div>
+      <div class="story"><h3><span class="sid">S10</span>Score history, trends &amp; rollups</h3><p>QA dashboard: per-property trend, best/worst, group/region averages; latest score on the property page + fact-sheet header.</p><div class="ac"><b>Done when</b> dashboard shows trends/rollups; property shows latest score + date.</div></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-band"><span class="pn">4</span> Offline PWA <span class="tag">the hard part</span></div>
+    <div class="stories">
+      <div class="story"><h3><span class="sid">S11</span>PWA shell + service worker</h3><p>Installable; cache app shell + active template + selected property for offline use.</p><div class="ac"><b>Done when</b> the inspection route loads with no network after first visit; installable on a phone.</div></div>
+      <div class="story"><h3><span class="sid">S12</span>Offline inspection state</h3><p>Responses + photos in IndexedDB; autosave; resume after closing; fully offline.</p><div class="ac"><b>Done when</b> a full inspection (incl. photos) works in airplane mode + persists across restarts.</div></div>
+      <div class="story"><h3><span class="sid">S13</span>Sync engine</h3><p>On reconnect, submit queued inspections + upload queued photos; idempotent (client ids); show sync status/failures.</p><div class="ac"><b>Done when</b> offline inspections sync cleanly; re-sync makes no dupes; failures are visible + retryable.</div></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-band"><span class="pn">5</span> Admin &amp; access <span class="tag">harden</span></div>
+    <div class="stories">
+      <div class="story"><h3><span class="sid">S14</span>Template management</h3><p>Admin adds/edits/reorders/deactivates items, bumping the template version; past inspections keep theirs.</p><div class="ac"><b>Done when</b> the checklist changes without code; new inspections use the new version; old scores unchanged.</div></div>
+      <div class="story"><h3><span class="sid">S15</span>Roles + GM read view</h3><p>Inspecting limited to admin/strand; GM sees their property's latest score + punch-list read-only; enforced at page + API.</p><div class="ac"><b>Done when</b> a GM can't start/edit/see other properties; can view their own result.</div></div>
+    </div>
+  </div>
+
+  <h2>Technical Considerations</h2>
+  <div class="card"><ul class="clean">
+    <li><b>Module, not standalone</b> — in app-suitemanager (Astro + CF Pages + D1 + R2); mobile-first routes (<code>/qa</code>); reuses session auth + properties + canAccessProperty.</li>
+    <li><b>Offline is the hard part</b> — service worker caches shell + template + property; <b>IndexedDB</b> holds in-progress state + photo blobs; sync flushes on reconnect. <b>Client-generated ids</b> → idempotent upserts. Photos compressed client-side before R2 upload.</li>
+    <li><b>Scoring snapshot + versioning</b> — store template_version on each inspection; snapshot score/pass/applicable at submit so template edits never rewrite history.</li>
+    <li><b>Score surfacing</b> — property's current score = latest submitted; show on Overview + fact-sheet header; trends/rollups in a QA dashboard (could later feed GM bonus logic).</li>
+    <li><b>Reuse infra</b> — PDF punch-list saved as a property record (R2); follow-ups a new lightweight table on the property page.</li>
+    <li><b>Sequence it</b> — Phases 1→3 = a usable inspector + outputs (ship + get Mike/Mel using it); Phase 4 adds offline; Phase 5 hardens.</li>
+  </ul></div>
+
+  <h2>Open questions</h2>
+  <div class="card"><ul class="clean">
+    <li>Confirm the ROOMS sheet's <b>Bath/Bedroom</b> item lists when seeding S2.</li>
+    <li>Should a <b>N/A</b> require a reason? (Default: no.)</li>
+    <li>Surface bonus thresholds (90 eligible / 80 safe / 60 fireable) as labels on the score?</li>
+  </ul></div>
+
+  <div class="foot">Suite Manager LLC · Ascend Systems · saved to <code>tasks/prd-qa-inspection.md</code></div>
+</div>
+</body>
+</html>

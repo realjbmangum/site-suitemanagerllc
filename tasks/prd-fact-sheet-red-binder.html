@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRD — Property Fact Sheet (Red Binder) v2</title>
+<style>
+  :root{
+    --navy:#1D1D33; --cream:#F5F4F1; --brass:#BB945C; --brass-dark:#9C7A48;
+    --brass-light:#D7B687; --hairline:#E5E3DE; --muted:#6B6B78; --card:#FFFFFF;
+    --green:#2E7D52; --red:#C0392B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--cream);color:var(--navy);line-height:1.6;padding:40px 20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:840px;margin:0 auto}
+  .header{
+    background:linear-gradient(135deg,var(--navy) 0%,#2A2A48 100%);
+    color:#fff;border-radius:18px;padding:36px 40px;position:relative;overflow:hidden;
+  }
+  .header::after{content:"";position:absolute;top:-50px;right:-50px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(187,148,92,.4) 0%,transparent 70%)}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-light);margin-bottom:10px}
+  .header h1{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  .header .meta{margin-top:12px;color:#c9c9d6;font-size:13px}
+  .header p.lede{margin-top:16px;color:#e7e7ee;font-size:15px;max-width:92%}
+
+  h2{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-dark);
+    margin:34px 0 14px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:22px;height:2px;background:var(--brass);border-radius:2px}
+
+  .card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:20px 24px;box-shadow:0 1px 3px rgba(29,29,51,.04)}
+  ul.clean{list-style:none}
+  ul.clean li{padding:6px 0 6px 22px;position:relative;font-size:14.5px}
+  ul.clean li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:7px;border-radius:50%;background:var(--brass)}
+  ul.no li{padding:6px 0 6px 22px;position:relative;font-size:14.5px;list-style:none}
+  ul.no li::before{content:"\00d7";position:absolute;left:2px;top:5px;color:var(--red);font-weight:700}
+
+  .story{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:20px 22px;margin-bottom:14px;display:flex;gap:18px}
+  .snum{flex-shrink:0;width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .sbody{flex:1;min-width:0}
+  .sbody h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .sbody p{font-size:14px;color:#33333f;margin-bottom:8px}
+  .ac{background:var(--cream);border:1px solid var(--hairline);border-radius:10px;padding:10px 14px;font-size:13px}
+  .ac b{color:var(--brass-dark);text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+  code{background:rgba(187,148,92,.14);color:var(--brass-dark);padding:1px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px}
+
+  .decisions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .chip{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px}
+  .chip .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .chip .v{font-size:14px;font-weight:600;margin-top:3px}
+
+  .callout{background:rgba(187,148,92,.08);border:1px solid rgba(187,148,92,.3);border-radius:12px;padding:14px 16px;font-size:14px;display:flex;gap:10px;margin-top:10px}
+  p.body{font-size:15px;margin-bottom:6px}
+  .foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--hairline);font-size:12.5px;color:var(--muted);text-align:center}
+  @media(max-width:620px){.decisions{grid-template-columns:1fr}.story{flex-direction:row}.header{padding:26px 22px}}
+  @media print{body{background:#fff;padding:0}.header{-webkit-print-color-adjust:exact;print-color-adjust:exact}.story,.card,.chip{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="eyebrow">Suite Manager · Product Requirements</div>
+    <h1>Property Fact Sheet — "Red Binder" v2</h1>
+    <div class="meta">Document Portal · app-suitemanager · Draft for build · Jun 20, 2026</div>
+    <p class="lede">Turn the flat fact sheet into a structured red-binder replacement: categorized contacts + a secure credentials vault, standardized across every property, so a cold GM or traveling VP can run any hotel.</p>
+  </div>
+
+  <h2>Decisions locked</h2>
+  <div class="decisions">
+    <div class="chip"><div class="k">Credentials</div><div class="v">Stored encrypted · masked + click-to-reveal · every reveal audited</div></div>
+    <div class="chip"><div class="k">Visibility</div><div class="v">GM sees own property's full sheet · admin/Strand see all</div></div>
+    <div class="chip"><div class="k">Data model</div><div class="v">Fully structured — typed Contacts + Credentials store</div></div>
+    <div class="chip"><div class="k">Template</div><div class="v">Standard template seeded blank across all ~31 properties</div></div>
+  </div>
+
+  <h2>Overview</h2>
+  <div class="card">
+    <p class="body">Replace the current flat label/value fact sheet with a <b>structured "red binder"</b> for each property: categorized <b>Contacts</b> (key people, vendors, emergency/utility) plus a <b>secure Credentials vault</b> (vendor logins, fire-alarm code, lock boxes). A standardized template applies to all ~31 properties so a cold GM or traveling VP can walk into any hotel and run it. The sheet auto-formats the property page into clean, scannable sections and retires the physical binder + post-it notes — the "State of the Union" Chris called the "lifeblood of a hotel site."</p>
+    <div class="callout"><span>📂</span><span>Source data: <code>Who to Call List.xlsx</code> + <code>Password list blank.xlsx</code> (the structure drives the template; values are entered in-app, not imported).</span></div>
+  </div>
+
+  <h2>Goals</h2>
+  <div class="card"><ul class="clean">
+    <li><b>Structured Contacts</b> — name, phone, mobile, email, account #, fax — grouped into <b>People</b>, <b>Vendors</b>, and <b>Emergency &amp; Utilities</b>.</li>
+    <li><b>Secure Credentials vault</b> — system/vendor, account #, username, password. Passwords <b>encrypted at rest</b>, shown <b>masked with click-to-reveal</b>, and <b>every reveal audited</b>.</li>
+    <li><b>Standardized template</b> across every property (predefined rows from the two lists); GMs fill values (start blank); custom rows allowed.</li>
+    <li><b>Visibility</b> — a GM sees their own property's full sheet; admin/Strand see all. Enforced at page, list-API, and reveal-API layers.</li>
+    <li><b>Auto-formatted property page</b> — sectioned, responsive, print-friendly; replaces the flat fact sheet.</li>
+  </ul></div>
+
+  <h2>Non-Goals</h2>
+  <div class="card"><ul class="no">
+    <li>Not importing the real Excel values — template ships blank.</li>
+    <li>Not a general password manager — no autofill, no external sharing.</li>
+    <li>No per-section custom visibility toggles in v1 (fixed GM-own / corporate-all).</li>
+    <li>No secret rotation, expiry, or 2FA in v1.</li>
+    <li>No changes to the document queue, financials, or property files.</li>
+  </ul></div>
+
+  <h2>Assumptions</h2>
+  <div class="card"><ul class="clean">
+    <li><b>Who fills it:</b> GMs maintain their own property's values; admin/Strand can edit any property.</li>
+    <li>Encryption key lives in a Cloudflare Worker secret (<code>CREDENTIALS_KEY</code>), never in source.</li>
+    <li>Existing flat facts are preserved as a "Notes / Other" section (light migration), not discarded.</li>
+  </ul></div>
+
+  <h2>User Stories · each one session</h2>
+
+  <div class="story"><div class="snum">1</div><div class="sbody">
+    <h3>Data model + migration</h3>
+    <p>Create <code>property_contacts</code> (category, label, contact_name, phone, mobile, email, account_number, fax, sort_order, is_custom) and <code>property_credentials</code> (label, account_number, username, password_ciphertext, password_iv, sort_order, is_custom). Indexes on property_id.</p>
+    <div class="ac"><b>Acceptance</b><br>Migration applies cleanly to remote D1; both tables exist with the columns above; no impact on existing tables; schema.sql updated to match.</div>
+  </div></div>
+
+  <div class="story"><div class="snum">2</div><div class="sbody">
+    <h3>Standardized template definition + apply</h3>
+    <p>Canonical template in <code>lib/factsheet-template.ts</code> from the two lists (People, Vendors, Emergency/Utility, Credentials). Apply blank rows to every active property; auto-apply on new-property creation.</p>
+    <div class="ac"><b>Acceptance</b><br>Every active property gets the full template set with empty values; new properties auto-seed; re-running is idempotent (no duplicates).</div>
+  </div></div>
+
+  <div class="story"><div class="snum">3</div><div class="sbody">
+    <h3>Contacts — view + edit on the property page</h3>
+    <p>Render the three contact categories with typed fields; inline edit/save for authorized users; add/remove custom rows per category.</p>
+    <div class="ac"><b>Acceptance</b><br>Contacts render grouped; edit saves and persists; a GM can edit only their own property; empty fields show "—"; custom rows add/remove.</div>
+  </div></div>
+
+  <div class="story"><div class="snum">4</div><div class="sbody">
+    <h3>Credentials vault — store + mask + reveal (audited)</h3>
+    <p>Passwords masked by default. A Reveal control calls <code>POST /api/credentials/:id/reveal</code> → authorize → decrypt server-side → return value → write audit event. Create/edit encrypts (AES-GCM) before storing.</p>
+    <div class="ac"><b>Acceptance</b><br>Passwords never appear in the initial HTML; Reveal shows the value and writes an <code>audit_events</code> row (credential id + property); stored values are ciphertext in D1; editing re-encrypts.</div>
+  </div></div>
+
+  <div class="story"><div class="snum">5</div><div class="sbody">
+    <h3>Access control + verification</h3>
+    <p>Enforce GM-own / corporate-all at the page guard, the list queries, and the reveal endpoint (mirrors the documents-download pattern).</p>
+    <div class="ac"><b>Acceptance</b><br>A GM cannot load or reveal another property's contacts/credentials (even with a guessed id); admin/Strand can; every reveal is audited.</div>
+  </div></div>
+
+  <div class="story"><div class="snum">6</div><div class="sbody">
+    <h3>Property-page formatting + polish</h3>
+    <p>Lay out as sections (People / Vendors / Emergency &amp; Utilities / Credentials / Notes), responsive and print-friendly, replacing the flat fact sheet on the GM and admin property pages.</p>
+    <div class="ac"><b>Acceptance</b><br>Property page shows the five sections in order; mobile-readable; "Print fact sheet" renders the binder cleanly (credentials masked unless revealed); existing facts appear under Notes.</div>
+  </div></div>
+
+  <h2>Technical Considerations</h2>
+  <div class="card"><ul class="clean">
+    <li><b>Encryption</b> (D1 has no column encryption): AES-GCM via WebCrypto in the Worker; store <code>ciphertext</code> + <code>iv</code>; key from Worker secret <code>CREDENTIALS_KEY</code>; decrypt only in the reveal endpoint, server-side, over HTTPS.</li>
+    <li><b>Reveal endpoint</b> <code>POST /api/credentials/:id/reveal</code> → auth + ownership → decrypt → return <code>{value}</code> → audit. Never ship plaintext in page loads.</li>
+    <li><b>Audit</b> — reuse <code>audit_events</code>; add <code>credential.reveal</code>, <code>credential.update</code>, <code>contact.update</code>.</li>
+    <li><b>Visibility</b> — reuse middleware gates; per-row ownership checks like <code>api/documents/[id]/download.ts</code> (GM query always <code>AND property_id = ?</code>).</li>
+    <li><b>Template</b> — canonical list in code; admin "apply template" action + auto-apply on property creation; idempotent.</li>
+    <li><b>Migration of existing facts</b> — keep <code>property_facts</code>; surface under "Notes / Other."</li>
+    <li><b>Reuse</b> — follow existing fact/API/component patterns; split into ContactsSheet, CredentialsVault, Notes.</li>
+  </ul></div>
+
+  <h2>Open questions</h2>
+  <div class="card"><ul class="clean">
+    <li>Single Worker secret for the AES key is fine for one client — confirm.</li>
+    <li>"Print fact sheet": keep credentials masked (default) or allow a full authorized reveal for printing?</li>
+  </ul></div>
+
+  <div class="foot">
+    Suite Manager LLC · Ascend Systems · Saved to <code>tasks/prd-fact-sheet-red-binder.md</code> + CRM project 39 (resource #55, task #234)
+  </div>
+</div>
+</body>
+</html>
