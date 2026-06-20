@@ -4,6 +4,8 @@ interface Env {
   DB: D1Database;
   FILES: R2Bucket;
   SESSION_SECRET?: string;
+  // AES-256 key (base64, 32 bytes) for the credentials vault. Worker secret.
+  CREDENTIALS_KEY?: string;
   STRAND_ACCOUNTING_EMAIL?: string;
   ADMIN_EMAIL?: string;
   MAX_UPLOAD_BYTES?: string;

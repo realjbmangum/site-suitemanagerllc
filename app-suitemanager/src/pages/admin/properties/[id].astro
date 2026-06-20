@@ -2,7 +2,8 @@
 import PortalLayout from "../../../layouts/PortalLayout.astro";
 import { STATEMENT_TYPES, typeLabel, periodLabel, MONTH_LABELS } from "../../../lib/financials";
 import FactSheet from "../../../components/FactSheet.astro";
-import PropertyFiles from "../../../components/PropertyFiles.astro";
+import ContactsSheet from "../../../components/ContactsSheet.astro";
+import CredentialsVault from "../../../components/CredentialsVault.astro";
 import { PROPERTY_CATEGORIES, categoryLabel } from "../../../lib/files";
 export const prerender = false;
 
@@ -82,14 +83,33 @@ const facts = await env.DB
   .bind(id)
   .all<{ id: string; label: string; value: string }>();
 
-const propertyFiles = await env.DB
+// Fact Sheet — Who-to-Call contacts (no password fields exist here).
+const contacts = await env.DB
   .prepare(
-    `SELECT id, category, title, description, expires_at, filename, mime_type, created_at
-     FROM property_files WHERE property_id = ? AND archived_at IS NULL
-     ORDER BY created_at DESC`
+    `SELECT id, category, label, contact_name, phone, mobile, email, account_number, fax, is_custom
+     FROM property_contacts WHERE property_id = ?
+     ORDER BY category, sort_order, created_at`
   )
   .bind(id)
-  .all<{ id: string; category: string; title: string; description: string | null; expires_at: string | null; filename: string; mime_type: string; created_at: string }>();
+  .all<{
+    id: string; category: "people" | "vendors" | "emergency_utility"; label: string;
+    contact_name: string | null; phone: string | null; mobile: string | null;
+    email: string | null; account_number: string | null; fax: string | null;
+    is_custom: number;
+  }>();
+
+// Credentials vault — NEVER select password ciphertext/iv into the page.
+const credentials = await env.DB
+  .prepare(
+    `SELECT id, label, account_number, username, sort_order, is_custom
+     FROM property_credentials WHERE property_id = ?
+     ORDER BY sort_order, created_at`
+  )
+  .bind(id)
+  .all<{ id: string; label: string; account_number: string | null; username: string | null; sort_order: number; is_custom: number }>();
+
+// Read-only GM name for the Who-to-Call "General Manager" row (assigned user).
+const gmName = gms.results[0]?.name ?? null;
 
 const viewerType = (mime: string) =>
   mime.includes("pdf") ? "pdf" : mime.startsWith("image/") ? "image" : "other";
@@ -120,8 +140,7 @@ const tabs = [
   { id: "overview", label: "Overview" },
   { id: "documents", label: "Documents", count: recent.results.length },
   { id: "financials", label: "Financials", count: financials.results.length },
-  { id: "factsheet", label: "Fact Sheet", count: facts.results.length },
-  { id: "records", label: "Records", count: propertyFiles.results.length },
+  { id: "factsheet", label: "Fact Sheet", count: contacts.results.length + credentials.results.length },
 ];
 ---
 
@@ -498,17 +517,12 @@ const tabs = [
     </div>
   </section>
 
-  <!-- ─── Fact sheet ─── -->
+  <!-- ─── Fact sheet (Red Binder) ─── -->
   <section data-panel="factsheet" hidden>
-    <div class="max-w-2xl">
+    <div class="max-w-3xl space-y-6">
+      <ContactsSheet propertyId={id!} contacts={contacts.results} gmName={gmName} canEdit={true} />
+      <CredentialsVault propertyId={id!} credentials={credentials.results} canEdit={true} />
       <FactSheet propertyId={id!} facts={facts.results} canEdit={true} />
-    </div>
-  </section>
-
-  <!-- ─── Records ─── -->
-  <section data-panel="records" hidden>
-    <div class="max-w-2xl">
-      <PropertyFiles propertyId={id!} files={propertyFiles.results} canEdit={true} />
     </div>
   </section>
 
