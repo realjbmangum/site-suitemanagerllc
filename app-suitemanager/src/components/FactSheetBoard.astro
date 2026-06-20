@@ -86,14 +86,20 @@ const NAV = [
           </a>
         ))}
       </nav>
+      <div class="flex items-center gap-2 sm:ml-auto shrink-0">
+        <button type="button" data-fs-expand class="text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-navy)] transition-colors">Expand all</button>
+        <span class="text-[var(--color-hairline)]" aria-hidden="true">·</span>
+        <button type="button" data-fs-collapse class="text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-navy)] transition-colors">Collapse all</button>
+      </div>
     </div>
     <p data-fs-noresults hidden class="mt-2 text-xs text-[var(--color-muted)]">
       No matches for <span data-fs-query class="font-semibold text-[var(--color-navy)]"></span>.
     </p>
   </div>
 
-  <!-- Card grid: single column on mobile, two columns ≥ lg -->
-  <div class="grid lg:grid-cols-2 gap-4 items-start">
+  <!-- Card dashboard: CSS masonry columns pack tightly (no row-gap holes).
+       One column on mobile, two ≥ lg. Each card is break-inside-avoid. -->
+  <div class="columns-1 lg:columns-2 gap-4">
     <ContactsSheet propertyId={propertyId} category="people" title="Key People" contacts={people} gmName={gmName} canEdit={canEdit} />
     <ContactsSheet propertyId={propertyId} category="vendors" title="Vendors" contacts={vendors} gmName={null} canEdit={canEdit} />
     <ContactsSheet propertyId={propertyId} category="emergency_utility" title="Emergency & Utilities" contacts={emergency} gmName={null} canEdit={canEdit} />
@@ -130,20 +136,22 @@ const NAV = [
         });
 
         if (!q) {
-          // Cleared: restore everything, including each card's own empty state.
+          // Cleared: restore everything (open), including each card's empty state.
           card.hidden = false;
+          card.open = true;
           if (empty) empty.hidden = false;
           if (rows.length || empty) anyVisible = true;
           return;
         }
 
         // Searching: hide a card with zero matching rows; hide its empty
-        // placeholder so it never shows during a search.
+        // placeholder so it never shows during a search; force-open matches.
         if (empty) empty.hidden = true;
         if (visibleRows === 0) {
           card.hidden = true;
         } else {
           card.hidden = false;
+          card.open = true;
           anyVisible = true;
         }
       });
@@ -178,8 +186,18 @@ const NAV = [
           search.value = "";
           applyFilter("");
         }
+        if (target.tagName === "DETAILS") target.open = true;
         target.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
+
+    // ---- Expand / collapse all ----
+    function setAll(open) {
+      cards.forEach(function (card) { if (!card.hidden) card.open = open; });
+    }
+    var expandBtn = board.querySelector("[data-fs-expand]");
+    var collapseBtn = board.querySelector("[data-fs-collapse]");
+    if (expandBtn) expandBtn.addEventListener("click", function () { setAll(true); });
+    if (collapseBtn) collapseBtn.addEventListener("click", function () { setAll(false); });
   })();
 </script>
