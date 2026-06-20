@@ -1,0 +1,185 @@
+---
+// FactSheetBoard — "Option C" card dashboard for the property fact sheet
+// (the online red binder). A sticky toolbar (search + jump-nav) sits above a
+// responsive two-column grid of five section cards:
+//   Key People · Vendors · Emergency & Utilities · Credentials · Notes/Other
+//
+// This component is purely a layout/UX shell. The cards themselves
+// (ContactsSheet ×3, CredentialsVault, FactSheet) own all edit/add/delete,
+// reveal/audit, and access behavior — unchanged. The client script here only
+// filters rows by the search box and smooth-scrolls the jump-nav pills.
+import ContactsSheet from './ContactsSheet.astro';
+import CredentialsVault from './CredentialsVault.astro';
+import FactSheet from './FactSheet.astro';
+
+interface Contact {
+  id: string;
+  category: 'people' | 'vendors' | 'emergency_utility';
+  label: string;
+  contact_name: string | null;
+  phone: string | null;
+  mobile: string | null;
+  email: string | null;
+  account_number: string | null;
+  fax: string | null;
+  is_custom: number;
+}
+interface Credential {
+  id: string;
+  label: string;
+  account_number: string | null;
+  username: string | null;
+  sort_order: number;
+  is_custom: number;
+}
+interface Fact {
+  id: string;
+  label: string;
+  value: string;
+}
+interface Props {
+  propertyId: string;
+  contacts: Contact[];
+  credentials: Credential[];
+  facts: Fact[];
+  gmName: string | null;
+  canEdit: boolean;
+}
+const { propertyId, contacts, credentials, facts, gmName, canEdit } = Astro.props;
+
+const people = contacts.filter((c) => c.category === 'people');
+const vendors = contacts.filter((c) => c.category === 'vendors');
+const emergency = contacts.filter((c) => c.category === 'emergency_utility');
+
+// Jump-nav pills → card anchors.
+const NAV = [
+  { id: 'fs-people', label: 'People' },
+  { id: 'fs-vendors', label: 'Vendors' },
+  { id: 'fs-emergency', label: 'Emergency' },
+  { id: 'fs-credentials', label: 'Credentials' },
+  { id: 'fs-notes', label: 'Notes' },
+];
+---
+
+<div class="fs-board" data-fs-board>
+  <!-- Sticky toolbar: search + jump-nav -->
+  <div class="fs-toolbar sticky top-0 z-10 -mx-1 px-1 py-3 bg-[var(--color-cream)]/95 backdrop-blur border-b border-[var(--color-hairline)] mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div class="relative sm:w-72 shrink-0">
+        <span aria-hidden="true" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] text-sm">⌕</span>
+        <input
+          type="search"
+          data-fs-search
+          placeholder="Search contacts & logins…"
+          aria-label="Search contacts and logins"
+          class="w-full rounded-lg border border-[var(--color-hairline)] bg-white pl-8 pr-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:border-[var(--color-brass)]"
+        />
+      </div>
+      <nav class="flex flex-wrap items-center gap-1.5" aria-label="Jump to section">
+        {NAV.map((n) => (
+          <a
+            href={`#${n.id}`}
+            data-fs-jump={n.id}
+            class="inline-flex items-center rounded-full border border-[var(--color-hairline)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-navy)] hover:border-[var(--color-brass)] hover:text-[var(--color-brass-dark)] transition-colors"
+          >
+            {n.label}
+          </a>
+        ))}
+      </nav>
+    </div>
+    <p data-fs-noresults hidden class="mt-2 text-xs text-[var(--color-muted)]">
+      No matches for <span data-fs-query class="font-semibold text-[var(--color-navy)]"></span>.
+    </p>
+  </div>
+
+  <!-- Card grid: single column on mobile, two columns ≥ lg -->
+  <div class="grid lg:grid-cols-2 gap-4 items-start">
+    <ContactsSheet propertyId={propertyId} category="people" title="Key People" contacts={people} gmName={gmName} canEdit={canEdit} />
+    <ContactsSheet propertyId={propertyId} category="vendors" title="Vendors" contacts={vendors} gmName={null} canEdit={canEdit} />
+    <ContactsSheet propertyId={propertyId} category="emergency_utility" title="Emergency & Utilities" contacts={emergency} gmName={null} canEdit={canEdit} />
+    <CredentialsVault propertyId={propertyId} credentials={credentials} canEdit={canEdit} />
+    <FactSheet propertyId={propertyId} facts={facts} canEdit={canEdit} />
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var board = document.querySelector("[data-fs-board]");
+    if (!board) return;
+
+    var search = board.querySelector("[data-fs-search]");
+    var noResults = board.querySelector("[data-fs-noresults]");
+    var queryEcho = board.querySelector("[data-fs-query]");
+    var cards = Array.prototype.slice.call(board.querySelectorAll(".fs-card"));
+
+    // ---- Search filtering ----
+    function applyFilter(raw) {
+      var q = (raw || "").trim().toLowerCase();
+      var anyVisible = false;
+
+      cards.forEach(function (card) {
+        var rows = card.querySelectorAll("[data-fs-row]");
+        var empty = card.querySelector(".fs-empty");
+        var visibleRows = 0;
+
+        rows.forEach(function (row) {
+          var text = row.getAttribute("data-fs-text") || "";
+          var show = !q || text.indexOf(q) !== -1;
+          row.hidden = !show;
+          if (show) visibleRows++;
+        });
+
+        if (!q) {
+          // Cleared: restore everything, including each card's own empty state.
+          card.hidden = false;
+          if (empty) empty.hidden = false;
+          if (rows.length || empty) anyVisible = true;
+          return;
+        }
+
+        // Searching: hide a card with zero matching rows; hide its empty
+        // placeholder so it never shows during a search.
+        if (empty) empty.hidden = true;
+        if (visibleRows === 0) {
+          card.hidden = true;
+        } else {
+          card.hidden = false;
+          anyVisible = true;
+        }
+      });
+
+      if (noResults) {
+        if (q && !anyVisible) {
+          if (queryEcho) queryEcho.textContent = raw.trim();
+          noResults.hidden = false;
+        } else {
+          noResults.hidden = true;
+        }
+      }
+    }
+
+    if (search) {
+      search.addEventListener("input", function () {
+        applyFilter(search.value);
+      });
+    }
+
+    // ---- Jump-nav smooth scroll ----
+    // scroll-margin-top (scroll-mt-28) on each card handles the sticky offset;
+    // we just need smooth behavior and to clear any active filter first so the
+    // target card isn't hidden.
+    board.querySelectorAll("[data-fs-jump]").forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        var targetId = link.getAttribute("data-fs-jump");
+        var target = targetId ? document.getElementById(targetId) : null;
+        if (!target) return;
+        e.preventDefault();
+        if (search && search.value) {
+          search.value = "";
+          applyFilter("");
+        }
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  })();
+</script>

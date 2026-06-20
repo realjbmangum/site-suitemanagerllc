@@ -1,9 +1,7 @@
 ---
 import PortalLayout from "../../../layouts/PortalLayout.astro";
 import { STATEMENT_TYPES, typeLabel, periodLabel, MONTH_LABELS } from "../../../lib/financials";
-import FactSheet from "../../../components/FactSheet.astro";
-import ContactsSheet from "../../../components/ContactsSheet.astro";
-import CredentialsVault from "../../../components/CredentialsVault.astro";
+import FactSheetBoard from "../../../components/FactSheetBoard.astro";
 import { PROPERTY_CATEGORIES, categoryLabel } from "../../../lib/files";
 export const prerender = false;
 
@@ -519,11 +517,14 @@ const tabs = [
 
   <!-- ─── Fact sheet (Red Binder) ─── -->
   <section data-panel="factsheet" hidden>
-    <div class="max-w-3xl space-y-6">
-      <ContactsSheet propertyId={id!} contacts={contacts.results} gmName={gmName} canEdit={true} />
-      <CredentialsVault propertyId={id!} credentials={credentials.results} canEdit={true} />
-      <FactSheet propertyId={id!} facts={facts.results} canEdit={true} />
-    </div>
+    <FactSheetBoard
+      propertyId={id!}
+      contacts={contacts.results}
+      credentials={credentials.results}
+      facts={facts.results}
+      gmName={gmName}
+      canEdit={true}
+    />
   </section>
 
   <script is:inline>
