@@ -177,6 +177,49 @@ CREATE TABLE IF NOT EXISTS property_files (
 CREATE INDEX IF NOT EXISTS idx_property_files_property ON property_files(property_id);
 CREATE INDEX IF NOT EXISTS idx_property_files_active ON property_files(archived_at);
 
+-- Property fact sheet "Red Binder" — Who-to-Call directory (added 2026-06-20).
+-- Three categories: 'people' (GM, housekeeper), 'vendors' (alarm, landscaper,
+-- plumber, HVAC, etc.), 'emergency_utility' (police non-emer, electric, gas,
+-- water/sewer, trash). No-duplication: address/phone/fax/email already on the
+-- properties record. is_custom=1 = GM-added beyond the seeded defaults.
+CREATE TABLE IF NOT EXISTS property_contacts (
+  id             TEXT PRIMARY KEY,
+  property_id    TEXT NOT NULL REFERENCES properties(id),
+  category       TEXT NOT NULL CHECK (category IN ('people','vendors','emergency_utility')),
+  label          TEXT NOT NULL,
+  contact_name   TEXT,
+  phone          TEXT,
+  mobile         TEXT,
+  email          TEXT,
+  account_number TEXT,
+  fax            TEXT,
+  sort_order     INTEGER NOT NULL DEFAULT 0,
+  is_custom      INTEGER NOT NULL DEFAULT 0,
+  created_by     TEXT NOT NULL REFERENCES users(id),
+  created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_contacts_property ON property_contacts(property_id);
+
+-- Property credentials — Passwords/logins (Guest Supply, HD Supply, Expedia,
+-- Onity machines, alarm codes, etc.). Passwords stored ENCRYPTED via
+-- password_ciphertext + password_iv; never plaintext.
+CREATE TABLE IF NOT EXISTS property_credentials (
+  id                  TEXT PRIMARY KEY,
+  property_id         TEXT NOT NULL REFERENCES properties(id),
+  label               TEXT NOT NULL,
+  account_number      TEXT,
+  username            TEXT,
+  password_ciphertext TEXT,
+  password_iv         TEXT,
+  sort_order          INTEGER NOT NULL DEFAULT 0,
+  is_custom           INTEGER NOT NULL DEFAULT 0,
+  created_by          TEXT NOT NULL REFERENCES users(id),
+  created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_credentials_property ON property_credentials(property_id);
+
 -- Calendar — shared schedule + GM PTO workflow (added 2026-06-08).
 -- regional = admin-owned schedules (visible to admin + strand, never GMs).
 -- gm_pto   = GM-requested time off → admin approves/denies → decision

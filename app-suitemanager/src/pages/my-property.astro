@@ -2,7 +2,8 @@
 import PortalLayout from "../layouts/PortalLayout.astro";
 import { typeLabel, periodLabel } from "../lib/financials";
 import FactSheet from "../components/FactSheet.astro";
-import PropertyFiles from "../components/PropertyFiles.astro";
+import ContactsSheet from "../components/ContactsSheet.astro";
+import CredentialsVault from "../components/CredentialsVault.astro";
 import { PROPERTY_CATEGORIES, categoryLabel } from "../lib/files";
 export const prerender = false;
 
@@ -69,20 +70,48 @@ const stats = await env.DB
   .bind(targetPropertyId, targetPropertyId, targetPropertyId)
   .first<{ total: number; unpaid_count: number; unpaid_total: number }>();
 
-// Fact sheet + property document library.
+// Fact Sheet (Red Binder) — Notes / Other, Who-to-Call contacts, credentials.
 const facts = await env.DB
   .prepare("SELECT id, label, value FROM property_facts WHERE property_id = ? ORDER BY sort_order, created_at")
   .bind(targetPropertyId)
   .all<{ id: string; label: string; value: string }>();
 
-const propertyFiles = await env.DB
+// Who-to-Call contacts (no password fields exist on this table).
+const contacts = await env.DB
   .prepare(
-    `SELECT id, category, title, description, expires_at, filename, mime_type, created_at
-     FROM property_files WHERE property_id = ? AND archived_at IS NULL
-     ORDER BY created_at DESC`
+    `SELECT id, category, label, contact_name, phone, mobile, email, account_number, fax, is_custom
+     FROM property_contacts WHERE property_id = ?
+     ORDER BY category, sort_order, created_at`
   )
   .bind(targetPropertyId)
-  .all<{ id: string; category: string; title: string; description: string | null; expires_at: string | null; filename: string; mime_type: string; created_at: string }>();
+  .all<{
+    id: string; category: "people" | "vendors" | "emergency_utility"; label: string;
+    contact_name: string | null; phone: string | null; mobile: string | null;
+    email: string | null; account_number: string | null; fax: string | null;
+    is_custom: number;
+  }>();
+
+// Credentials vault — NEVER select password ciphertext/iv into the page.
+const credentials = await env.DB
+  .prepare(
+    `SELECT id, label, account_number, username, sort_order, is_custom
+     FROM property_credentials WHERE property_id = ?
+     ORDER BY sort_order, created_at`
+  )
+  .bind(targetPropertyId)
+  .all<{ id: string; label: string; account_number: string | null; username: string | null; sort_order: number; is_custom: number }>();
+
+// Read-only GM name for the Who-to-Call "General Manager" row. When the GM is
+// viewing their own property it's themselves; for an admin preview, look up the
+// property's assigned GM.
+let gmName: string | null = user.role === "gm" ? user.name : null;
+if (!gmName) {
+  const gm = await env.DB
+    .prepare("SELECT name FROM users WHERE property_id = ? AND role = 'gm' ORDER BY active DESC, name LIMIT 1")
+    .bind(targetPropertyId)
+    .first<{ name: string }>();
+  gmName = gm?.name ?? null;
+}
 
 // Financial statements for this property.
 const financials = await env.DB
@@ -507,11 +536,24 @@ const viewerType = (mime: string) =>
     </div>
   </section>
 
-  <!-- Fact sheet + property document library -->
-  <div class="grid lg:grid-cols-2 gap-6 mt-8">
-    <FactSheet propertyId={targetPropertyId} facts={facts.results} canEdit={true} />
-    <PropertyFiles propertyId={targetPropertyId} files={propertyFiles.results} canEdit={true} />
-  </div>
+  <!-- Fact sheet (Red Binder): Who-to-Call · Credentials · Notes -->
+  <section class="mt-8">
+    <div class="mb-3">
+      <h2 class="text-lg font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
+        Property fact sheet
+      </h2>
+      <p class="text-sm text-[var(--color-muted)] mt-1">
+        Your red binder, online — who to call, vendor logins and codes, and notes for the site.
+      </p>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-6 items-start">
+      <ContactsSheet propertyId={targetPropertyId} contacts={contacts.results} gmName={gmName} canEdit={true} />
+      <div class="space-y-6">
+        <CredentialsVault propertyId={targetPropertyId} credentials={credentials.results} canEdit={true} />
+        <FactSheet propertyId={targetPropertyId} facts={facts.results} canEdit={true} />
+      </div>
+    </div>
+  </section>
 
   <script is:inline>
     document.querySelectorAll("form[data-confirm]").forEach((form) => {
