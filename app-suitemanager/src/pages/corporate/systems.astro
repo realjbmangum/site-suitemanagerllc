@@ -1,0 +1,592 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import CorporateNav from "../../components/CorporateNav.astro";
+import {
+  SERVICE_TYPES,
+  serviceLabel,
+  fmtMoney,
+  type PropertySystem,
+} from "../../lib/systems";
+
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const url = new URL(Astro.request.url);
+const selectedPropertyId = url.searchParams.get("property") || "";
+const saved = url.searchParams.get("saved") === "1";
+const errorMsg = url.searchParams.get("error");
+
+// ── Data (always live from D1; nothing hardcoded) ──────
+const propsRes = await env.DB
+  .prepare("SELECT id, name, code, address_state FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string; code: string | null; address_state: string | null }>();
+const properties = propsRes.results;
+
+const sysRes = await env.DB
+  .prepare(
+    `SELECT s.id, s.property_id, s.service_type, s.vendor_name, s.account_number,
+            s.contact_name, s.contact_phone, s.contact_email, s.monthly_cost_cents,
+            s.contract_end, s.cancel_notice, s.status, s.notes
+       FROM property_systems s
+       JOIN properties p ON p.id = s.property_id
+      WHERE p.active = 1
+      ORDER BY s.service_type, s.vendor_name`
+  )
+  .all<PropertySystem>();
+const systems = sysRes.results;
+
+// ── Build the property × service-type grid ─────────────
+type Cell = { active: PropertySystem[]; all: PropertySystem[] };
+const byProp = new Map<string, Map<string, Cell>>();
+for (const p of properties) byProp.set(p.id, new Map());
+for (const s of systems) {
+  const m = byProp.get(s.property_id);
+  if (!m) continue;
+  let cell = m.get(s.service_type);
+  if (!cell) { cell = { active: [], all: [] }; m.set(s.service_type, cell); }
+  cell.all.push(s);
+  if (s.status === "active") cell.active.push(s);
+}
+const cellFor = (propertyId: string, type: string): Cell =>
+  byProp.get(propertyId)?.get(type) ?? { active: [], all: [] };
+
+// ── Tiles + flags ──────────────────────────────────────
+const activeSystems = systems.filter((s) => s.status === "active");
+const activeCount = activeSystems.length;
+const monthlySpend = activeSystems.reduce((sum, s) => sum + (s.monthly_cost_cents ?? 0), 0);
+
+let gaps = 0;
+type DoublePay = { propertyId: string; propertyName: string; type: string; vendors: string[]; combined: number };
+const doublePays: DoublePay[] = [];
+
+// Per-property metrics (drive client-side matrix sorting; no hardcoded values).
+const propMeta = properties.map((p) => {
+  let spend = 0, gapCount = 0, dblCount = 0;
+  for (const st of SERVICE_TYPES) {
+    const cell = cellFor(p.id, st.value);
+    spend += cell.active.reduce((s, a) => s + (a.monthly_cost_cents ?? 0), 0);
+    if (cell.active.length === 0) { gaps++; gapCount++; }
+    if (cell.active.length >= 2) {
+      dblCount++;
+      doublePays.push({
+        propertyId: p.id, propertyName: p.name, type: st.value,
+        vendors: cell.active.map((a) => a.vendor_name),
+        combined: cell.active.reduce((sum, a) => sum + (a.monthly_cost_cents ?? 0), 0),
+      });
+    }
+  }
+  return { ...p, spend, gapCount, dblCount };
+});
+
+// ── Flat list rows (one per system), property-sorted ───
+const propById = new Map(properties.map((p) => [p.id, p]));
+const listRows = systems
+  .map((s) => ({ s, p: propById.get(s.property_id)! }))
+  .filter((r) => r.p)
+  .sort((a, b) =>
+    a.p.name.localeCompare(b.p.name) ||
+    a.s.service_type.localeCompare(b.s.service_type) ||
+    a.s.vendor_name.localeCompare(b.s.vendor_name)
+  );
+
+// ── Selected property → termination legend (SSR) ───────
+const selectedProperty = selectedPropertyId
+  ? properties.find((p) => p.id === selectedPropertyId) ?? null
+  : null;
+const legendSystems = selectedProperty
+  ? systems
+      .filter((s) => s.property_id === selectedProperty.id)
+      .sort((a, b) => a.service_type.localeCompare(b.service_type) || a.vendor_name.localeCompare(b.vendor_name))
+  : [];
+const legendMonthly = legendSystems
+  .filter((s) => s.status === "active")
+  .reduce((sum, s) => sum + (s.monthly_cost_cents ?? 0), 0);
+
+const buildHref = (overrides: Record<string, string | null>) => {
+  const u = new URL(url);
+  u.searchParams.delete("saved");
+  u.searchParams.delete("error");
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + (u.search || "");
+};
+
+// Compact payload for client-side CSV export.
+const exportPayload = {
+  props: properties.map((p) => ({ id: p.id, name: p.name, code: p.code, state: p.address_state })),
+  types: SERVICE_TYPES.map((s) => ({ value: s.value, label: s.label })),
+  systems: systems.map((s) => ({
+    property_id: s.property_id, service_type: s.service_type, vendor_name: s.vendor_name,
+    account_number: s.account_number, contact_name: s.contact_name, contact_phone: s.contact_phone,
+    contact_email: s.contact_email, monthly: s.monthly_cost_cents != null ? s.monthly_cost_cents / 100 : null,
+    contract_end: s.contract_end, cancel_notice: s.cancel_notice, status: s.status, notes: s.notes,
+  })),
+};
+---
+
+<PortalLayout title="Systems">
+  <CorporateNav
+    active="systems"
+    systemsCount={doublePays.length}
+    description="Technology & systems vendors across every property — your termination legend (who to cancel when a property drops) and a double-pay check (two vendors billing for one service)."
+  />
+
+  {errorMsg && (
+    <div class="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMsg}</div>
+  )}
+  {saved && (
+    <div class="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Saved.</div>
+  )}
+
+  <!-- Tiles -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Active systems</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{activeCount}</div>
+      <div class="text-xs text-[var(--color-muted)] mt-1">across {properties.length} properties</div>
+    </div>
+    <div class="rounded-xl border bg-white border-[var(--color-hairline)] p-4">
+      <div class="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">Monthly spend</div>
+      <div class="text-2xl font-bold text-[var(--color-navy)] mt-1">{fmtMoney(monthlySpend)}</div>
+      <div class="text-xs text-[var(--color-muted)] mt-1">where cost is on file</div>
+    </div>
+    <div class={`rounded-xl border p-4 ${doublePays.length > 0 ? "bg-red-50 border-red-300" : "bg-white border-[var(--color-hairline)]"}`}>
+      <div class={`text-xs font-semibold uppercase tracking-widest ${doublePays.length > 0 ? "text-red-700" : "text-[var(--color-muted)]"}`}>Double-pay flags</div>
+      <div class={`text-2xl font-bold mt-1 ${doublePays.length > 0 ? "text-red-700" : "text-[var(--color-navy)]"}`}>{doublePays.length}</div>
+      <div class="text-xs text-[var(--color-muted)] mt-1">2+ vendors, 1 service</div>
+    </div>
+    <div class={`rounded-xl border p-4 ${gaps > 0 ? "bg-amber-50 border-amber-300" : "bg-white border-[var(--color-hairline)]"}`}>
+      <div class={`text-xs font-semibold uppercase tracking-widest ${gaps > 0 ? "text-amber-700" : "text-[var(--color-muted)]"}`}>Coverage gaps</div>
+      <div class={`text-2xl font-bold mt-1 ${gaps > 0 ? "text-amber-700" : "text-[var(--color-navy)]"}`}>{gaps}</div>
+      <div class="text-xs text-[var(--color-muted)] mt-1">no vendor on file yet</div>
+    </div>
+  </div>
+
+  <!-- Double-pay callout -->
+  {doublePays.length > 0 && (
+    <section class="mb-6 rounded-xl border border-red-300 bg-red-50 overflow-hidden">
+      <header class="px-5 py-3 border-b border-red-200 flex items-center gap-2">
+        <span class="text-red-700">⚠</span>
+        <h2 class="font-semibold text-red-800">Possible double-pays — two active vendors for one service</h2>
+      </header>
+      <ul class="divide-y divide-red-100">
+        {doublePays.map((d) => (
+          <li class="px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <a href={buildHref({ property: d.propertyId })} class="font-semibold text-[var(--color-navy)] hover:text-red-700">{d.propertyName}</a>
+              <span class="text-[var(--color-muted)]"> · {serviceLabel(d.type)}</span>
+              <div class="text-sm text-red-700 mt-0.5">{d.vendors.join("  vs.  ")}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-[var(--color-muted)] uppercase tracking-widest">combined / mo</div>
+              <div class="font-bold text-red-700 tabular-nums">{fmtMoney(d.combined)}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <!-- Toolbar: instant search · view toggle · matrix sort · type filter · export · add -->
+  <div class="flex flex-wrap items-center gap-2 mb-3">
+    <div class="relative flex-1 min-w-[220px]">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] text-sm">⌕</span>
+      <input id="sys-search" type="search" placeholder="Filter by property, vendor, account…"
+        class="w-full rounded-lg border border-[var(--color-hairline)] bg-white pl-8 pr-3 py-2 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]" />
+    </div>
+
+    <div class="inline-flex rounded-lg border border-[var(--color-hairline)] overflow-hidden bg-white" role="tablist">
+      <button id="view-matrix-btn" data-view="matrix" class="view-btn px-3 py-2 text-sm font-semibold">Matrix</button>
+      <button id="view-list-btn" data-view="list" class="view-btn px-3 py-2 text-sm font-semibold border-l border-[var(--color-hairline)]">List</button>
+    </div>
+
+    <select id="matrix-sort" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+      <option value="name">Sort: Property A–Z</option>
+      <option value="spend">Sort: Monthly spend ↓</option>
+      <option value="gaps">Sort: Most gaps ↓</option>
+      <option value="dbl">Sort: Most double-pays ↓</option>
+    </select>
+
+    <select id="type-filter" class="rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm">
+      <option value="all">All systems</option>
+      {SERVICE_TYPES.map((s) => <option value={s.value}>{s.label}</option>)}
+    </select>
+
+    <button type="button" id="export-matrix-btn" class="btn-ghost text-sm">Export CSV</button>
+    <a href="#add-system" class="pill pill-statement text-sm">+ Add</a>
+  </div>
+
+  <p id="result-count" class="text-xs text-[var(--color-muted)] mb-2"></p>
+
+  <!-- ===== MATRIX VIEW ===== -->
+  <div id="view-matrix">
+    <div class="sys-wrap">
+      <table class="sys-table sys-matrix">
+        <thead>
+          <tr>
+            <th class="sticky-col">Property</th>
+            {SERVICE_TYPES.map((t) => <th data-col={t.value} class="col-head"><span title={t.label}>{t.short}</span></th>)}
+          </tr>
+        </thead>
+        <tbody id="matrix-body">
+          {propMeta.map((p) => (
+            <tr class="m-row"
+              data-search={`${p.name} ${p.code ?? ""} ${p.address_state ?? ""}`.toLowerCase()}
+              data-name={p.name.toLowerCase()} data-spend={p.spend} data-gaps={p.gapCount} data-dbl={p.dblCount}>
+              <td class="sticky-col">
+                <a href={buildHref({ property: p.id })} class={`pname ${selectedPropertyId === p.id ? "is-active" : ""}`}>{p.name}</a>
+                {p.address_state && <span class="pst">· {p.address_state}</span>}
+              </td>
+              {SERVICE_TYPES.map((t) => {
+                const cell = cellFor(p.id, t.value);
+                const n = cell.active.length;
+                if (n >= 2) return (
+                  <td data-col={t.value} class="cell-dbl">
+                    <a href={buildHref({ property: p.id })}>
+                      <span class="dbl-flag">⚠ {n}</span>
+                      {cell.active.map((a) => <span class="dbl-v">{a.vendor_name}</span>)}
+                    </a>
+                  </td>
+                );
+                if (n === 1) return <td data-col={t.value} class="cell-one">{cell.active[0].vendor_name}</td>;
+                return <td data-col={t.value} class="cell-gap" title="No vendor on file">—</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="key">
+      <span class="sw gap"></span> gap (nobody on file) · <span class="sw dbl"></span> double-pay (2+ vendors) ·
+      click a property for its termination legend.
+    </p>
+  </div>
+
+  <!-- ===== LIST VIEW ===== -->
+  <div id="view-list" class="hidden">
+    <div class="sys-wrap">
+      <table class="sys-table sys-list" id="list-table">
+        <thead>
+          <tr>
+            <th data-sort data-type="text">Property</th>
+            <th data-sort data-type="text">System</th>
+            <th data-sort data-type="text">Vendor</th>
+            <th data-sort data-type="text">Account #</th>
+            <th data-sort data-type="num" class="num">Monthly</th>
+            <th data-sort data-type="text">Status</th>
+          </tr>
+        </thead>
+        <tbody id="list-body">
+          {listRows.map(({ s, p }) => (
+            <tr class="l-row" data-search={`${p.name} ${serviceLabel(s.service_type)} ${s.vendor_name} ${s.account_number ?? ""}`.toLowerCase()} data-type-key={s.service_type}>
+              <td><a href={buildHref({ property: p.id })} class="pname">{p.name}</a>{p.address_state && <span class="pst">· {p.address_state}</span>}</td>
+              <td>{serviceLabel(s.service_type)}</td>
+              <td class="text-[var(--color-navy)]">{s.vendor_name}</td>
+              <td class="acct">{s.account_number || "—"}</td>
+              <td class="num" data-sort-value={s.monthly_cost_cents ?? 0}>{fmtMoney(s.monthly_cost_cents)}</td>
+              <td data-sort-value={s.status}>
+                {s.status === "cancelled"
+                  ? <span class="badge-neutral">Cancelled</span>
+                  : <span class="badge-active">Active</span>}
+              </td>
+            </tr>
+          ))}
+          {listRows.length === 0 && (
+            <tr><td colspan="6" class="empty">No systems on file yet — use “+ Add” below.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== TERMINATION LEGEND (SSR for selected property) ===== -->
+  {selectedProperty && (
+    <section id="legend" class="mt-8 bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+      <header class="px-5 py-4 border-b border-[var(--color-hairline)] flex items-start justify-between gap-4 flex-wrap bg-[var(--color-navy)] text-white">
+        <div>
+          <h2 class="text-lg font-bold" style="font-family: var(--font-display);">{selectedProperty.name} — termination legend</h2>
+          <p class="text-sm text-white/70 mt-0.5">Everyone to notify to cancel accounts if this property is dropped · {legendSystems.length} system{legendSystems.length === 1 ? "" : "s"} · {fmtMoney(legendMonthly)}/mo active</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="print-legend-btn" class="pill bg-white/15 text-white text-sm hover:bg-white/25">Print</button>
+          <button type="button" id="export-legend-btn" class="pill bg-white/15 text-white text-sm hover:bg-white/25" data-property={selectedProperty.id} data-name={selectedProperty.name}>Export CSV</button>
+          <a href={buildHref({ property: null })} class="pill bg-white/15 text-white text-sm hover:bg-white/25">Close</a>
+        </div>
+      </header>
+      {legendSystems.length === 0 ? (
+        <div class="px-5 py-10 text-center text-[var(--color-muted)]">No systems recorded for this property yet. Use “+ Add” below.</div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-[var(--color-cream)] text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+              <tr>
+                <th class="text-left px-4 py-3">Service</th><th class="text-left px-4 py-3">Vendor</th>
+                <th class="text-left px-4 py-3">Account #</th><th class="text-left px-4 py-3">Who to call</th>
+                <th class="text-right px-4 py-3">Monthly</th><th class="text-left px-4 py-3">Cancellation notice</th>
+                <th class="text-right px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {legendSystems.map((s) => (
+                <>
+                  <tr class={`border-t border-[var(--color-hairline)] ${s.status === "cancelled" ? "opacity-50" : ""}`}>
+                    <td class="px-4 py-3 font-semibold text-[var(--color-navy)]">{serviceLabel(s.service_type)}{s.status === "cancelled" && <span class="ml-2 text-[10px] uppercase tracking-wide text-[var(--color-muted)] border border-[var(--color-hairline)] rounded px-1">cancelled</span>}</td>
+                    <td class="px-4 py-3 text-[var(--color-navy)]">{s.vendor_name}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-[var(--color-muted)]">{s.account_number || "—"}</td>
+                    <td class="px-4 py-3 text-xs text-[var(--color-navy)]">
+                      {s.contact_name && <div class="font-medium">{s.contact_name}</div>}
+                      {s.contact_phone && <div class="text-[var(--color-muted)]">{s.contact_phone}</div>}
+                      {s.contact_email && <div class="text-[var(--color-muted)]">{s.contact_email}</div>}
+                      {!s.contact_name && !s.contact_phone && !s.contact_email && <span class="text-[var(--color-muted)]">—</span>}
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums text-[var(--color-navy)]">{fmtMoney(s.monthly_cost_cents)}</td>
+                    <td class="px-4 py-3 text-xs text-[var(--color-navy)] max-w-[240px]">{s.cancel_notice || <span class="text-[var(--color-muted)]">—</span>}{s.contract_end && <div class="text-[var(--color-muted)] mt-0.5">term ends {s.contract_end}</div>}</td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                      <button type="button" class="text-xs text-[var(--color-brass-dark)] hover:underline mr-2" data-edit-toggle={s.id}>Edit</button>
+                      <form method="POST" action={`/api/systems/${s.id}`} class="inline" onsubmit="return confirm('Delete this system?');">
+                        <input type="hidden" name="action" value="delete" />
+                        <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                  <tr id={`edit-${s.id}`} class="hidden border-t border-[var(--color-hairline)] bg-[var(--color-cream)]/50">
+                    <td colspan="7" class="px-4 py-4">
+                      <form method="POST" action={`/api/systems/${s.id}`} class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="hidden" name="action" value="update" />
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">System type
+                          <select name="service_type" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal">
+                            {SERVICE_TYPES.map((t) => <option value={t.value} selected={t.value === s.service_type}>{t.label}</option>)}
+                          </select>
+                        </label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Vendor<input name="vendor_name" value={s.vendor_name} required class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Account #<input name="account_number" value={s.account_number || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Contact name<input name="contact_name" value={s.contact_name || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Contact phone<input name="contact_phone" value={s.contact_phone || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Contact email<input name="contact_email" value={s.contact_email || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Monthly cost<input name="monthly_cost" value={s.monthly_cost_cents != null ? (s.monthly_cost_cents / 100).toFixed(2) : ""} placeholder="$0.00" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Contract end<input type="date" name="contract_end" value={s.contract_end || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)]">Status
+                          <select name="status" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal">
+                            <option value="active" selected={s.status === "active"}>Active</option>
+                            <option value="cancelled" selected={s.status === "cancelled"}>Cancelled</option>
+                          </select>
+                        </label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)] md:col-span-3">Cancellation notice<input name="cancel_notice" value={s.cancel_notice || ""} placeholder="e.g. 30 days written notice to billing@vendor.com" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <label class="text-xs font-semibold text-[var(--color-muted)] md:col-span-3">Notes<input name="notes" value={s.notes || ""} class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+                        <div class="md:col-span-3 flex gap-2"><button type="submit" class="pill pill-statement text-sm">Save changes</button><button type="button" class="btn-ghost text-sm" data-edit-toggle={s.id}>Cancel</button></div>
+                      </form>
+                    </td>
+                  </tr>
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )}
+
+  <!-- ===== ADD A SYSTEM ===== -->
+  <section id="add-system" class="mt-8 bg-white border border-[var(--color-hairline)] rounded-xl overflow-hidden">
+    <header class="px-5 py-3 border-b border-[var(--color-hairline)]"><h2 class="font-semibold text-[var(--color-navy)]">Add a system</h2></header>
+    <form method="POST" id="add-system-form" class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Property
+        <select name="_property" required class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal">
+          <option value="">Choose…</option>
+          {properties.map((p) => <option value={p.id} selected={p.id === selectedPropertyId}>{p.name}{p.address_state ? ` · ${p.address_state}` : ""}</option>)}
+        </select>
+      </label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">System type
+        <select name="service_type" required class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal">
+          {SERVICE_TYPES.map((t) => <option value={t.value}>{t.label}</option>)}
+        </select>
+      </label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Vendor<input name="vendor_name" required placeholder="e.g. Spectrum" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Account #<input name="account_number" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Contact name<input name="contact_name" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Contact phone<input name="contact_phone" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Contact email<input name="contact_email" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Monthly cost<input name="monthly_cost" placeholder="$0.00" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Contract end<input type="date" name="contract_end" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)] md:col-span-2">Cancellation notice<input name="cancel_notice" placeholder="e.g. 30 days written notice to billing@vendor.com" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <label class="text-xs font-semibold text-[var(--color-muted)]">Status
+        <select name="status" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal"><option value="active">Active</option><option value="cancelled">Cancelled</option></select>
+      </label>
+      <label class="text-xs font-semibold text-[var(--color-muted)] md:col-span-3">Notes<input name="notes" class="mt-1 w-full rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] font-normal" /></label>
+      <div class="md:col-span-3"><button type="submit" class="pill pill-statement text-sm">Add system</button></div>
+    </form>
+  </section>
+
+  <script type="application/json" id="systems-export-data" set:html={JSON.stringify(exportPayload)}></script>
+</PortalLayout>
+
+<style>
+  .sys-wrap{background:#fff;border:1px solid var(--color-hairline);border-radius:14px;overflow:auto;max-height:72vh;}
+  .sys-table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;}
+  .sys-table thead th{position:sticky;top:0;z-index:3;background:var(--color-cream);text-align:left;
+    padding:11px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--color-muted);white-space:nowrap;border-bottom:1px solid var(--color-hairline);}
+  .sys-table tbody td{padding:9px 14px;border-bottom:1px solid var(--color-hairline);vertical-align:middle;color:var(--color-navy);}
+  .sys-table tbody tr:last-child td{border-bottom:none;}
+  .sys-table tbody tr:hover td{background:#fcfbf8;}
+  /* sticky first column (matrix) */
+  .sys-matrix th.sticky-col,.sys-matrix td.sticky-col{position:sticky;left:0;z-index:2;background:#fff;min-width:200px;}
+  .sys-matrix thead th.sticky-col{z-index:4;background:var(--color-cream);}
+  .sys-matrix tbody tr:hover td.sticky-col{background:#fcfbf8;}
+  .sys-matrix th.col-head{min-width:118px;}
+  .pname{font-weight:700;color:var(--color-navy);text-decoration:none;}
+  .pname:hover{color:var(--color-brass-dark);}
+  .pname.is-active{color:var(--color-brass-dark);}
+  .pst{color:var(--color-muted);font-size:11px;margin-left:5px;}
+  .cell-one{color:var(--color-navy);}
+  .cell-gap{background:rgba(254,243,199,.35);color:#c59a52;text-align:center;}
+  .cell-dbl{background:var(--color-red,#FEF3F2);background:#FEF3F2;}
+  .cell-dbl a{text-decoration:none;display:block;}
+  .dbl-flag{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#B42318;}
+  .dbl-v{display:block;font-size:12px;color:#912018;line-height:1.3;}
+  /* list */
+  .sys-list th[data-sort]{cursor:pointer;user-select:none;}
+  .sys-list th[data-sort]:hover{color:var(--color-navy);}
+  .sys-list th .arw{color:var(--color-brass);margin-left:4px;}
+  .sys-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .sys-list .acct{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--color-muted);}
+  .badge-active{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:#ECFDF3;color:#067647;border:1px solid #ABEFC6;}
+  .badge-neutral{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--color-cream);color:var(--color-muted);border:1px solid var(--color-hairline);}
+  .empty{padding:38px;text-align:center;color:var(--color-muted);}
+  .key{font-size:12px;color:var(--color-muted);margin:10px 2px 0;}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;}
+  .sw.gap{background:#fef0c7;border:1px solid #FEDF89;}
+  .sw.dbl{background:#fee4e2;border:1px solid #FECDCA;}
+  /* view toggle */
+  .view-btn{color:var(--color-muted);background:#fff;}
+  .view-btn.is-active{background:var(--color-navy);color:#fff;}
+</style>
+
+<script is:inline>
+  (function () {
+    var search = document.getElementById("sys-search");
+    var typeFilter = document.getElementById("type-filter");
+    var matrixSort = document.getElementById("matrix-sort");
+    var matrixBody = document.getElementById("matrix-body");
+    var listBody = document.getElementById("list-body");
+    var countEl = document.getElementById("result-count");
+    var viewMatrix = document.getElementById("view-matrix");
+    var viewList = document.getElementById("view-list");
+    var btnMatrix = document.getElementById("view-matrix-btn");
+    var btnList = document.getElementById("view-list-btn");
+    var current = "matrix";
+
+    function setView(v) {
+      current = v;
+      viewMatrix.classList.toggle("hidden", v !== "matrix");
+      viewList.classList.toggle("hidden", v !== "list");
+      btnMatrix.classList.toggle("is-active", v === "matrix");
+      btnList.classList.toggle("is-active", v === "list");
+      matrixSort.style.display = v === "matrix" ? "" : "none";
+      apply();
+    }
+    btnMatrix.addEventListener("click", function () { setView("matrix"); });
+    btnList.addEventListener("click", function () { setView("list"); });
+
+    function apply() {
+      var q = (search.value || "").trim().toLowerCase();
+      var type = typeFilter.value;
+      // Matrix: filter rows by text; column show/hide by type.
+      var mShown = 0;
+      Array.prototype.forEach.call(matrixBody.querySelectorAll("tr.m-row"), function (tr) {
+        var hit = !q || tr.getAttribute("data-search").indexOf(q) > -1;
+        tr.style.display = hit ? "" : "none"; if (hit) mShown++;
+      });
+      document.querySelectorAll(".sys-matrix [data-col]").forEach(function (c) {
+        c.style.display = (type === "all" || c.getAttribute("data-col") === type) ? "" : "none";
+      });
+      // List: filter rows by text + type.
+      var lShown = 0, lRows = listBody.querySelectorAll("tr.l-row");
+      Array.prototype.forEach.call(lRows, function (tr) {
+        var hit = (!q || tr.getAttribute("data-search").indexOf(q) > -1) &&
+                  (type === "all" || tr.getAttribute("data-type-key") === type);
+        tr.style.display = hit ? "" : "none"; if (hit) lShown++;
+      });
+      if (current === "matrix") countEl.textContent = mShown + " of " + matrixBody.querySelectorAll("tr.m-row").length + " properties";
+      else countEl.textContent = lShown + " of " + lRows.length + " systems";
+    }
+    search.addEventListener("input", apply);
+    typeFilter.addEventListener("change", apply);
+
+    // Matrix sort (client-side, by data-attributes).
+    matrixSort.addEventListener("change", function () {
+      var key = matrixSort.value;
+      var rows = Array.prototype.slice.call(matrixBody.querySelectorAll("tr.m-row"));
+      rows.sort(function (a, b) {
+        if (key === "name") return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"));
+        return (parseFloat(b.getAttribute("data-" + key)) || 0) - (parseFloat(a.getAttribute("data-" + key)) || 0);
+      });
+      rows.forEach(function (r) { matrixBody.appendChild(r); });
+    });
+
+    // List column sort (click headers).
+    var listTable = document.getElementById("list-table");
+    if (listTable) {
+      var heads = listTable.tHead.rows[0].cells;
+      Array.prototype.forEach.call(heads, function (th, idx) {
+        if (!th.hasAttribute("data-sort")) return;
+        th.addEventListener("click", function () {
+          var type = th.getAttribute("data-type") || "text";
+          var dir = th.getAttribute("data-dir") === "asc" ? "desc" : "asc";
+          Array.prototype.forEach.call(heads, function (h) { h.removeAttribute("data-dir"); var a = h.querySelector(".arw"); if (a) a.remove(); });
+          th.setAttribute("data-dir", dir);
+          var arw = document.createElement("span"); arw.className = "arw"; arw.textContent = dir === "asc" ? "▲" : "▼"; th.appendChild(arw);
+          var rows = Array.prototype.slice.call(listBody.querySelectorAll("tr.l-row"));
+          rows.sort(function (a, b) {
+            function val(tr) { var td = tr.cells[idx]; var v = td.getAttribute("data-sort-value"); if (v == null) v = td.textContent.trim(); return type === "num" ? (parseFloat(String(v).replace(/[^0-9.\-]/g, "")) || 0) : String(v).toLowerCase(); }
+            var x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * (dir === "asc" ? 1 : -1);
+          });
+          rows.forEach(function (r) { listBody.appendChild(r); });
+        });
+      });
+    }
+
+    // Add-system form posts to /api/properties/:id/systems.
+    var addForm = document.getElementById("add-system-form");
+    if (addForm) addForm.addEventListener("submit", function (e) {
+      var sel = addForm.querySelector('select[name="_property"]');
+      if (!sel || !sel.value) { e.preventDefault(); alert("Choose a property first."); return; }
+      addForm.action = "/api/properties/" + sel.value + "/systems";
+    });
+
+    // Legend edit toggles + print.
+    document.querySelectorAll("[data-edit-toggle]").forEach(function (btn) {
+      btn.addEventListener("click", function () { var r = document.getElementById("edit-" + btn.getAttribute("data-edit-toggle")); if (r) r.classList.toggle("hidden"); });
+    });
+    var printBtn = document.getElementById("print-legend-btn");
+    if (printBtn) printBtn.addEventListener("click", function () { window.print(); });
+
+    // CSV export.
+    var data = JSON.parse(document.getElementById("systems-export-data").textContent || "{}");
+    function csvCell(v) { if (v == null) return ""; var s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+    function download(name, rows) { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([rows.map(function (r) { return r.map(csvCell).join(","); }).join("\n")], { type: "text/csv;charset=utf-8;" })); a.download = name; a.click(); URL.revokeObjectURL(a.href); }
+    var matrixBtn = document.getElementById("export-matrix-btn");
+    if (matrixBtn) matrixBtn.addEventListener("click", function () {
+      var header = ["Property", "Code", "State"].concat(data.types.map(function (t) { return t.label; }));
+      var rows = [header];
+      data.props.forEach(function (p) {
+        var row = [p.name, p.code, p.state];
+        data.types.forEach(function (t) { row.push(data.systems.filter(function (s) { return s.property_id === p.id && s.service_type === t.value && s.status === "active"; }).map(function (s) { return s.vendor_name; }).join(" | ")); });
+        rows.push(row);
+      });
+      download("systems-matrix.csv", rows);
+    });
+    var legendBtn = document.getElementById("export-legend-btn");
+    if (legendBtn) legendBtn.addEventListener("click", function () {
+      var pid = legendBtn.getAttribute("data-property"), pname = legendBtn.getAttribute("data-name") || "property";
+      var tl = {}; data.types.forEach(function (t) { tl[t.value] = t.label; });
+      var rows = [["Service", "Vendor", "Account #", "Contact name", "Contact phone", "Contact email", "Monthly", "Contract end", "Cancellation notice", "Status", "Notes"]];
+      data.systems.filter(function (s) { return s.property_id === pid; }).forEach(function (s) { rows.push([tl[s.service_type] || s.service_type, s.vendor_name, s.account_number, s.contact_name, s.contact_phone, s.contact_email, s.monthly != null ? s.monthly : "", s.contract_end, s.cancel_notice, s.status, s.notes]); });
+      download(pname.replace(/[^a-z0-9]+/gi, "-").toLowerCase() + "-systems.csv", rows);
+    });
+
+    setView("matrix");
+  })();
+</script>

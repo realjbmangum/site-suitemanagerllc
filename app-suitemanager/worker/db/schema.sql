@@ -220,6 +220,36 @@ CREATE TABLE IF NOT EXISTS property_credentials (
 );
 CREATE INDEX IF NOT EXISTS idx_property_credentials_property ON property_credentials(property_id);
 
+-- Property systems & technology (added 2026-06-25) — one row per
+-- property-system, backing the corporate cross-property Systems matrix
+-- (/corporate/systems). service_type is a controlled list (phone, isp,
+-- wifi_managed, cable_tv, cameras, alarm_fire, door_locks, pms). Two active
+-- rows for the same property_id + service_type = a double-pay flag; zero = a
+-- coverage gap. monthly_cost_cents in cents (matches documents.amount_cents).
+CREATE TABLE IF NOT EXISTS property_systems (
+  id                 TEXT PRIMARY KEY,
+  property_id        TEXT NOT NULL REFERENCES properties(id),
+  service_type       TEXT NOT NULL,
+  vendor_name        TEXT NOT NULL,
+  account_number     TEXT,
+  contact_name       TEXT,
+  contact_phone      TEXT,
+  contact_email      TEXT,
+  monthly_cost_cents INTEGER,
+  contract_end       TEXT,
+  cancel_notice      TEXT,
+  status             TEXT NOT NULL DEFAULT 'active'
+                     CHECK (status IN ('active','cancelled')),
+  notes              TEXT,
+  sort_order         INTEGER NOT NULL DEFAULT 0,
+  created_by         TEXT NOT NULL REFERENCES users(id),
+  created_at         TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_systems_property ON property_systems(property_id);
+CREATE INDEX IF NOT EXISTS idx_property_systems_type     ON property_systems(service_type);
+CREATE INDEX IF NOT EXISTS idx_property_systems_status   ON property_systems(status);
+
 -- Calendar — shared schedule + GM PTO workflow (added 2026-06-08).
 -- regional = admin-owned schedules (visible to admin + strand, never GMs).
 -- gm_pto   = GM-requested time off → admin approves/denies → decision

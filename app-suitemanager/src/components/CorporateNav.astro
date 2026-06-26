@@ -3,16 +3,18 @@
 // page. Adding a new tab means dropping in another { id, label, href }
 // row here and a sibling .astro file under src/pages/corporate/.
 interface Props {
-  active: "documents" | "calendar";
+  active: "documents" | "calendar" | "systems";
   documentsCount?: number;
   calendarCount?: number;   // pending PTO requests, for an admin badge
+  systemsCount?: number;    // double-pay flags, for a warning badge
   description?: string;
 }
-const { active, documentsCount, calendarCount, description } = Astro.props;
+const { active, documentsCount, calendarCount, systemsCount, description } = Astro.props;
 
 const tabs = [
   { id: "documents", label: "Documents", href: "/corporate/documents", count: documentsCount },
   { id: "calendar",  label: "Calendar",  href: "/corporate/calendar",  count: calendarCount  },
+  { id: "systems",   label: "Systems",   href: "/corporate/systems",   count: systemsCount  },
 ];
 ---
 
