@@ -183,21 +183,26 @@ const lbl = "block text-xs font-semibold text-[var(--color-muted)] mb-1";
               <th data-sort data-type="text">Account # <span class="arw">⇅</span></th>
               <th data-sort data-type="num" class="num">Monthly <span class="arw">⇅</span></th>
               <th data-sort data-type="text">Status <span class="arw">⇅</span></th>
+              <th class="num">Actions</th>
             </tr>
           </thead>
           <tbody id="list-body">
             {listRows.map(({ s, p }) => (
               <tr class="l-row cursor-pointer" data-search={`${p.name} ${serviceLabel(s.service_type)} ${s.vendor_name} ${s.account_number ?? ""}`.toLowerCase()} data-type-key={s.service_type} data-prop={p.id}>
-                <td class="font-semibold text-[var(--color-navy)]">{p.name}{p.address_state && <span class="pst">· {p.address_state}</span>}</td>
+                <td><button type="button" class="open-prop pname" data-prop={p.id}>{p.name}</button>{p.address_state && <span class="pst">· {p.address_state}</span>}</td>
                 <td>{serviceLabel(s.service_type)}</td>
                 <td>{s.vendor_name}</td>
                 <td class="acct">{s.account_number || "—"}</td>
                 <td class="num" data-sort-value={s.monthly_cost_cents ?? 0}>{fmtMoney(s.monthly_cost_cents)}</td>
                 <td data-sort-value={s.status}>{s.status === "cancelled" ? <span class="badge-neutral">Cancelled</span> : <span class="badge-active">Active</span>}</td>
+                <td class="num whitespace-nowrap">
+                  <button type="button" class="edit-sys text-xs font-semibold text-[var(--color-brass-dark)] hover:underline" data-id={s.id}>Edit</button>
+                  <button type="button" class="del-sys text-xs font-semibold text-red-600 hover:underline ml-3" data-id={s.id}>Delete</button>
+                </td>
               </tr>
             ))}
             {listRows.length === 0 && (
-              <tr><td colspan="6" class="empty">
+              <tr><td colspan="7" class="empty">
                 <div class="mx-auto max-w-[420px]">
                   <div class="text-[var(--color-navy)] font-bold text-base mb-1">No systems recorded yet</div>
                   <p class="mb-4">All {properties.length} properties are already loaded. Add each one's phone, internet, WiFi, cameras and the rest — the double-pay and gap checks start working the moment you do.</p>
@@ -482,10 +487,13 @@ const lbl = "block text-xs font-semibold text-[var(--color-muted)] mb-1";
   }
   document.getElementById("drawer-close").addEventListener("click", closeDrawer);
   overlay.addEventListener("click", closeDrawer);
+  // One delegated handler. Check action buttons FIRST (with return) so an
+  // Edit/Delete click inside a list row never also opens the drawer.
   document.addEventListener("click", function (e) {
-    var op = e.target.closest(".open-prop, .l-row"); if (op) { openDrawer(op.getAttribute("data-prop")); }
-    var ed = e.target.closest(".edit-sys"); if (ed) openModalEdit(ed.getAttribute("data-id"));
-    var dl = e.target.closest(".del-sys"); if (dl) deleteSystem(dl.getAttribute("data-id"));
+    var ed = e.target.closest(".edit-sys"); if (ed) { e.preventDefault(); openModalEdit(ed.getAttribute("data-id")); return; }
+    var dl = e.target.closest(".del-sys"); if (dl) { e.preventDefault(); deleteSystem(dl.getAttribute("data-id")); return; }
+    var op = e.target.closest(".open-prop"); if (op) { e.preventDefault(); openDrawer(op.getAttribute("data-prop")); return; }
+    var row = e.target.closest(".l-row"); if (row) { openDrawer(row.getAttribute("data-prop")); }
   });
 
   // ── Add / Edit modal ──
