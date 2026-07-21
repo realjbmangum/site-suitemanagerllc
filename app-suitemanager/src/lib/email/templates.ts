@@ -342,6 +342,56 @@ export function buildApprovalDecisionEmail(input: ApprovalDecisionEmailInput): {
 }
 
 
+// --- Password reset (to any user) ---------------------------------------
+export interface PasswordResetEmailInput {
+  recipientName: string;
+  resetUrl: string;       // absolute /invite/:token URL (same set-password flow)
+  expiresAt: string;      // ISO date
+  byAdmin?: boolean;      // true when an admin triggered it (vs. self-service)
+  adminName?: string;     // e.g. "Brian Mangum" — only when byAdmin
+}
+
+export function buildPasswordResetEmail(input: PasswordResetEmailInput): {
+  subject: string;
+  html: string;
+} {
+  const first = input.recipientName.split(/\s+/)[0] || input.recipientName;
+  const expiresPretty = new Date(input.expiresAt).toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  const trigger = input.byAdmin
+    ? `${input.adminName ? escapeHtml(input.adminName) : 'A Suite Manager admin'} started a password reset for your account.`
+    : `We got a request to reset the password for your Suite Manager account.`;
+
+  const bodyHtml = `
+    <p style="margin:14px 0 0 0;">${escapeHtml(first)},</p>
+    <p style="margin:12px 0 0 0;">${trigger} Click below to choose a new password and sign in.</p>
+    <p style="margin:14px 0 0 0;font-size:13px;color:${BRAND.muted};">
+      This link expires <strong style="color:${BRAND.text};">${escapeHtml(expiresPretty)}</strong>.
+      ${
+        input.byAdmin
+          ? `If you weren't expecting this, contact your Suite Manager admin.`
+          : `If you didn't request this, you can safely ignore this email — your password won't change.`
+      }
+    </p>`;
+
+  return {
+    subject: `Reset your Suite Manager password`,
+    html: transactionalShell({
+      preheader: `Choose a new password for your Suite Manager account.`,
+      heading: 'Reset your password',
+      bodyHtml,
+      ctaLabel: 'Choose a new password',
+      ctaUrl: input.resetUrl,
+    }),
+  };
+}
+
 // --- PTO decision (to the GM) -------------------------------------------
 export interface PtoDecisionEmailInput {
   recipientName: string;

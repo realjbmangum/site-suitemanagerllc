@@ -3,8 +3,10 @@ import { loadSession, readSessionToken } from './lib/session';
 
 const PUBLIC_PATHS = new Set<string>([
   '/login',
+  '/forgot',
   '/api/auth/login',
   '/api/auth/activate',
+  '/api/auth/forgot',
 ]);
 
 function isPublic(pathname: string): boolean {

@@ -58,8 +58,9 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
   });
 
   // Send the invite email (best-effort — the copy-link in the UI is the
-  // fallback if Graph mail isn't configured or the send fails).
-  const origin = new URL(request.url).origin;
+  // fallback if Graph mail isn't configured or the send fails). Build the link
+  // off the configured app origin, not the request Host.
+  const origin = env.APP_ORIGIN || new URL(request.url).origin;
   let propertyName: string | undefined;
   if (role === 'gm' && propertyId) {
     const prop = await env.DB

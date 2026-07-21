@@ -8,32 +8,37 @@ const env = Astro.locals.runtime.env;
 const url = new URL(Astro.request.url);
 const error = url.searchParams.get("error");
 
-let user: { name: string; email: string; role: string; expires: string | null } | null = null;
+let user: { name: string; email: string; role: string; expires: string | null; activated: boolean } | null = null;
 let expired = false;
 
 if (token) {
   const row = await env.DB
     .prepare(
-      `SELECT name, email, role, invite_expires_at FROM users
+      `SELECT name, email, role, invite_expires_at, password_hash IS NOT NULL AS activated FROM users
        WHERE invite_token = ? AND active = 1`
     )
     .bind(token)
-    .first<{ name: string; email: string; role: string; invite_expires_at: string | null }>();
+    .first<{ name: string; email: string; role: string; invite_expires_at: string | null; activated: number }>();
   if (row) {
     user = {
       name: row.name,
       email: row.email,
       role: row.role,
       expires: row.invite_expires_at,
+      activated: row.activated === 1,
     };
     if (row.invite_expires_at && new Date(row.invite_expires_at) < new Date()) {
       expired = true;
     }
   }
 }
+
+// A user who already has a password is resetting it (link came from
+// "Forgot password?" or an admin reset); a fresh user is activating an invite.
+const isReset = user?.activated ?? false;
 ---
 
-<PortalLayout title={user ? "Set your password" : "Invite not found"} bare>
+<PortalLayout title={user ? (isReset ? "Reset your password" : "Set your password") : "Link not found"} bare>
   <div class="w-full max-w-sm">
     <div class="bg-white border border-[var(--color-hairline)] rounded-2xl shadow-sm overflow-hidden">
       <div class="bg-[var(--color-navy)] text-white px-8 py-7 border-b-2 border-[var(--color-brass)] flex flex-col items-center">
@@ -50,21 +55,22 @@ if (token) {
       {!user ? (
         <div class="px-8 py-7 text-center">
           <h1 class="text-xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-            Invite link not found
+            Link not found
           </h1>
           <p class="text-sm text-[var(--color-muted)] mt-2">
-            This invite link is invalid or has already been used. Ask your admin for a new one.
+            This link is invalid or has already been used. Request a new one from the sign-in page or your admin.
           </p>
           <a href="/login" class="btn-ghost mt-5 inline-flex">Back to sign in</a>
         </div>
       ) : expired ? (
         <div class="px-8 py-7 text-center">
           <h1 class="text-xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-            Invite link expired
+            Link expired
           </h1>
           <p class="text-sm text-[var(--color-muted)] mt-2">
-            Your invite link for <strong>{user.email}</strong> has expired. Ask your admin to send a new one.
+            The link for <strong>{user.email}</strong> has expired. {isReset ? "Request a new one from the “Forgot password?” link on the sign-in page." : "Ask your admin to send a new one."}
           </p>
+          <a href={isReset ? "/forgot" : "/login"} class="btn-ghost mt-5 inline-flex">{isReset ? "Request a new link" : "Back to sign in"}</a>
         </div>
       ) : (
         <form method="POST" action="/api/auth/activate" class="px-8 py-7 space-y-5">
@@ -72,10 +78,10 @@ if (token) {
 
           <div>
             <h1 class="text-2xl font-bold text-[var(--color-navy)]" style="font-family: var(--font-display);">
-              Welcome, {user.name.split(" ")[0]}
+              {isReset ? "Reset your password" : `Welcome, ${user.name.split(" ")[0]}`}
             </h1>
             <p class="text-sm text-[var(--color-muted)] mt-1">
-              Set a password for <strong>{user.email}</strong> to access the Suite Manager portal.
+              {isReset ? "Choose a new password for" : "Set a password for"} <strong>{user.email}</strong> to {isReset ? "get back into" : "access"} the Suite Manager portal.
             </p>
           </div>
 
@@ -101,7 +107,7 @@ if (token) {
               class="w-full rounded-lg border border-[var(--color-hairline)] bg-white px-4 py-3 text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brass)]/40 focus:border-[var(--color-brass)]" />
           </div>
 
-          <button type="submit" class="btn-primary w-full">Set password & sign in</button>
+          <button type="submit" class="btn-primary w-full">{isReset ? "Reset password & sign in" : "Set password & sign in"}</button>
         </form>
       )}
     </div>

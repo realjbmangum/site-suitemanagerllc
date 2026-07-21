@@ -8,6 +8,8 @@ const { id } = Astro.params;
 const url = new URL(Astro.request.url);
 const saved = url.searchParams.get("saved") === "1";
 const error = url.searchParams.get("error");
+const resetJustSent = url.searchParams.get("reset") === "1";
+const resetEmailed = url.searchParams.get("emailed") === "1";
 
 const user = await env.DB
   .prepare(
@@ -62,6 +64,9 @@ const actionLabel: Record<string, string> = {
   "user.update": "Updated a user",
   "user.delete": "Removed a user",
   "user.activate": "Set their password",
+  "user.reset": "Sent a password reset",
+  "password.reset": "Reset their password",
+  "password.reset_requested": "Requested a password reset",
   "property.create": "Created a property",
   "folder.create": "Created a folder",
   "resource.upload": "Uploaded a template",
@@ -70,6 +75,13 @@ const actionLabel: Record<string, string> = {
 
 const inviteUrl =
   user.invite_token && !user.activated
+    ? `${url.origin}/invite/${user.invite_token}`
+    : null;
+
+// After an admin reset we surface the fresh link (works even if email failed).
+// The token is read back from the DB, not passed through the URL.
+const resetUrl =
+  resetJustSent && user.invite_token && user.activated === 1
     ? `${url.origin}/invite/${user.invite_token}`
     : null;
 ---
@@ -112,7 +124,7 @@ const inviteUrl =
         Invite pending
       </div>
       <p class="text-sm text-[var(--color-navy)] mt-1 mb-3">
-        This user hasn't set their password yet. Share this link — expires {user.invite_expires_at ? new Date(user.invite_expires_at + "Z").toLocaleDateString() : "soon"}.
+        This user hasn't set their password yet. Share this link — expires {user.invite_expires_at ? new Date(user.invite_expires_at).toLocaleDateString() : "soon"}.
       </p>
       <div class="flex items-center gap-2 flex-wrap">
         <input
@@ -125,6 +137,34 @@ const inviteUrl =
           type="button"
           class="btn-primary text-sm"
           data-copy-target="invite-link"
+        >
+          Copy link
+        </button>
+      </div>
+    </div>
+  )}
+
+  {resetUrl && (
+    <div class="mb-6 rounded-xl border border-[var(--color-brass)] bg-[var(--color-brass-light)]/15 p-5">
+      <div class="text-xs font-bold uppercase tracking-widest text-[var(--color-brass-dark)]">
+        {resetEmailed ? "Reset link emailed" : "Reset link created"}
+      </div>
+      <p class="text-sm text-[var(--color-navy)] mt-1 mb-3">
+        {resetEmailed
+          ? `We emailed a reset link to ${user.email}. Here's the same link in case you'd rather text or call it to them — it expires in 24 hours.`
+          : `Email didn't go out — copy this link and send it to ${user.email} yourself. It expires in 24 hours.`}
+      </p>
+      <div class="flex items-center gap-2 flex-wrap">
+        <input
+          id="reset-link"
+          readonly
+          value={resetUrl}
+          class="flex-1 min-w-[260px] rounded-lg border border-[var(--color-hairline)] bg-white px-3 py-2 text-xs font-mono text-[var(--color-navy)]"
+        />
+        <button
+          type="button"
+          class="btn-primary text-sm"
+          data-copy-target="reset-link"
         >
           Copy link
         </button>
@@ -198,19 +238,29 @@ const inviteUrl =
         <button type="submit" class="btn-primary text-sm">Save changes</button>
         <a href="/admin/users" class="btn-ghost text-sm">Cancel</a>
         {!isSelf && (
-          <form
-            method="POST"
-            action={`/api/users/${user.id}/delete`}
-            data-confirm={`Permanently delete ${user.email}? Their audit history will be cleared. Documents stay (uploaded_by becomes orphaned).`}
-            class="ml-auto"
+          <button
+            type="submit"
+            form="delete-user-form"
+            class="ml-auto text-xs font-semibold text-red-600 hover:text-red-700"
           >
-            <button type="submit" class="text-xs font-semibold text-red-600 hover:text-red-700">
-              Delete user
-            </button>
-          </form>
+            Delete user
+          </button>
         )}
       </div>
     </form>
+
+    {!isSelf && (
+      // Standalone form (NOT nested inside the edit form above — the HTML parser
+      // drops a nested <form>, which would silently make "Delete user" submit
+      // the edit form to /update). The button links to it via the form= attr.
+      <form
+        id="delete-user-form"
+        method="POST"
+        action={`/api/users/${user.id}/delete`}
+        data-confirm={`Permanently delete ${user.email}? Their audit history will be cleared. Documents stay (uploaded_by becomes orphaned).`}
+        class="hidden"
+      ></form>
+    )}
 
     <!-- Activity -->
     <aside class="bg-white border border-[var(--color-hairline)] rounded-xl p-5">
@@ -243,6 +293,23 @@ const inviteUrl =
       )}
     </aside>
   </div>
+
+  {!isSelf && user.activated === 1 && user.active === 1 && (
+    <section class="mt-6 bg-white border border-[var(--color-hairline)] rounded-xl p-6 max-w-xl">
+      <h2 class="font-semibold text-[var(--color-navy)]">Password</h2>
+      <p class="text-sm text-[var(--color-muted)] mt-1 mb-4">
+        Locked out? Send {user.name.split(" ")[0]} a link to set a new password.
+        Their current password keeps working until they use it, and it expires in 24 hours.
+      </p>
+      <form
+        method="POST"
+        action={`/api/users/${user.id}/reset`}
+        data-confirm={`Send ${user.email} a password reset link? It stays valid for 24 hours.`}
+      >
+        <button type="submit" class="btn-ghost text-sm">Reset password</button>
+      </form>
+    </section>
+  )}
 
   <script is:inline>
     document.querySelectorAll("[data-copy-target]").forEach((btn) => {
