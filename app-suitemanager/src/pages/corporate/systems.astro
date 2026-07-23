@@ -12,8 +12,8 @@ const errorMsg = url.searchParams.get("error");
 
 // ── Data (always live from D1; nothing hardcoded) ──────
 const propsRes = await env.DB
-  .prepare("SELECT id, name, code, address_state FROM properties WHERE active = 1 ORDER BY name")
-  .all<{ id: string; name: string; code: string | null; address_state: string | null }>();
+  .prepare("SELECT id, name, code, address_state, room_count FROM properties WHERE active = 1 ORDER BY name")
+  .all<{ id: string; name: string; code: string | null; address_state: string | null; room_count: number | null }>();
 const properties = propsRes.results;
 
 const sysRes = await env.DB
@@ -64,6 +64,11 @@ const propById = new Map(properties.map((p) => [p.id, p]));
 const listRows = systems
   .map((s) => ({ s, p: propById.get(s.property_id)! })).filter((r) => r.p)
   .sort((a, b) => a.p.name.localeCompare(b.p.name) || a.s.service_type.localeCompare(b.s.service_type));
+
+// Cost-per-room lens: a service's monthly cost ÷ the property's room count.
+// null when either is missing (renders as "—"); returns raw cents/room for fmtMoney + numeric sort.
+const perRoomCents = (cents: number | null | undefined, rooms: number | null | undefined): number | null =>
+  cents == null || !rooms ? null : cents / rooms;
 
 // Full client payload (powers the slide-over drawer + add/edit modal + CSV — all client-side).
 const payload = {
@@ -182,6 +187,7 @@ const lbl = "block text-xs font-semibold text-[var(--color-muted)] mb-1";
               <th data-sort data-type="text">Vendor <span class="arw">⇅</span></th>
               <th data-sort data-type="text">Account # <span class="arw">⇅</span></th>
               <th data-sort data-type="num" class="num">Monthly <span class="arw">⇅</span></th>
+              <th data-sort data-type="num" class="num" title="Monthly cost ÷ rooms">$/room <span class="arw">⇅</span></th>
               <th data-sort data-type="text">Status <span class="arw">⇅</span></th>
               <th class="num">Actions</th>
             </tr>
@@ -194,6 +200,7 @@ const lbl = "block text-xs font-semibold text-[var(--color-muted)] mb-1";
                 <td>{s.vendor_name}</td>
                 <td class="acct">{s.account_number || "—"}</td>
                 <td class="num" data-sort-value={s.monthly_cost_cents ?? 0}>{fmtMoney(s.monthly_cost_cents)}</td>
+                <td class="num" data-sort-value={perRoomCents(s.monthly_cost_cents, p.room_count) ?? 0}>{fmtMoney(perRoomCents(s.monthly_cost_cents, p.room_count))}</td>
                 <td data-sort-value={s.status}>{s.status === "cancelled" ? <span class="badge-neutral">Cancelled</span> : <span class="badge-active">Active</span>}</td>
                 <td class="num whitespace-nowrap">
                   <button type="button" class="edit-sys text-xs font-semibold text-[var(--color-brass-dark)] hover:underline" data-id={s.id}>Edit</button>
@@ -202,7 +209,7 @@ const lbl = "block text-xs font-semibold text-[var(--color-muted)] mb-1";
               </tr>
             ))}
             {listRows.length === 0 && (
-              <tr><td colspan="7" class="empty">
+              <tr><td colspan="8" class="empty">
                 <div class="mx-auto max-w-[420px]">
                   <div class="text-[var(--color-navy)] font-bold text-base mb-1">No systems recorded yet</div>
                   <p class="mb-4">All {properties.length} properties are already loaded. Add each one's phone, internet, WiFi, cameras and the rest — the double-pay and gap checks start working the moment you do.</p>
